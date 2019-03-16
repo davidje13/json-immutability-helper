@@ -6,6 +6,12 @@ JSON-serialisable mutability helpers, built on
 Primarily adds list commands, along with simple string and mathematical
 commands.
 
+## Install dependency
+
+```bash
+npm install --save git+https://github.com/davidje13/json-immutability-helper.git#semver:^1.0.0
+```
+
 ## Motivation
 
 When working with collaborative state shared over a network, it can be
