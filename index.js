@@ -1,5 +1,9 @@
-const update = require('immutability-helper');
+const { Context } = require('immutability-helper');
 const invariant = require('invariant');
+
+// Use a new context to avoid polluting native immutability-helper
+const defaultContext = new Context();
+const { update } = defaultContext;
 
 const UNSAFE_REGEXP = /[/\\^$*+?.()|[\]{}]/g;
 function makeLiteralRegExp(input, flags) {
@@ -262,4 +266,8 @@ update.extendAll({
   },
 });
 
-module.exports = update;
+// Match export style of immutability-helper for compatibility
+Object.defineProperty(exports, '__esModule', { value: true });
+exports.default = defaultContext.update;
+module.exports = Object.assign(exports.default, exports);
+exports.default.default = module.exports;
