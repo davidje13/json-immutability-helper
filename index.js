@@ -88,6 +88,8 @@ function applyExtensions(context) {
   context.extendAll({
     $apply: () => invariant(false, 'Cannot use $apply (not JSON-safe)'),
 
+    $seq: (specs, original) => specs.reduce(context.update, original),
+
     $updateIf: ([condition, spec, elseSpec = null], original) => {
       const check = context.makeConditionPredicate(condition);
       if (!check(original)) {
@@ -210,6 +212,10 @@ function applyExtensions(context) {
   });
 }
 
+function getSeqSteps(spec) {
+  return spec.$seq || [spec];
+}
+
 class JsonContext extends Context {
   constructor() {
     super();
@@ -219,6 +225,37 @@ class JsonContext extends Context {
     this.extendConditionAll = this.extendConditionAll.bind(this);
     this.internalConditionPart = this.internalConditionPart.bind(this);
     applyExtensions(this);
+    this.update.combine = this.combine.bind(this);
+    this.internalCombine2 = this.internalCombine2.bind(this);
+  }
+
+  isOp(o) {
+    const keys = Object.keys(o);
+    if (keys.length !== 1) {
+      return false;
+    }
+    return Boolean(this.commands[keys[0]]);
+  }
+
+  internalCombine2(spec1, spec2) {
+    if (this.isOp(spec1) || this.isOp(spec2)) {
+      return { $seq: [...getSeqSteps(spec1), ...getSeqSteps(spec2)] };
+    }
+
+    const result = Object.assign({}, spec1);
+    Object.keys(spec2).forEach((key) => {
+      if (result[key] === undefined) {
+        result[key] = spec2[key];
+      } else {
+        result[key] = this.internalCombine2(result[key], spec2[key]);
+      }
+    });
+    return result;
+  }
+
+  combine(specs, no) {
+    invariant(!no, 'combine(): must provide a single (list) parameter.');
+    return specs.reduce(this.internalCombine2, {});
   }
 
   extendAll(commands) {

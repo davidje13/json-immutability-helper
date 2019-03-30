@@ -48,7 +48,7 @@ module.exports = {
     'lines-between-class-members': ['error'],
     'max-depth': ['error'],
     'max-len': ['error'],
-    'max-lines': ['error'],
+    'max-lines': ['error', 500],
     'max-nested-callbacks': ['error'],
     'max-params': ['error'],
     'max-statements': ['error'],

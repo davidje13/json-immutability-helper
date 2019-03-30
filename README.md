@@ -204,6 +204,20 @@ are available. In addition:
   applies the given `spec` if the `condition` matches, otherwise
   applies the `elseSpec` (if provided) or does nothing.
 
+- `{$seq: [specs...]}`
+  applies the given `spec`s sequentially. This can be used to create
+  complex updates out of simple operations.
+
+  ```javascript
+  // Computes (value * 2 + 10)
+  const updated = update(state, {
+    $seq: [
+      { $multiply: 2 },
+      { $add: 10 },
+    ],
+  });
+  ```
+
 ### Array
 
 - `{$insertBeforeFirstWhere: [condition, items...]}`
@@ -272,3 +286,23 @@ are available. In addition:
 
 - `{$reciprocal: value}`
   divides the given `value` by the current value.
+
+## Other methods
+
+- `.extendAll(object)`
+  same as calling `extend` for all key/value pairs in the given object.
+
+- `.extendCondition(name, (param) => (actual) => boolean)`
+  adds a new condition which can be used in the same places as built-in
+  conditions.
+
+- `.extendConditionAll(object)`
+  same as calling `extendCondition` for all key/value pairs in the
+  given object.
+
+- `.combine(specs)`
+  generates a single spec which is equivalent to applying all the given
+  specs sequentially. Conceptually this is identical to using
+  `{$seq: specs}`, but `combine` optimises common paths where possible.
+  Note that the specs must be provided in an array, not as variadic
+  parameters.
