@@ -9,7 +9,7 @@ commands.
 ## Install dependency
 
 ```bash
-npm install --save git+https://github.com/davidje13/json-immutability-helper.git#semver:^1.0.1
+npm install --save git+https://github.com/davidje13/json-immutability-helper.git#semver:^1.0.2
 ```
 
 ## Motivation
