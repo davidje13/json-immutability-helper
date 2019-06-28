@@ -3,7 +3,8 @@
   "version": "1.0.1",
   "description": "json-serialisable mutability helpers, built on immutability-helper",
   "files": [
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ],
   "main": "index.js",
   "types": "index.d.ts",
