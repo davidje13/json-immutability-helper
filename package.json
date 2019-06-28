@@ -6,6 +6,7 @@
     "index.js"
   ],
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "lint": "eslint --format codeframe --ext mjs,js .",
     "test": "jest && npm run lint",

@@ -5,6 +5,9 @@
       location = "container:index.js">
    </FileRef>
    <FileRef
+      location = "container:index.d.ts">
+   </FileRef>
+   <FileRef
       location = "container:spec">
    </FileRef>
    <FileRef
