@@ -1,4 +1,4 @@
-declare namespace e {
+declare module 'json-immutability-helper' {
   interface ConditionValue<T> {
     equals?: T;
     greaterThanOrEqual?: T;
@@ -88,5 +88,3 @@ declare namespace e {
   const update: Context & Update;
   export default update;
 }
-
-export = e;
