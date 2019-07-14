@@ -82,7 +82,7 @@ declare module 'json-immutability-helper' {
 
     public update<T>(object: T, spec: Spec<T>): T;
 
-    public combine<T>(...specs: Spec<T>[]): Spec<T>;
+    public combine<T>(specs: Spec<T>[]): Spec<T>;
   }
 
   const update: Context & Update;
