@@ -1,4 +1,4 @@
-const update = require('../index');
+const { update } = require('../index');
 
 const initial = { foo: '1', bar: '2' };
 

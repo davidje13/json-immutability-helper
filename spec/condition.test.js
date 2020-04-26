@@ -1,4 +1,6 @@
-const update = require('../index');
+const { Context } = require('../index');
+
+const context = new Context();
 
 const initial = {
   foo: 'bar',
@@ -7,7 +9,7 @@ const initial = {
 };
 
 function matches(condition, state = initial) {
-  const updatedState = update([state], ['deleteWhere', condition]);
+  const updatedState = context.update([state], ['deleteWhere', condition]);
 
   return updatedState.length === 0;
 }
@@ -163,7 +165,7 @@ describe('multiple conditions on multiple properties', () => {
 
 describe('extendCondition', () => {
   it('adds custom conditions', () => {
-    update.extendCondition('multiple', (c) => (v) => ((v % c) === 0));
+    context.extendCondition('multiple', (c) => (v) => ((v % c) === 0));
 
     expect(matches({multiple: 3}, 9)).toEqual(true);
     expect(matches({multiple: 3}, 10)).toEqual(false);
@@ -174,7 +176,7 @@ describe('extendConditionAll', () => {
   it('adds multiple custom conditions', () => {
     const longerThan = (c) => (v) => (v.length > c);
     const shorterThan = (c) => (v) => (v.length < c);
-    update.extendConditionAll({longerThan, shorterThan});
+    context.extendConditionAll({longerThan, shorterThan});
 
     expect(matches({longerThan: 3, shorterThan: 5}, 'abcd')).toEqual(true);
     expect(matches({longerThan: 3, shorterThan: 5}, 'ab')).toEqual(false);

@@ -1,4 +1,4 @@
-const update = require('../index');
+const { update } = require('../index');
 
 describe('replaceAll', () => {
   it('operates on strings', () => {

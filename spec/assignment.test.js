@@ -1,6 +1,4 @@
-const update = require('../index');
-
-const { UNSET_TOKEN } = update;
+const { update, UNSET_TOKEN } = require('../index');
 
 describe('set', () => {
   it('takes 1 argument', () => {

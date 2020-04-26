@@ -78,7 +78,7 @@ function deleteIndices(arr, indices) {
   arr.length -= del;
 }
 
-const UNSET_TOKEN = {};
+const UNSET_TOKEN = Symbol('unset');
 
 function bindAll(o, fns) {
   fns.forEach((fn) => {
@@ -220,17 +220,14 @@ class JsonContext {
 
 const defaultContext = new JsonContext();
 
-// Match export style of immutability-helper for compatibility
 Object.defineProperty(exports, '__esModule', { value: true });
 
 exports.Context = JsonContext;
-exports.isEquals = defaultContext.update.isEquals;
-exports.extend = defaultContext.extend;
-exports.extendAll = defaultContext.extendAll;
-exports.extendCondition = defaultContext.extendCondition;
-exports.extendConditionAll = defaultContext.extendConditionAll;
+exports.update = defaultContext.update;
+exports.combine = defaultContext.combine;
 exports.invariant = invariant;
-exports.default = defaultContext.update;
+exports.UNSET_TOKEN = UNSET_TOKEN;
+exports.default = defaultContext;
 
-module.exports = Object.assign(exports.default, exports);
+module.exports = Object.assign(exports.default, { Context: JsonContext });
 exports.default.default = module.exports;

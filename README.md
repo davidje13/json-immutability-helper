@@ -40,7 +40,7 @@ when detecting changes using shallow comparison.
 Simple usage:
 
 ```javascript
-const update = require('json-immutability-helper');
+const { update } = require('json-immutability-helper');
 
 const initialState = { foo: 3 };
 
@@ -52,7 +52,7 @@ const updatedState = update(initialState, { foo: ['add', 1] });
 You can define arbitrary hierarchies:
 
 ```javascript
-const update = require('json-immutability-helper');
+const { update } = require('json-immutability-helper');
 
 const initialState = { foo: { bar: { baz: 1 } } };
 
@@ -71,7 +71,7 @@ Note that arrays in the spec define commands. To navigate to a particular
 item in an array, use a number as an object key:
 
 ```javascript
-const update = require('json-immutability-helper');
+const { update } = require('json-immutability-helper');
 
 const initialState = { foo: [2, 8] };
 
@@ -96,7 +96,7 @@ const spec = `
 With list commands:
 
 ```javascript
-const update = require('json-immutability-helper');
+const { update } = require('json-immutability-helper');
 
 const initialState = {
   items: [
@@ -386,7 +386,18 @@ update.extendCondition(
   toggles the current value
   (`true` &rarr; `false`; `false` &rarr; `true`).
 
-## Other methods
+## Other context methods
+
+You can access the default context, or create your own scoped context:
+
+```javascript
+const defaultContext = require('json-immutability-helper');
+```
+
+```javascript
+const { Context } = require('json-immutability-helper');
+const myContext = new Context();
+```
 
 - `.extend(name, (object, args, context) => newValue)`
   adds a new command which can be used in the same places as built-in
@@ -422,3 +433,10 @@ update.extendCondition(
 - `.invariant(check, message?)`
   throws an exception if `check` is false. Includes the message if
   specified (can be a string or a function which returns a string).
+
+The default context's `update`, `combine` and `invariant` are also
+available as direct imports:
+
+```javascript
+const { update, combine, invariant } = require('json-immutability-helper');
+```

@@ -66,7 +66,7 @@ declare module 'json-immutability-helper' {
     ['merge', Partial<Readonly<T>>] |
     { [K in keyof T]?: Spec<T[K]> };
 
-  type DirectiveFn<T> = (param: any, old: T) => T;
+  type DirectiveFn<T> = (old: Readonly<T>, args: ReadonlyArray<any>, context: Readonly<Context>) => T | UNSET_TOKEN;
   type ConditionFn<T> = (param: T) => (actual: T) => boolean;
 
   interface OptionsDisallowUnset {
@@ -78,17 +78,12 @@ declare module 'json-immutability-helper' {
     allowUnset: true;
   }
 
-  type UNSET_TOKEN = {};
-
-  type Update = (
-    (<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset) => T) |
-    (<T>(object: T, spec: UnsettableSpec<T>, options: OptionsAllowUnset) => T | UNSET_TOKEN)
-  );
+  const SHARED_UNSET_TOKEN: unique symbol;
 
   export class Context {
-    public isEquals: (x: any, y: any) => boolean;
-    public copy: <T>(o: T) => T;
-    public readonly UNSET_TOKEN: UNSET_TOKEN;
+    public isEquals: (x: unknown, y: unknown) => boolean;
+    public copy: <T>(o: Readonly<T>) => T;
+    public readonly UNSET_TOKEN: typeof SHARED_UNSET_TOKEN;
 
     public constructor();
 
@@ -100,7 +95,8 @@ declare module 'json-immutability-helper' {
 
     public extendConditionAll<T>(checks: { [key: string]: ConditionFn<T> }): void;
 
-    public update<T>(object: T, spec: Spec<T>): T;
+    public update<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset): T;
+    public update<T>(object: T, spec: UnsettableSpec<T>, options: OptionsAllowUnset): T | typeof UNSET_TOKEN;
 
     public combine<T>(specs: Spec<T>[]): Spec<T>;
 
@@ -112,11 +108,11 @@ declare module 'json-immutability-helper' {
     ): asserts condition;
   }
 
-  export function invariant(
-    condition: any,
-    message?: string | (() => string),
-  ): asserts condition;
+  const defaultContext: Context;
+  export const UNSET_TOKEN: typeof defaultContext.UNSET_TOKEN;
+  export const update: typeof defaultContext.update;
+  export const combine: typeof defaultContext.combine;
+  export const invariant: typeof defaultContext.invariant;
 
-  const update: Context & Update;
-  export default update;
+  export default defaultContext;
 }

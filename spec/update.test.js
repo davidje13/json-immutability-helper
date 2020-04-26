@@ -1,4 +1,4 @@
-const update = require('../index');
+const { update } = require('../index');
 
 const initial = [10, 9, 11, 9, -1];
 const spec = ['=', 2];

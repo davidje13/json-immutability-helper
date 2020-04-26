@@ -1,6 +1,4 @@
-const update = require('../index');
-
-const { Context } = update;
+const { update, Context } = require('../index');
 
 describe('Context', () => {
   it('scopes command mutations', () => {
