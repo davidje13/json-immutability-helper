@@ -1,4 +1,6 @@
 declare module 'json-immutability-helper' {
+  const SHARED_UNSET_TOKEN: unique symbol;
+
   interface ConditionValue<T> {
     equals?: T;
     greaterThanOrEqual?: T;
@@ -66,7 +68,7 @@ declare module 'json-immutability-helper' {
     ['merge', Partial<Readonly<T>>] |
     { [K in keyof T]?: Spec<T[K]> };
 
-  type DirectiveFn<T> = (old: Readonly<T>, args: ReadonlyArray<any>, context: Readonly<Context>) => T | UNSET_TOKEN;
+  type DirectiveFn<T> = (old: Readonly<T>, args: ReadonlyArray<any>, context: Readonly<Context>) => T | typeof SHARED_UNSET_TOKEN;
   type ConditionFn<T> = (param: T) => (actual: T) => boolean;
 
   interface OptionsDisallowUnset {
@@ -77,8 +79,6 @@ declare module 'json-immutability-helper' {
   type OptionsAllowUnset = Omit<OptionsDisallowUnset, 'allowUnset'> | {
     allowUnset: true;
   }
-
-  const SHARED_UNSET_TOKEN: unique symbol;
 
   export class Context {
     public isEquals: (x: unknown, y: unknown) => boolean;
