@@ -10,7 +10,7 @@ alternative syntax.
 ## Install dependency
 
 ```bash
-npm install --save git+https://github.com/davidje13/json-immutability-helper.git#semver:^2.1.0
+npm install --save git+https://github.com/davidje13/json-immutability-helper.git#semver:^2.1.1
 ```
 
 ## Motivation
