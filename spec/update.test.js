@@ -1,85 +1,54 @@
 const update = require('../index');
 
-const initialState = [10, 9, 11, 9, -1];
+const initial = [10, 9, 11, 9, -1];
+const spec = ['=', 2];
 
-describe('$updateAll', () => {
+describe('updateAll', () => {
   it('applies an update to all items in a list', () => {
-    const updatedState = update(initialState, {
-      $updateAll: {$set: 2},
-    });
+    const updated = update(initial, ['updateAll', spec]);
 
-    expect(updatedState).toEqual([2, 2, 2, 2, 2]);
+    expect(updated).toEqual([2, 2, 2, 2, 2]);
   });
 });
 
-describe('$updateWhere', () => {
+describe('updateWhere', () => {
   it('applies an update to all matching items in a list', () => {
-    const updatedState = update(initialState, {
-      $updateWhere: [
-        {equals: 9},
-        {$set: 2},
-      ],
-    });
+    const updated = update(initial, ['updateWhere', {equals: 9}, spec]);
 
-    expect(updatedState).toEqual([10, 2, 11, 2, -1]);
+    expect(updated).toEqual([10, 2, 11, 2, -1]);
   });
 
   it('does nothing if no items match', () => {
-    const updatedState = update(initialState, {
-      $updateWhere: [
-        {equals: 100},
-        {$set: 2},
-      ],
-    });
+    const updated = update(initial, ['updateWhere', {equals: 1}, spec]);
 
-    expect(updatedState).toBe(initialState);
+    expect(updated).toBe(initial);
   });
 });
 
-describe('$updateFirstWhere', () => {
+describe('updateFirstWhere', () => {
   it('applies an update to the first matching item in a list', () => {
-    const updatedState = update(initialState, {
-      $updateFirstWhere: [
-        {equals: 9},
-        {$set: 2},
-      ],
-    });
+    const updated = update(initial, ['updateFirstWhere', {equals: 9}, spec]);
 
-    expect(updatedState).toEqual([10, 2, 11, 9, -1]);
+    expect(updated).toEqual([10, 2, 11, 9, -1]);
   });
 
   it('does nothing if no items match', () => {
-    const updatedState = update(initialState, {
-      $updateFirstWhere: [
-        {equals: 100},
-        {$set: 2},
-      ],
-    });
+    const updated = update(initial, ['updateFirstWhere', {equals: 1}, spec]);
 
-    expect(updatedState).toBe(initialState);
+    expect(updated).toBe(initial);
   });
 });
 
-describe('$updateLastWhere', () => {
+describe('updateLastWhere', () => {
   it('applies an update to the last matching item in a list', () => {
-    const updatedState = update(initialState, {
-      $updateLastWhere: [
-        {equals: 9},
-        {$set: 2},
-      ],
-    });
+    const updated = update(initial, ['updateLastWhere', {equals: 9}, spec]);
 
-    expect(updatedState).toEqual([10, 9, 11, 2, -1]);
+    expect(updated).toEqual([10, 9, 11, 2, -1]);
   });
 
   it('does nothing if no items match', () => {
-    const updatedState = update(initialState, {
-      $updateLastWhere: [
-        {equals: 100},
-        {$set: 2},
-      ],
-    });
+    const updated = update(initial, ['updateLastWhere', {equals: 1}, spec]);
 
-    expect(updatedState).toBe(initialState);
+    expect(updated).toBe(initial);
   });
 });

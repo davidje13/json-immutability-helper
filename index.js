@@ -1,303 +1,203 @@
-const { Context } = require('immutability-helper');
-const invariant = require('invariant');
+const defaultConditions = require('./conditions');
+const defaultCommands = require('./commands');
 
-const defaultConditions = {
-  equals: (c) => (v) => (v === c),
-  not: (c) => (v) => (v !== c),
-  greaterThan: (c) => (v) => (v > c),
-  lessThan: (c) => (v) => (v < c),
-  greaterThanOrEqual: (c) => (v) => (v >= c),
-  lessThanOrEqual: (c) => (v) => (v <= c),
-};
-
-const UNSAFE_REGEXP = /[/\\^$*+?.()|[\]{}]/g;
-function makeLiteralRegExp(input, flags) {
-  const escaped = input.replace(UNSAFE_REGEXP, '\\$&');
-  return new RegExp(escaped, flags);
+function invariant(condition, msgFn) {
+  if (!condition) {
+    const msg = typeof msgFn === 'function' ? msgFn() : msgFn || 'bad input';
+    throw new Error(msg);
+  }
 }
 
-function numericInvariant(value, original, command) {
-  invariant(
-    typeof value === 'number',
-    'update(): expected spec of %s to be a number; got %s.',
-    command,
-    value
-  );
-  invariant(
-    typeof original === 'number',
-    'update(): expected target of %s to be a number; got %s.',
-    command,
-    original
-  );
+const isOp = Array.isArray;
+const isEquals = (x, y) => (x === y);
+const copy = (o) => (
+  Array.isArray(o) ? [...o] :
+    (typeof o === 'object' && o) ? Object.assign({}, o) :
+      o
+);
+
+function getSeqSteps(spec) {
+  if (isOp(spec) && spec[0] === 'seq') {
+    return spec.slice(1);
+  }
+  return [spec];
 }
 
-function findLast(list, check) {
-  for (let i = list.length; (i--) > 0;) {
-    if (check(list[i])) {
-      return i;
+function combineSpecs(spec1, spec2) {
+  if (isOp(spec1) || isOp(spec2)) {
+    return ['seq', ...getSeqSteps(spec1), ...getSeqSteps(spec2)];
+  }
+
+  const result = Object.assign({}, spec1);
+  Object.keys(spec2).forEach((key) => {
+    if (result[key] === undefined) {
+      result[key] = spec2[key];
+    } else {
+      result[key] = combineSpecs(result[key], spec2[key]);
+    }
+  });
+  return result;
+}
+
+function conditionPartPredicate(condition, context) {
+  invariant(
+    typeof condition === 'object',
+    () => `expected spec of condition to be an object; got ${condition}`
+  );
+
+  const checks = Object.keys(condition)
+    .filter((key) => (key !== 'key'))
+    .map((key) => {
+      const type = context.conditionTypes.get(key);
+      invariant(type, () => `unknown condition type: ${key}`);
+      return type(condition[key]);
+    });
+
+  if (condition.key !== undefined) {
+    if (!checks.length) {
+      return (o) => (o[condition.key] !== undefined);
+    }
+    return (o) => checks.every((c) => c(o[condition.key]));
+  }
+
+  invariant(checks.length > 0, () => `unknown condition ${condition}`);
+
+  return (o) => checks.every((c) => c(o));
+}
+
+function deleteIndices(arr, indices) {
+  indices.sort((a, b) => (a - b));
+  let del = 1;
+  for (let i = indices[0] + 1; i < arr.length; ++i) {
+    if (i === indices[del]) {
+      ++del;
+    } else {
+      arr[i - del] = arr[i];
     }
   }
-  return -1;
+  arr.length -= del;
 }
 
-function findIndicesReversed(list, check) {
-  const indices = [];
-  for (let i = list.length; (i--) > 0;) {
-    if (check(list[i])) {
-      indices.push(i);
-    }
-  }
-  return indices;
-}
+const UNSET_TOKEN = {};
 
-function insertAtIndex(context, [index, items], original) {
-  return context.update(original, { $splice: [[index, 0, ...items]] });
-}
-
-function updateAtIndex(context, [index, spec], original) {
-  if (index === -1) {
-    return original;
-  }
-  const originalItem = original[index];
-  const newItem = context.update(originalItem, spec);
-  return context.update(original, { [index]: { $set: newItem } });
-}
-
-function deleteAtIndex(context, index, original) {
-  if (index === -1) {
-    return original;
-  }
-  return context.update(original, { $splice: [[index, 1]] });
-}
-
-function applyExtensions(context) {
-  const first = (list, condition) => list.findIndex(
-    context.makeConditionPredicate(condition)
-  );
-
-  const last = (list, condition) => findLast(
-    list,
-    context.makeConditionPredicate(condition)
-  );
-
-  const indicesReversed = (list, condition) => findIndicesReversed(
-    list,
-    context.makeConditionPredicate(condition)
-  );
-
-  context.extendAll({
-    $apply: () => invariant(false, 'Cannot use $apply (not JSON-safe)'),
-
-    $seq: (specs, original) => specs.reduce(context.update, original),
-
-    $updateIf: ([condition, spec, elseSpec = null], original) => {
-      const check = context.makeConditionPredicate(condition);
-      if (!check(original)) {
-        if (elseSpec) {
-          return context.update(original, elseSpec);
-        }
-        return original;
-      }
-      return context.update(original, spec);
-    },
-
-    $insertBeforeFirstWhere: ([condition, ...items], original) => {
-      let index = first(original, condition);
-      if (index === -1) {
-        index = original.length;
-      }
-      return insertAtIndex(context, [index, items], original);
-    },
-
-    $insertAfterFirstWhere: ([condition, ...items], original) => {
-      let index = first(original, condition);
-      if (index === -1) {
-        index = original.length - 1;
-      }
-      return insertAtIndex(context, [index + 1, items], original);
-    },
-
-    $insertBeforeLastWhere: ([condition, ...items], original) => {
-      let index = last(original, condition);
-      if (index === -1) {
-        index = 0;
-      }
-      return insertAtIndex(context, [index, items], original);
-    },
-
-    $insertAfterLastWhere: ([condition, ...items], original) => {
-      const index = last(original, condition);
-      return insertAtIndex(context, [index + 1, items], original);
-    },
-
-    $updateAll: (spec, original) => {
-      const combined = {};
-      for (let i = 0; i < original.length; i++) {
-        const originalItem = original[i];
-        const newItem = context.update(originalItem, spec);
-        combined[i] = { $set: newItem };
-      }
-      return context.update(original, combined);
-    },
-
-    $updateWhere: ([condition, spec], original) => {
-      const combined = {};
-      indicesReversed(original, condition).forEach((index) => {
-        const originalItem = original[index];
-        const newItem = context.update(originalItem, spec);
-        combined[index] = { $set: newItem };
-      });
-      return context.update(original, combined);
-    },
-
-    $updateFirstWhere: ([condition, spec], original) => {
-      const index = first(original, condition);
-      return updateAtIndex(context, [index, spec], original);
-    },
-
-    $updateLastWhere: ([condition, spec], original) => {
-      const index = last(original, condition);
-      return updateAtIndex(context, [index, spec], original);
-    },
-
-    $deleteWhere: (condition, original) => {
-      const indices = indicesReversed(original, condition);
-      return context.update(original, { $splice: indices.map((i) => [i, 1]) });
-    },
-
-    $deleteFirstWhere: (condition, original) => {
-      const index = first(original, condition);
-      return deleteAtIndex(context, index, original);
-    },
-
-    $deleteLastWhere: (condition, original) => {
-      const index = last(original, condition);
-      return deleteAtIndex(context, index, original);
-    },
-
-    $replaceAll: ([search, replacement], original) => {
-      invariant(
-        typeof search === 'string' && typeof replacement === 'string',
-        'update(): expected spec of $replaceAll to be [find, replace]; got %s.',
-        [search, replacement]
-      );
-      const pattern = makeLiteralRegExp(search, 'g');
-      return String(original).replace(pattern, replacement);
-    },
-
-    $add: (value, original) => {
-      numericInvariant(value, original, '$add');
-      return original + value;
-    },
-
-    $subtract: (value, original) => {
-      numericInvariant(value, original, '$subtract');
-      return original - value;
-    },
-
-    $multiply: (value, original) => {
-      numericInvariant(value, original, '$multiply');
-      return original * value;
-    },
-
-    $divide: (value, original) => {
-      numericInvariant(value, original, '$divide');
-      return original / value;
-    },
-
-    $reciprocal: (value, original) => {
-      numericInvariant(value, original, '$reciprocal');
-      return value / original;
-    },
+function bindAll(o, fns) {
+  fns.forEach((fn) => {
+    o[fn] = o[fn].bind(o);
   });
 }
 
-function getSeqSteps(spec) {
-  return spec.$seq || [spec];
-}
-
-class JsonContext extends Context {
+class JsonContext {
   constructor() {
-    super();
-    this.conditionTypes = Object.assign({}, defaultConditions);
-    this.extendAll = this.extendAll.bind(this);
-    this.extendCondition = this.extendCondition.bind(this);
-    this.extendConditionAll = this.extendConditionAll.bind(this);
-    this.internalConditionPart = this.internalConditionPart.bind(this);
-    applyExtensions(this);
-    this.update.combine = this.combine.bind(this);
-    this.internalCombine2 = this.internalCombine2.bind(this);
-  }
-
-  isOp(o) {
-    const keys = Object.keys(o);
-    if (keys.length !== 1) {
-      return false;
-    }
-    return Boolean(this.commands[keys[0]]);
-  }
-
-  internalCombine2(spec1, spec2) {
-    if (this.isOp(spec1) || this.isOp(spec2)) {
-      return { $seq: [...getSeqSteps(spec1), ...getSeqSteps(spec2)] };
-    }
-
-    const result = Object.assign({}, spec1);
-    Object.keys(spec2).forEach((key) => {
-      if (result[key] === undefined) {
-        result[key] = spec2[key];
-      } else {
-        result[key] = this.internalCombine2(result[key], spec2[key]);
-      }
+    Object.assign(this, {
+      commands: new Map(),
+      conditionTypes: new Map(),
+      isEquals,
+      copy,
+      UNSET_TOKEN,
+      invariant,
     });
-    return result;
+
+    bindAll(this, [
+      'extend',
+      'extendAll',
+      'extendCondition',
+      'extendConditionAll',
+      'update',
+      'combine',
+      'makeConditionPredicate',
+    ]);
+
+    Object.assign(this.update, {
+      combine: this.combine,
+      UNSET_TOKEN: this.UNSET_TOKEN,
+    });
+
+    this.extendAll(defaultCommands);
+    this.extendConditionAll(defaultConditions);
   }
 
-  combine(specs, no) {
-    invariant(!no, 'combine(): must provide a single (list) parameter.');
-    return specs.reduce(this.internalCombine2, {});
+  extend(name, fn) {
+    this.commands.set(name, fn);
   }
 
   extendAll(commands) {
     Object.keys(commands).forEach((name) => {
-      this.extend(name, commands[name]);
+      this.commands.set(name, commands[name]);
     });
   }
 
   extendCondition(name, condition) {
-    this.conditionTypes[name] = condition;
+    this.conditionTypes.set(name, condition);
   }
 
   extendConditionAll(conditions) {
     Object.keys(conditions).forEach((name) => {
-      this.extendCondition(name, conditions[name]);
+      this.conditionTypes.set(name, conditions[name]);
     });
   }
 
-  internalConditionPart(condition) {
-    invariant(
-      typeof condition === 'object',
-      'update(): expected spec of condition to be an object; got %s.',
-      condition
-    );
+  /* eslint-disable-next-line max-statements */
+  update(object, spec, { path = '', allowUnset = false } = {}) {
+    const initial = (object === UNSET_TOKEN) ? undefined : object;
 
-    const checks = Object.keys(condition)
-      .filter((key) => (key !== 'key'))
-      .map((key) => {
-        invariant(this.conditionTypes[key], 'Unknown condition type: %s.', key);
-        return this.conditionTypes[key](condition[key]);
-      });
-
-    if (condition.key !== undefined) {
-      if (!checks.length) {
-        return (o) => (o[condition.key] !== undefined);
+    if (isOp(spec)) {
+      const [commandName, ...options] = spec;
+      const command = this.commands.get(commandName);
+      try {
+        invariant(command, 'unknown command');
+        const updated = command(initial, options, this);
+        if (updated === UNSET_TOKEN) {
+          return allowUnset ? UNSET_TOKEN : undefined;
+        }
+        return this.isEquals(updated, initial) ? initial : updated;
+      } catch (e) {
+        throw new Error(`/${path} ${commandName}: ${e.message}`);
       }
-      return (o) => checks.every((c) => c(o[condition.key]));
     }
 
-    invariant(checks.length > 0, 'update(): unknown condition %s.', condition);
+    invariant(
+      typeof object === 'object' && object !== null,
+      () => `/${path}: target must be an object or array`
+    );
 
-    return (o) => checks.every((c) => c(o));
+    invariant(
+      typeof spec === 'object' && spec !== null,
+      () => `/${path}: spec must be an object or a command`
+    );
+
+    let updated = null;
+    const deleted = [];
+    const nextPath = path ? `${path}/` : '';
+    Object.keys(spec).forEach((key) => {
+      const updateOptions = { path: `${nextPath}${key}`, allowUnset: true };
+
+      const oldValue = initial[key];
+      const newValue = this.update(oldValue, spec[key], updateOptions);
+      const newExist = newValue !== UNSET_TOKEN;
+
+      if (
+        (newExist && oldValue !== newValue) ||
+        newExist !== Object.prototype.hasOwnProperty.call(initial, key)
+      ) {
+        updated = updated || this.copy(initial);
+        if (newExist) {
+          updated[key] = newValue;
+        } else if (Array.isArray(updated)) {
+          deleted.push(Number(key));
+        } else {
+          delete updated[key];
+        }
+      }
+    });
+    if (deleted.length > 0) {
+      deleteIndices(updated, deleted);
+    }
+    return updated || initial;
+  }
+
+  combine(specs, no) {
+    invariant(!no, 'combine(): must provide a single (list) parameter.');
+    return specs.reduce(combineSpecs, {});
   }
 
   makeConditionPredicate(condition) {
@@ -305,16 +205,16 @@ class JsonContext extends Context {
       invariant(condition.length > 0, 'update(): empty condition.');
 
       if (typeof condition[0] === 'string' && condition.length === 2) {
-        return this.internalConditionPart({
+        return conditionPartPredicate({
           key: condition[0],
           equals: condition[1],
-        });
+        }, this);
       }
 
-      const parts = condition.map(this.internalConditionPart);
+      const parts = condition.map((x) => conditionPartPredicate(x, this));
       return (o) => parts.every((part) => part(o));
     }
-    return this.internalConditionPart(condition);
+    return conditionPartPredicate(condition, this);
   }
 }
 
@@ -329,6 +229,7 @@ exports.extend = defaultContext.extend;
 exports.extendAll = defaultContext.extendAll;
 exports.extendCondition = defaultContext.extendCondition;
 exports.extendConditionAll = defaultContext.extendConditionAll;
+exports.invariant = invariant;
 exports.default = defaultContext.update;
 
 module.exports = Object.assign(exports.default, exports);

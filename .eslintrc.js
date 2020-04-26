@@ -2,6 +2,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 6,
   },
+  env: { 'commonjs': true, 'es6': true },
   extends: [
     'eslint:recommended',
     'plugin:node/recommended',

@@ -1,33 +1,27 @@
 const update = require('../index');
 
-const initialState = {
+const initial = {
   foo: 'bar',
   seven: 7,
 };
 
-describe('$seq', () => {
+describe('seq', () => {
   it('applies all specs', () => {
-    const updatedState = update(initialState, {
-      $seq: [
-        { foo: { $set: 'baz' } },
-        { seven: { $set: 8 } },
-      ],
-    });
+    const updated = update(initial, [
+      'seq',
+      { foo: ['=', 'baz'] },
+      { seven: ['=', 8] },
+    ]);
 
-    expect(updatedState).not.toBe(initialState);
-    expect(updatedState).toEqual({ foo: 'baz', seven: 8 });
+    expect(updated).not.toBe(initial);
+    expect(updated).toEqual({ foo: 'baz', seven: 8 });
   });
 
   it('applies specs sequentially to the current property', () => {
-    const updatedState = update(initialState, {
-      seven: {
-        $seq: [
-          { $add: 5 },
-          { $multiply: 2 },
-        ],
-      },
+    const updated = update(initial, {
+      seven: ['seq', ['add', 5], ['multiply', 2]],
     });
 
-    expect(updatedState).toEqual({ foo: 'bar', seven: 24 });
+    expect(updated).toEqual({ foo: 'bar', seven: 24 });
   });
 });

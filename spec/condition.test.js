@@ -1,15 +1,13 @@
 const update = require('../index');
 
-const initialState = {
+const initial = {
   foo: 'bar',
   zig: 'zag',
   value: 5,
 };
 
-function matches(condition, state = initialState) {
-  const updatedState = update([state], {
-    $deleteWhere: condition,
-  });
+function matches(condition, state = initial) {
+  const updatedState = update([state], ['deleteWhere', condition]);
 
   return updatedState.length === 0;
 }
