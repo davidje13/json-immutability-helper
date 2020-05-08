@@ -1,4 +1,5 @@
 const config = require('./commandTypeCheck');
+const calc = require('./calc');
 
 const UNSAFE_REGEXP = /[/\\^$*+?.()|[\]{}]/g;
 function literalRegExp(input, flags) {
@@ -36,6 +37,21 @@ function updateAtIndex(context, [index, spec], original) {
   const originalItem = original[index];
   const newItem = context.update(originalItem, spec, { allowUnset: true });
   return context.update(original, { [index]: ['=', newItem] });
+}
+
+function makeRpnCommand(inputType, funcs) {
+  return config(inputType, 'operations:primitive...')((
+    object,
+    tokens,
+    context
+  ) => {
+    const result = calc.applyReversePolish(tokens, { x: object }, funcs);
+    context.invariant(
+      typeof object === typeof result,
+      'cannot change type of property'
+    );
+    return result;
+  });
 }
 
 const defaultCommands = {
@@ -237,19 +253,20 @@ const defaultCommands = {
 
   subtract: config('number', 'number')((object, [value]) => object - value),
 
-  multiply: config('number', 'number')((object, [value]) => object * value),
+  rpn: makeRpnCommand('number', calc.MATH_FUNCTIONS),
+};
 
-  divide: config('number', 'number')((object, [value]) => object / value),
-
-  reciprocal: config('number', 'number')((object, [value]) => value / object),
+const riskyStringCommands = {
+  rpn: makeRpnCommand('primitive', calc.ALL_FUNCTIONS),
 };
 
 // Aliases
 defaultCommands['='] = defaultCommands.set;
 defaultCommands['+'] = defaultCommands.add;
 defaultCommands['-'] = defaultCommands.subtract;
-defaultCommands['*'] = defaultCommands.multiply;
-defaultCommands['/'] = defaultCommands.divide;
 defaultCommands['~'] = defaultCommands.toggle;
 
-module.exports = defaultCommands;
+module.exports = {
+  defaultCommands,
+  riskyStringCommands,
+};

@@ -5,20 +5,20 @@ function typeChecker(type) {
   case 'array': return Array.isArray;
   case 'condition': return (o) => typeof o === 'object';
   case 'spec': return (o) => typeof o === 'object';
+  case 'primitive': return (o) => ['number', 'string'].includes(typeof o);
   default: return (o) => typeof o === type;
   }
 }
 
 function parseType(type) {
-  const sep = type.indexOf(':');
-  const name = sep === -1 ? type : type.substr(0, sep);
-  const str = sep === -1 ? type : type.substr(sep + 1);
+  let [name, str] = type.split(':');
+  str = str || name;
 
   if (str.endsWith('...')) {
     return {
       variadic: true,
       optional: true,
-      check: typeChecker(str.substr(0, str.length - 3)),
+      check: typeChecker(str.slice(0, -3)),
       name,
     };
   }
@@ -26,7 +26,7 @@ function parseType(type) {
     return {
       variadic: false,
       optional: true,
-      check: typeChecker(str.substr(0, str.length - 1)),
+      check: typeChecker(str.slice(0, -1)),
       name,
     };
   }

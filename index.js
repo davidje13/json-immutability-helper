@@ -1,5 +1,5 @@
 const defaultConditions = require('./conditions');
-const defaultCommands = require('./commands');
+const { defaultCommands, riskyStringCommands } = require('./commands');
 
 function invariant(condition, msgFn) {
   if (!condition) {
@@ -134,6 +134,10 @@ class JsonContext {
     Object.keys(conditions).forEach((name) => {
       this.conditionTypes.set(name, conditions[name]);
     });
+  }
+
+  enableRiskyStringOps() {
+    this.extendAll(riskyStringCommands);
   }
 
   /* eslint-disable-next-line max-statements */

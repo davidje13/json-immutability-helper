@@ -48,80 +48,41 @@ describe('subtract', () => {
   });
 });
 
-describe('multiply', () => {
+describe('rpn', () => {
   it('operates on numbers', () => {
-    expect(() => update('', ['multiply', 1]))
-      .toThrow('/ multiply: expected target to be number');
+    expect(() => update([], ['rpn']))
+      .toThrow('/ rpn: expected target to be number');
   });
 
-  it('takes a multiplier', () => {
-    expect(() => update(0, ['multiply']))
-      .toThrow('/ multiply: expected [command, number]');
+  it('takes command tokens', () => {
+    expect(() => update(0, ['rpn', []]))
+      .toThrow('/ rpn: expected [command, operations]');
   });
 
-  it('applies multiplication', () => {
-    const updated = update(8, ['multiply', 2]);
-
-    expect(updated).toEqual(16);
+  it('rejects changes of type', () => {
+    expect(() => update(7, ['rpn', '"abc"'])).toThrow();
   });
 
-  it('has alias *', () => {
-    const updated = update(8, ['*', 2]);
-
-    expect(updated).toEqual(16);
-  });
-});
-
-describe('divide', () => {
-  it('operates on numbers', () => {
-    expect(() => update('', ['divide', 1]))
-      .toThrow('/ divide: expected target to be number');
+  it('applies a calculation in reverse Polish notation', () => {
+    const result = update(0, ['rpn', 7, 2, '+']);
+    expect(result).toEqual(9);
   });
 
-  it('takes a divisor', () => {
-    expect(() => update(0, ['divide']))
-      .toThrow('/ divide: expected [command, number]');
+  it('provides the original numeric value as x', () => {
+    const result = update(2, ['rpn', 10, 'x', '/']);
+    expect(result).toEqual(5);
   });
 
-  it('applies division', () => {
-    const updated = update(8, ['divide', 2]);
-
-    expect(updated).toEqual(4);
+  it('handles multiple operations', () => {
+    const result = update(9, ['rpn', 'x', 'x', 1, '+', '/']);
+    expect(result).toEqual(0.9);
   });
 
-  it('returns infinity for division by zero', () => {
-    const updated = update(8, ['divide', 0]);
-
-    expect(updated).toEqual(Number.POSITIVE_INFINITY);
+  it('rejects string operations', () => {
+    expect(() => update(0, ['rpn', 2, 'String', 'Number'])).toThrow();
   });
 
-  it('has alias /', () => {
-    const updated = update(8, ['/', 2]);
-
-    expect(updated).toEqual(4);
-  });
-});
-
-describe('reciprocal', () => {
-  it('operates on numbers', () => {
-    expect(() => update('', ['reciprocal', 1]))
-      .toThrow('/ reciprocal: expected target to be number');
-  });
-
-  it('takes a dividend', () => {
-    expect(() => update(0, ['reciprocal']))
-      .toThrow('/ reciprocal: expected [command, number]');
-  });
-
-  it('applies reversed division', () => {
-    const updated = update(8, ['reciprocal', 2]);
-
-    expect(updated).toEqual(0.25);
-  });
-
-  it('returns infinity for division by zero', () => {
-    const updated = update(0, ['reciprocal', 2]);
-
-    expect(updated).toEqual(Number.POSITIVE_INFINITY);
+  it('rejects string concatenation', () => {
+    expect(() => update(0, ['rpn', '"2"', '"3"', '+', 'Number'])).toThrow();
   });
 });

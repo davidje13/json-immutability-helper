@@ -35,7 +35,8 @@ declare module 'json-immutability-helper' {
   type UnsettableSpec<T> = Spec<T> | ['unset'];
 
   type StringSpec =
-    ['replaceAll', string, string];
+    ['replaceAll', string, string] |
+    ['rpn', ...(number | string)];
 
   type BooleanSpec =
     ['~'] | ['toggle'];
@@ -43,9 +44,7 @@ declare module 'json-immutability-helper' {
   type NumberSpec =
     ['+', number] | ['add', number] |
     ['-', number] | ['subtract', number] |
-    ['*', number] | ['multiply', number] |
-    ['/', number] | ['divide', number] |
-    ['reciprocal', number];
+    ['rpn', ...(number | string)];
 
   type ArraySpec<T> =
     ['push', ...T[]] |
@@ -90,6 +89,8 @@ declare module 'json-immutability-helper' {
     public extend<T>(directive: string, fn: DirectiveFn<T>): void;
 
     public extendAll<T>(directives: { [key: string]: DirectiveFn<T> }): void;
+
+    public enableRiskyStringOps(): void;
 
     public extendCondition<T>(name: string, check: ConditionFn<T>): void;
 
