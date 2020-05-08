@@ -10,8 +10,9 @@ function typeChecker(type) {
 }
 
 function parseType(type) {
-  const name = (typeof type === 'object') ? (type.name || type.type) : type;
-  const str = (typeof type === 'object') ? type.type : type;
+  const sep = type.indexOf(':');
+  const name = sep === -1 ? type : type.substr(0, sep);
+  const str = sep === -1 ? type : type.substr(sep + 1);
 
   if (str.endsWith('...')) {
     return {

@@ -228,11 +228,7 @@ const defaultCommands = {
     return updateAtIndex(context, [index, ['unset']], object);
   }),
 
-  replaceAll: config(
-    'string',
-    { type: 'string', name: 'find' },
-    { type: 'string', name: 'replace' }
-  )((
+  replaceAll: config('string', 'find:string', 'replace:string')((
     object,
     [find, replace]
   ) => object.replace(literalRegExp(find, 'g'), replace)),
