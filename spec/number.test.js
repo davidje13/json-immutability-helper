@@ -77,12 +77,4 @@ describe('rpn', () => {
     const result = update(9, ['rpn', 'x', 'x', 1, '+', '/']);
     expect(result).toEqual(0.9);
   });
-
-  it('rejects string operations', () => {
-    expect(() => update(0, ['rpn', 2, 'String', 'Number'])).toThrow();
-  });
-
-  it('rejects string concatenation', () => {
-    expect(() => update(0, ['rpn', '"2"', '"3"', '+', 'Number'])).toThrow();
-  });
 });

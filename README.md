@@ -434,7 +434,7 @@ To specify a different number, add `:<num>` to the end of the function name:
 update(4, ['rpn', 'x', 'x', 'neg', 2, 'max:3']); // = 4
 
 // compute log_2(x)
-update(8, ['rpn', 'x', '2', 'log:2']); // = 3
+update(8, ['rpn', 'x', 2, 'log:2']); // = 3
 ```
 
 String literals can be specified as JSON-encoded strings (this means that for

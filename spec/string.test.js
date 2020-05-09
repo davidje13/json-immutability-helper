@@ -19,6 +19,46 @@ describe('replaceAll', () => {
     expect(updated).toEqual('this is A messAge');
   });
 
+  it('does nothing if the input string is blank', () => {
+    const initial = 'this is a message';
+
+    const updated = update(initial, ['replaceAll', '', 'A']);
+
+    expect(updated).toEqual(initial);
+  });
+
+  it('does nothing if no matches are found', () => {
+    const initial = 'this is a message';
+
+    const updated = update(initial, ['replaceAll', 'x', 'A']);
+
+    expect(updated).toEqual(initial);
+  });
+
+  it('does nothing if find and replace are identical', () => {
+    const initial = 'this is a message';
+
+    const updated = update(initial, ['replaceAll', 'is', 'is']);
+
+    expect(updated).toEqual(initial);
+  });
+
+  it('replaces touching occurrences', () => {
+    const initial = 'aaaaa';
+
+    const updated = update(initial, ['replaceAll', 'a', 'bB']);
+
+    expect(updated).toEqual('bBbBbBbBbB');
+  });
+
+  it('does not replace recursively', () => {
+    const initial = 'foo bar baz';
+
+    const updated = update(initial, ['replaceAll', 'bar', 'foo bar baz']);
+
+    expect(updated).toEqual('foo foo bar baz baz');
+  });
+
   it('does not interpret inputs as regular expressions', () => {
     const initial = 'vowels are [aeiou]';
 

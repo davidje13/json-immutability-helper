@@ -1,11 +1,6 @@
 const config = require('./commandTypeCheck');
 const calc = require('./calc');
-
-const UNSAFE_REGEXP = /[/\\^$*+?.()|[\]{}]/g;
-function literalRegExp(input, flags) {
-  const escaped = input.replace(UNSAFE_REGEXP, '\\$&');
-  return new RegExp(escaped, flags);
-}
+const { MAX_TOTAL_STRING_SIZE } = require('./limits');
 
 function findLast(list, check) {
   for (let i = list.length; (i--) > 0;) {
@@ -170,11 +165,13 @@ const defaultCommands = {
 
   updateAll: config('array', 'spec')((object, [spec], context) => {
     const combined = {};
-    for (let i = 0; i < object.length; i++) {
-      const originalItem = object[i];
-      const newItem = context.update(originalItem, spec);
-      combined[i] = ['=', newItem];
-    }
+    context.incLoopNesting(object.length, () => {
+      for (let i = 0; i < object.length; i++) {
+        const originalItem = object[i];
+        const newItem = context.update(originalItem, spec);
+        combined[i] = ['=', newItem];
+      }
+    });
     return context.update(object, combined);
   }),
 
@@ -188,10 +185,12 @@ const defaultCommands = {
       object,
       context.makeConditionPredicate(condition)
     );
-    indices.forEach((index) => {
-      const originalItem = object[index];
-      const newItem = context.update(originalItem, spec);
-      combined[index] = ['=', newItem];
+    context.incLoopNesting(indices.length, () => {
+      indices.forEach((index) => {
+        const originalItem = object[index];
+        const newItem = context.update(originalItem, spec);
+        combined[index] = ['=', newItem];
+      });
     });
     return context.update(object, combined);
   }),
@@ -246,8 +245,24 @@ const defaultCommands = {
 
   replaceAll: config('string', 'find:string', 'replace:string')((
     object,
-    [find, replace]
-  ) => object.replace(literalRegExp(find, 'g'), replace)),
+    [find, replace],
+    context
+  ) => {
+    if (!find || find === replace) {
+      return object;
+    }
+    const parts = object.split(find);
+    if (replace.length > find.length) {
+      const count = parts.length - 1;
+      const diff = count * (replace.length - find.length);
+      context.invariant(
+        object.length + diff <= MAX_TOTAL_STRING_SIZE,
+        'too much data'
+      );
+      context.incLoopNesting(count, () => null);
+    }
+    return parts.join(replace);
+  }),
 
   add: config('number', 'number')((object, [value]) => object + value),
 

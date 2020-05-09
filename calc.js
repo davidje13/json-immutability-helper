@@ -1,11 +1,11 @@
+const { MAX_TOTAL_STRING_SIZE } = require('./limits');
+
 const CONSTANTS = {
   e: Math.E,
   pi: Math.PI,
   Inf: Number.POSITIVE_INFINITY,
   NaN: Number.NaN,
 };
-
-const MAX_COMPUTED_STRING_LENGTH = 1024;
 
 function isInt(x) {
   return Math.round(x) === x;
@@ -68,7 +68,7 @@ const STRING_FUNCTIONS = {
   '+': [2, 2, (a, b) => (a + b)],
   '^': [2, 2, (a, b) => {
     if (typeof a === 'string') {
-      if (!isInt(b) || b < 0 || b * a.length > MAX_COMPUTED_STRING_LENGTH) {
+      if (!isInt(b) || b < 0 || b * a.length > MAX_TOTAL_STRING_SIZE) {
         throw new Error(`unsupported repeat count ${b}`);
       }
       return a.repeat(b);
@@ -79,13 +79,13 @@ const STRING_FUNCTIONS = {
   indexOf: [2, 3, (str, token, start) => str.indexOf(token, start)],
   lastIndexOf: [2, 3, (str, token, end) => str.lastIndexOf(token, end)],
   padStart: [2, 3, (str, length, padding) => {
-    if (!isInt(length) || length < 0 || length > MAX_COMPUTED_STRING_LENGTH) {
+    if (!isInt(length) || length < 0 || length > MAX_TOTAL_STRING_SIZE) {
       throw new Error(`unsupported padding length ${length}`);
     }
     return str.padStart(length, padding);
   }],
   padEnd: [2, 3, (str, length, padding) => {
-    if (!isInt(length) || length < 0 || length > MAX_COMPUTED_STRING_LENGTH) {
+    if (!isInt(length) || length < 0 || length > MAX_TOTAL_STRING_SIZE) {
       throw new Error(`unsupported padding length ${length}`);
     }
     return str.padEnd(length, padding);

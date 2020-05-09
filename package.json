@@ -8,6 +8,7 @@
     "commands.js",
     "commandTypeCheck.js",
     "calc.js",
+    "limits.js",
     "index.d.ts"
   ],
   "main": "index.js",

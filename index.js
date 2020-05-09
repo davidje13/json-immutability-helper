@@ -1,5 +1,9 @@
 const defaultConditions = require('./conditions');
 const { defaultCommands, riskyStringCommands } = require('./commands');
+const {
+  MAX_RECURSION_DEPTH,
+  MAX_RECURSION_BREADTH,
+} = require('./limits');
 
 function invariant(condition, msgFn) {
   if (!condition) {
@@ -91,6 +95,8 @@ class JsonContext {
     Object.assign(this, {
       commands: new Map(),
       conditionTypes: new Map(),
+      nestDepth: 0,
+      nestBreadth: 1,
       isEquals,
       copy,
       UNSET_TOKEN,
@@ -219,6 +225,29 @@ class JsonContext {
       return (o) => parts.every((part) => part(o));
     }
     return conditionPartPredicate(condition, this);
+  }
+
+  incLoopNesting(iterations, fn) {
+    if (iterations <= 1) {
+      return fn();
+    }
+
+    const oldBreadth = this.nestBreadth;
+    ++this.nestDepth;
+    this.nestBreadth *= iterations;
+
+    invariant(
+      this.nestDepth < MAX_RECURSION_DEPTH &&
+      this.nestBreadth < MAX_RECURSION_BREADTH,
+      `too much recursion: ${this.nestDepth} deep, ~${this.nestBreadth} items`
+    );
+
+    try {
+      return fn();
+    } finally {
+      --this.nestDepth;
+      this.nestBreadth = oldBreadth;
+    }
   }
 }
 
