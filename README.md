@@ -365,6 +365,8 @@ update.extendCondition(
   replaces all occurrences of `search` in the string with `replace`.
   Note that the `search` is used as a literal, not as a regular
   expression.
+  Note that use of `replaceAll` is disabled unless `.enableRiskyStringOps()`
+  has been called.
 
 - `['rpn', operations...]`
   reverse Polish notation command; see below for details.
@@ -563,9 +565,9 @@ const myContext = new Context();
   same as calling `extend` for all key/value pairs in the given object.
 
 - `.enableRiskyStringOps()`
-  enables the string manipulation operators in the `rpn` command, which are
-  disabled by default due to their potential to amplify memory exhaustion
-  attacks.
+  enables `replaceAll` and the string manipulation operators in the `rpn`
+  command, which are disabled by default due to their potential to amplify
+  memory exhaustion attacks.
 
 - `.extendCondition(name, (param) => (actual) => boolean)`
   adds a new condition which can be used in the same places as built-in

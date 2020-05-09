@@ -243,6 +243,14 @@ const defaultCommands = {
     return updateAtIndex(context, [index, ['unset']], object);
   }),
 
+  add: config('number', 'number')((object, [value]) => object + value),
+
+  subtract: config('number', 'number')((object, [value]) => object - value),
+
+  rpn: makeRpnCommand('number', calc.MATH_FUNCTIONS),
+};
+
+const riskyStringCommands = {
   replaceAll: config('string', 'find:string', 'replace:string')((
     object,
     [find, replace],
@@ -264,14 +272,6 @@ const defaultCommands = {
     return parts.join(replace);
   }),
 
-  add: config('number', 'number')((object, [value]) => object + value),
-
-  subtract: config('number', 'number')((object, [value]) => object - value),
-
-  rpn: makeRpnCommand('number', calc.MATH_FUNCTIONS),
-};
-
-const riskyStringCommands = {
   rpn: makeRpnCommand('primitive', calc.ALL_FUNCTIONS),
 };
 
