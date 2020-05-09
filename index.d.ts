@@ -36,7 +36,7 @@ declare module 'json-immutability-helper' {
 
   type StringSpec =
     ['replaceAll', string, string] |
-    ['rpn', ...(number | string)];
+    ['rpn', ...(number | string)[]];
 
   type BooleanSpec =
     ['~'] | ['toggle'];
@@ -44,7 +44,7 @@ declare module 'json-immutability-helper' {
   type NumberSpec =
     ['+', number] | ['add', number] |
     ['-', number] | ['subtract', number] |
-    ['rpn', ...(number | string)];
+    ['rpn', ...(number | string)[]];
 
   type ArraySpec<T> =
     ['push', ...T[]] |
