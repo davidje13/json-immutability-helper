@@ -33,8 +33,8 @@ describe('calc', () => {
   });
 
   it('rejects unsupported numbers of function arguments', () => {
-    expect(() => calc([1, 2, '+:2'])).not.toThrow();
-    expect(() => calc([1, 2, 2, '+:3'])).toThrow();
+    expect(() => calc([1, 2, '-:2'])).not.toThrow();
+    expect(() => calc([1, 2, 2, '-:3'])).toThrow();
     expect(() => calc(['log:0'])).toThrow();
     expect(() => calc([1, 'log:1'])).not.toThrow();
     expect(() => calc([1, 2, 'log:2'])).not.toThrow();
@@ -112,6 +112,13 @@ describe('number functions', () => {
 
     expect(calc([10, 4, '/'])).toEqual(2.5);
     expect(calc([10, 4, '//'])).toEqual(2);
+  });
+
+  it('variadic +, *', () => {
+    expect(calc([1, 2, 3, '+:3'])).toEqual(6);
+    expect(calc([1, 2, '"0"', '+:3'])).toEqual('120');
+
+    expect(calc([2, 3, 4, '*:3'])).toEqual(24);
   });
 
   it('^', () => {
@@ -280,15 +287,5 @@ describe('string functions', () => {
     expect(calc(['"foo bar baz"', 1, -1, 'substr'])).toEqual('');
     expect(calc(['"foo bar baz"', 11, 1, 'substr'])).toEqual('');
     expect(calc(['"foo bar baz"', 12, 1, 'substr'])).toEqual('');
-  });
-});
-
-describe('memory exhaustion protection', () => {
-  it('blocks operations which would dynamically generate lots of text', () => {
-    expect(() => calc(['""', 100000, 'padLeft'])).toThrow();
-    expect(() => calc(['""', 100000, 'padRight'])).toThrow();
-    expect(() => calc(['"a"', 100000, '^'])).toThrow();
-    expect(() => calc(['"abcdefghijklmnopqrstuvwxyz"', 1000, '^'])).toThrow();
-    expect(() => calc(['"a"', 1000, '^'])).not.toThrow();
   });
 });

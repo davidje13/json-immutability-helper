@@ -1,4 +1,50 @@
-const { update } = require('../index');
+const { Context, update } = require('../index');
+
+describe('without enableRiskyStringOps', () => {
+  it('rejects rpn string operations by default', () => {
+    expect(() => update('', ['rpn', '"v"'])).toThrow();
+    expect(() => update(0, ['rpn', 2, 'String', 'Number'])).toThrow();
+    expect(() => update(0, ['rpn', '"2"', '"3"', '+', 'Number'])).toThrow();
+    expect(() => update(0, ['rpn', '"0"', 10, 'padStart', 'Number'])).toThrow();
+    expect(() => update(0, ['rpn', '"0"', 10, 'padEnd', 'Number'])).toThrow();
+    expect(() => update(0, ['rpn', '"0"', 10, '^', 'Number'])).toThrow();
+  });
+});
+
+describe('with enableRiskyStringOps', () => {
+  const context = new Context();
+  context.enableRiskyStringOps();
+
+  it('allows rpn string operations', () => {
+    expect(() => context.update('', ['rpn', '"v"'])).not.toThrow();
+    expect(() => context.update(0, ['rpn', 2, 'String', 'Number']))
+      .not.toThrow();
+    expect(() => context.update(0, ['rpn', '"2"', '"3"', '+', 'Number']))
+      .not.toThrow();
+    expect(() => context.update(0, ['rpn', '"0"', 10, 'padStart', 'Number']))
+      .not.toThrow();
+    expect(() => context.update(0, ['rpn', '"0"', 10, 'padEnd', 'Number']))
+      .not.toThrow();
+    expect(() => context.update(0, ['rpn', '"0"', 10, '^', 'Number']))
+      .not.toThrow();
+  });
+
+  it('blocks rpn operations which generate lots of data', () => {
+    expect(() => context.update(
+      '.'.repeat(10000),
+      ['rpn', 'x', 'x', '+']
+    )).toThrow();
+
+    expect(() => context.update('.', ['rpn', 'x', 20000, 'padStart']))
+      .toThrow();
+    expect(() => context.update('.', ['rpn', 'x', 20000, 'padEnd']))
+      .toThrow();
+    expect(() => context.update('.', ['rpn', 'x', 20000, '^']))
+      .toThrow();
+    expect(() => context.update('.'.repeat(100), ['rpn', 'x', 200, '^']))
+      .toThrow();
+  });
+});
 
 describe('catastrophic backtracking protection', () => {
   it('replaceAll ignores regular expression syntax', () => {
@@ -62,15 +108,5 @@ describe('"billion laughs" protection', () => {
     /* eslint-enable array-bracket-newline, comma-spacing */
     const tm1 = Date.now();
     expect(tm1 - tm0).toBeLessThan(50);
-  });
-});
-
-describe('rpn', () => {
-  it('rejects string operations by default', () => {
-    expect(() => update(0, ['rpn', 2, 'String', 'Number'])).toThrow();
-  });
-
-  it('rejects string concatenation by default', () => {
-    expect(() => update(0, ['rpn', '"2"', '"3"', '+', 'Number'])).toThrow();
   });
 });

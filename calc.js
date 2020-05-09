@@ -14,17 +14,22 @@ function isInt(x) {
 /* eslint-disable quote-props, no-bitwise */
 const MATH_FUNCTIONS = {
   Number: [1, 1, (v) => Number.parseFloat(v)],
-  '+': [2, 2, (a, b) => {
-    if (typeof a !== 'number' || typeof b !== 'number') {
+  '+': [2, Number.POSITIVE_INFINITY, (...v) => {
+    if (v.some((arg) => typeof arg !== 'number')) {
       throw new Error('cannot concatenate strings');
     }
-    return (a + b);
+    return v.reduce((a, b) => (a + b), 0);
   }],
   '-': [2, 2, (a, b) => (a - b)],
-  '*': [2, 2, (a, b) => (a * b)],
+  '*': [2, Number.POSITIVE_INFINITY, (...v) => v.reduce((a, b) => (a * b), 1)],
   '/': [2, 2, (a, b) => (a / b)],
   '//': [2, 2, (a, b) => Math.trunc(a / b)],
-  '^': [2, 2, (a, b) => Math.pow(a, b)],
+  '^': [2, 2, (a, b) => {
+    if (typeof a === 'string') {
+      throw new Error('cannot repeat strings');
+    }
+    return Math.pow(a, b);
+  }],
   '%': [2, 2, (a, b) => (a % b)],
   mod: [2, 2, (a, b) => (((a % b) + b) % b)],
   neg: [1, 1, (a) => -a],
@@ -61,11 +66,20 @@ const STRING_FUNCTIONS = {
     if (dp < 0) {
       const str = (v / Math.pow(10, -dp)).toFixed();
       return (str === '0' || str === '-0') ? str : (str + '0'.repeat(-dp));
-    } else {
-      return v.toFixed(dp);
     }
+    return v.toFixed(dp);
   }],
-  '+': [2, 2, (a, b) => (a + b)],
+  '+': [2, Number.POSITIVE_INFINITY, (...v) => {
+    if (v.some((arg) => typeof arg !== 'number')) {
+      return v.reduce((a, b) => {
+        if (a.length + b.length > MAX_TOTAL_STRING_SIZE) {
+          throw new Error('string concatenation too long');
+        }
+        return a + b;
+      }, '');
+    }
+    return v.reduce((a, b) => (a + b), 0);
+  }],
   '^': [2, 2, (a, b) => {
     if (typeof a === 'string') {
       if (!isInt(b) || b < 0 || b * a.length > MAX_TOTAL_STRING_SIZE) {
@@ -110,7 +124,7 @@ function applyFunction(functions, token, stack) {
   if (stack.length < arity) {
     throw new Error(`argument mismatch for ${token}`);
   }
-  stack.push(fn(...stack.splice(-arity, arity)));
+  stack.push(fn(...stack.splice(-arity)));
 }
 
 function applyReversePolish(tokens, values = {}, functions = ALL_FUNCTIONS) {
