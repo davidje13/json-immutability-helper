@@ -54,6 +54,10 @@ const defaultCommands = {
 
   unset: config('*')((object, options, context) => context.UNSET_TOKEN),
 
+  init: config('*', 'value')((object, [value]) => (
+    (object === undefined) ? value : object
+  )),
+
   updateIf: config('*', 'condition', 'spec', 'spec?')((
     object,
     [condition, spec, elseSpec = null],
@@ -101,12 +105,17 @@ const defaultCommands = {
     return updatedObject || object;
   }),
 
-  merge: config('object', 'object')((object, [value], context) => {
+  merge: config('object?', 'merge:object', 'initial:object?')((
+    object,
+    [value, init],
+    context
+  ) => {
+    const initedObject = (object === undefined) ? init : object;
     let updatedObject = null;
     Object.keys(value).forEach((key) => {
-      if (value[key] !== object[key]) {
+      if (value[key] !== initedObject[key]) {
         if (!updatedObject) {
-          updatedObject = context.copy(object);
+          updatedObject = context.copy(initedObject);
         }
         if (value[key] === context.UNSET_TOKEN) {
           delete updatedObject[key];

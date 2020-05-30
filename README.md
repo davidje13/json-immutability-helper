@@ -272,6 +272,10 @@ update.extendCondition(
   subsequent items re-packed. If used on the root, `update` will
   return `undefined` (unless `allowUnset` is specified).
 
+- `['init', value]`
+  if undefined, sets the value to the literal value given.
+  Otherwise leaves the value unchanged.
+
 - `['updateIf', condition, spec, elseSpec?]`
   applies the given `spec` if the `condition` matches, otherwise
   applies the `elseSpec` (if provided) or does nothing.
@@ -355,9 +359,12 @@ update.extendCondition(
 
 ### Object
 
-- `['merge', object]`
+- `['merge', object, initial?]`
   Merges the keys of object into the current target. Similar to
-  calling `Object.assign`.
+  calling `Object.assign`. If `initial` is provided and the target
+  value is undefined, it will be assigned the value of `initial`
+  before merging
+  (equivalent to `['seq', ['init', initial], ['merge', object]]`).
 
 ### String
 

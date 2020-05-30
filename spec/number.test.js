@@ -56,7 +56,7 @@ describe('rpn', () => {
 
   it('takes command tokens', () => {
     expect(() => update(0, ['rpn', []]))
-      .toThrow('/ rpn: expected [command, operations]');
+      .toThrow('/ rpn: expected [command, operations...]');
   });
 
   it('rejects changes of type', () => {

@@ -167,3 +167,22 @@ describe('unset', () => {
     expect(updated).toBe(UNSET_TOKEN);
   });
 });
+
+describe('init', () => {
+  it('takes 1 argument', () => {
+    expect(() => update(1, ['init']))
+      .toThrow('/ init: expected [command, value]');
+  });
+
+  it('initialises the value if undefined', () => {
+    const updated = update(undefined, ['init', 'b']);
+
+    expect(updated).toEqual('b');
+  });
+
+  it('does nothing if the value is already set', () => {
+    const updated = update('a', ['init', 'b']);
+
+    expect(updated).toEqual('a');
+  });
+});

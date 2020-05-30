@@ -29,6 +29,7 @@ declare module 'json-immutability-helper' {
   ) |
   ['=', T] | ['set', T] |
   (T extends undefined ? ['unset'] : never) |
+  ['init', T] |
   ['updateIf', Condition<T>, Spec<T>, Spec<T>?] |
   ['seq', ...Spec<T>[]];
 
@@ -64,7 +65,7 @@ declare module 'json-immutability-helper' {
     { [index: number]: UnsettableSpec<T> };
 
   type ObjectSpec<T> =
-    ['merge', Partial<Readonly<T>>] |
+    ['merge', Partial<Readonly<T>>, Readonly<T>?] |
     { [K in keyof T]?: Spec<T[K]> };
 
   type DirectiveFn<T> = (old: Readonly<T>, args: ReadonlyArray<any>, context: Readonly<Context>) => T | typeof SHARED_UNSET_TOKEN;
