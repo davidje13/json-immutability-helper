@@ -15,7 +15,8 @@
   "types": "index.d.ts",
   "scripts": {
     "lint": "eslint --format codeframe --ext mjs,js .",
-    "test": "jest && npm run lint",
+    "test": "jest",
+    "posttest": "npm run lint",
     "test:watch": "jest --watch"
   },
   "repository": {
@@ -33,9 +34,9 @@
   },
   "homepage": "https://github.com/davidje13/json-immutability-helper#readme",
   "devDependencies": {
-    "eslint": "6.x",
+    "eslint": "7.x",
     "eslint-plugin-jest": "23.x",
     "eslint-plugin-node": "11.x",
-    "jest": "25.x"
+    "jest": "26.x"
   }
 }
