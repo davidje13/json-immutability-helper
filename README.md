@@ -518,7 +518,7 @@ Available functions/operators:
   of `search` in `string`, skipping the first `start` characters
 - `string search 'lastIndexOf'`: returns the index of the last occurrence of
   `search` in `string` (0-based), or -1 if it is not found
-- `string search end 'lastIndexOf'`: returns the index of the last occurrence
+- `string search end 'lastIndexOf:3'`: returns the index of the last occurrence
   of `search` in `string` within the range up to `end`
 - `string length 'padStart'`: pads the start of `string` with spaces until it
   is at least `length` characters long
