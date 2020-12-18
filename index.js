@@ -82,6 +82,20 @@ function deleteIndices(arr, indices) {
   arr.length -= del;
 }
 
+function makeKeyChecker(object, path = '') {
+  if (!Array.isArray(object)) {
+    return () => null;
+  }
+
+  const { length } = object;
+  return (key) => {
+    const index = Number(key);
+    if (index < 0 || index >= length || index.toFixed(0) !== key) {
+      throw new Error(`/${path}: cannot modify array property ${key}`);
+    }
+  };
+}
+
 const UNSET_TOKEN = Symbol('unset');
 
 function bindAll(o, fns) {
@@ -109,6 +123,7 @@ class JsonContext {
       'extendCondition',
       'extendConditionAll',
       'update',
+      'applyMerge',
       'combine',
       'makeConditionPredicate',
     ]);
@@ -175,23 +190,38 @@ class JsonContext {
       () => `/${path}: spec must be an object or a command`
     );
 
+    const nextPath = path ? `${path}/` : '';
+    const diffEntries = Object.keys(spec).map((key) => [key, this.update(
+      initial[key],
+      spec[key],
+      { path: `${nextPath}${key}`, allowUnset: true }
+    )]);
+    return this.applyMerge(initial, diffEntries, path);
+  }
+
+  applyMerge(initial, diffEntries, path = '') {
     let updated = null;
     const deleted = [];
-    const nextPath = path ? `${path}/` : '';
-    Object.keys(spec).forEach((key) => {
-      const updateOptions = { path: `${nextPath}${key}`, allowUnset: true };
-
-      const oldValue = initial[key];
-      const newValue = this.update(oldValue, spec[key], updateOptions);
+    const checkKey = makeKeyChecker(initial, path);
+    diffEntries.forEach(([key, newValue]) => {
+      checkKey(key);
       const newExist = newValue !== UNSET_TOKEN;
 
       if (
-        (newExist && oldValue !== newValue) ||
+        (newExist && initial[key] !== newValue) ||
         newExist !== Object.prototype.hasOwnProperty.call(initial, key)
       ) {
         updated = updated || this.copy(initial);
         if (newExist) {
-          updated[key] = newValue;
+          if (key === '__proto__') {
+            Object.defineProperty(updated, key, {
+              value: newValue,
+              enumerable: true,
+              writable: true,
+            });
+          } else {
+            updated[key] = newValue;
+          }
         } else if (Array.isArray(updated)) {
           deleted.push(Number(key));
         } else {
@@ -211,20 +241,21 @@ class JsonContext {
   }
 
   makeConditionPredicate(condition) {
-    if (Array.isArray(condition)) {
-      invariant(condition.length > 0, 'update(): empty condition.');
-
-      if (typeof condition[0] === 'string' && condition.length === 2) {
-        return conditionPartPredicate({
-          key: condition[0],
-          equals: condition[1],
-        }, this);
-      }
-
-      const parts = condition.map((x) => conditionPartPredicate(x, this));
-      return (o) => parts.every((part) => part(o));
+    if (!Array.isArray(condition)) {
+      return conditionPartPredicate(condition, this);
     }
-    return conditionPartPredicate(condition, this);
+
+    invariant(condition.length > 0, 'update(): empty condition.');
+
+    if (typeof condition[0] === 'string' && condition.length === 2) {
+      return conditionPartPredicate({
+        key: condition[0],
+        equals: condition[1],
+      }, this);
+    }
+
+    const parts = condition.map((x) => conditionPartPredicate(x, this));
+    return (o) => parts.every((part) => part(o));
   }
 
   incLoopNesting(iterations, fn) {

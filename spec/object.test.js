@@ -39,6 +39,36 @@ describe('merge', () => {
     expect(updated).not.toBe(initial);
   });
 
+  it('sets indices in arrays', () => {
+    const initArr = ['a', 'b', 'c', 'd'];
+    const updated = update(initArr, ['merge', { '1': 'B', '2': 'C' }]);
+
+    expect(updated).toEqual(['a', 'B', 'C', 'd']);
+    expect(updated).not.toBe(initArr);
+  });
+
+  it('rejects attempts to add properties to arrays', () => {
+    const initArr = ['a', 'b', 'c'];
+    expect(() => update(initArr, ['merge', { foo: 1 }]))
+      .toThrow('cannot modify array property foo');
+  });
+
+  it('rejects attempts to modify array length directly', () => {
+    const initArr = ['a', 'b', 'c'];
+    expect(() => update(initArr, ['merge', { length: 1 }]))
+      .toThrow('cannot modify array property length');
+  });
+
+  it('sets __proto__ as a literal value', () => {
+    // JSON.parse is an easy way to get literal __proto__ properties
+    const spec = JSON.parse('["merge", { "__proto__": { "foo": 1 } }]');
+    const updated = update({}, spec);
+
+    /* eslint-disable-next-line no-proto */
+    expect(updated.__proto__.foo).toEqual(1);
+    expect(updated.foo).toBeUndefined();
+  });
+
   it('makes no change if no value has changed', () => {
     const updated = update(initial, ['merge', { foo: '1' }]);
 
@@ -51,6 +81,23 @@ describe('merge', () => {
 
     expect(updated).toEqual({ foo: '1' });
     expect(updated).not.toBe(initial);
+  });
+
+  it('ignores requests to unset values which are not set', () => {
+    const updated = update(initial, ['merge', { nope: update.UNSET_TOKEN }]);
+
+    expect(updated).toBe(initial);
+  });
+
+  it('repacks arrays after removing indices', () => {
+    const initArr = ['a', 'b', 'c', 'd'];
+    const updated = update(initArr, ['merge', {
+      '1': update.UNSET_TOKEN,
+      '2': update.UNSET_TOKEN,
+    }]);
+
+    expect(updated).toEqual(['a', 'd']);
+    expect(updated).not.toBe(initArr);
   });
 
   it('ignores the default if there is already a value', () => {

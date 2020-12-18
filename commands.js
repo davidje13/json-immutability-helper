@@ -81,11 +81,11 @@ const defaultCommands = {
   toggle: config('boolean')((object) => !object),
 
   push: config('array', 'value...')((object, values) => (
-    values.length ? object.concat(values) : object
+    values.length ? Array.prototype.concat.call(object, values) : object
   )),
 
   unshift: config('array', 'value...')((object, values) => (
-    values.length ? values.concat(object) : object
+    values.length ? Array.prototype.concat.call(values, object) : object
   )),
 
   splice: config('array', 'array...')((object, splices, context) => {
@@ -96,9 +96,7 @@ const defaultCommands = {
         'expected splice parameter to be an array of arguments to splice()'
       );
       if (args.length && (args[1] !== 0 || args.length > 2)) {
-        if (!updatedObject) {
-          updatedObject = context.copy(object);
-        }
+        updatedObject = updatedObject || context.copy(object);
         Array.prototype.splice.apply(updatedObject, args);
       }
     });
@@ -111,20 +109,7 @@ const defaultCommands = {
     context
   ) => {
     const initedObject = (object === undefined) ? init : object;
-    let updatedObject = null;
-    Object.keys(value).forEach((key) => {
-      if (value[key] !== initedObject[key]) {
-        if (!updatedObject) {
-          updatedObject = context.copy(initedObject);
-        }
-        if (value[key] === context.UNSET_TOKEN) {
-          delete updatedObject[key];
-        } else {
-          updatedObject[key] = value[key];
-        }
-      }
-    });
-    return updatedObject || object;
+    return context.applyMerge(initedObject, Object.entries(value));
   }),
 
   insertBeforeFirstWhere: config('array', 'condition', 'value...')((
@@ -132,7 +117,8 @@ const defaultCommands = {
     [condition, ...items],
     context
   ) => {
-    let index = object.findIndex(context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    let index = Array.prototype.findIndex.call(object, predicate);
     if (index === -1) {
       index = object.length;
     }
@@ -144,7 +130,8 @@ const defaultCommands = {
     [condition, ...items],
     context
   ) => {
-    let index = object.findIndex(context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    let index = Array.prototype.findIndex.call(object, predicate);
     if (index === -1) {
       index = object.length - 1;
     }
@@ -156,7 +143,8 @@ const defaultCommands = {
     [condition, ...items],
     context
   ) => {
-    let index = findLast(object, context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    let index = findLast(object, predicate);
     if (index === -1) {
       index = 0;
     }
@@ -168,7 +156,8 @@ const defaultCommands = {
     [condition, ...items],
     context
   ) => {
-    const index = findLast(object, context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    const index = findLast(object, predicate);
     return insertAtIndex(context, [index + 1, items], object);
   }),
 
@@ -190,10 +179,8 @@ const defaultCommands = {
     context
   ) => {
     const combined = {};
-    const indices = findIndicesReversed(
-      object,
-      context.makeConditionPredicate(condition)
-    );
+    const predicate = context.makeConditionPredicate(condition);
+    const indices = findIndicesReversed(object, predicate);
     context.incLoopNesting(indices.length, () => {
       indices.forEach((index) => {
         const originalItem = object[index];
@@ -209,7 +196,8 @@ const defaultCommands = {
     [condition, spec],
     context
   ) => {
-    const index = object.findIndex(context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    const index = Array.prototype.findIndex.call(object, predicate);
     return updateAtIndex(context, [index, spec], object);
   }),
 
@@ -218,7 +206,8 @@ const defaultCommands = {
     [condition, spec],
     context
   ) => {
-    const index = findLast(object, context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    const index = findLast(object, predicate);
     return updateAtIndex(context, [index, spec], object);
   }),
 
@@ -227,10 +216,8 @@ const defaultCommands = {
     [condition],
     context
   ) => {
-    const indices = findIndicesReversed(
-      object,
-      context.makeConditionPredicate(condition)
-    );
+    const predicate = context.makeConditionPredicate(condition);
+    const indices = findIndicesReversed(object, predicate);
     return context.update(object, ['splice', ...indices.map((i) => [i, 1])]);
   }),
 
@@ -239,7 +226,8 @@ const defaultCommands = {
     [condition],
     context
   ) => {
-    const index = object.findIndex(context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    const index = Array.prototype.findIndex.call(object, predicate);
     return updateAtIndex(context, [index, ['unset']], object);
   }),
 
@@ -248,7 +236,8 @@ const defaultCommands = {
     [condition],
     context
   ) => {
-    const index = findLast(object, context.makeConditionPredicate(condition));
+    const predicate = context.makeConditionPredicate(condition);
+    const index = findLast(object, predicate);
     return updateAtIndex(context, [index, ['unset']], object);
   }),
 
@@ -268,7 +257,7 @@ const riskyStringCommands = {
     if (!find || find === replace) {
       return object;
     }
-    const parts = object.split(find);
+    const parts = String.prototype.split.call(object, find);
     if (replace.length > find.length) {
       const count = parts.length - 1;
       const diff = count * (replace.length - find.length);

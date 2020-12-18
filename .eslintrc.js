@@ -176,4 +176,11 @@ module.exports = {
     'yield-star-spacing': ['error'],
     'yoda': ['error'],
   },
+  overrides: [{
+    files: ['**/*.test.*'],
+    rules: {
+      'max-statements': ['error', 20],
+      'node/no-unsupported-features/es-builtins': ['off'],
+    },
+  }],
 };
