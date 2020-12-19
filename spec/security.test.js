@@ -17,22 +17,22 @@ const UNDEFINED_TARGET = { type: undefined, factory: () => undefined };
 
 const json = JSON.stringify;
 
-function jsonCommand(value) {
+function command(value) {
   if (value === UNSET_TOKEN) {
-    return '["unset"]';
+    return ['unset'];
   } else {
-    return json(['set', value]);
+    return ['set', value];
   }
 }
 
 const PROTOTYPE_ATTACKS = [
   {
     name: 'set as regular property',
-    attack: (key, v) => `{${json(key)}:${jsonCommand(v)}}`,
+    attack: (key, v) => json({ [key]: command(v) }),
   },
   {
     name: 'set inside __proto__',
-    attack: (key, v) => `{"__proto__":{${json(key)}:${jsonCommand(v)}}}`,
+    attack: (key, v) => `{"__proto__":${json({ [key]: command(v) })}}`,
   },
   {
     name: 'set __proto__',
@@ -43,12 +43,24 @@ const PROTOTYPE_ATTACKS = [
     attack: (key, v) => `["set",{"__proto__":${json({ [key]: v })}}]`,
   },
   {
+    name: 'set constructor.prototype',
+    attack: (key, v) => json({
+      constructor: ['set', { prototype: { [key]: v } }],
+    }),
+  },
+  {
+    name: 'set outside constructor.prototype',
+    attack: (key, v) => json(['set', {
+      constructor: { prototype: { [key]: v } },
+    }]),
+  },
+  {
     name: 'merge as regular property',
     attack: (key, v) => `["merge",${json({ [key]: v })}]`,
   },
   {
     name: 'merge inside __proto__',
-    attack: (key, v) => `{"__proto__":["merge",${json({ [key]: v })}]}`,
+    attack: (key, v) => `{"__proto__":["merge",${json({ [key]: v })},{}]}`,
   },
   {
     name: 'merge outside __proto__',
@@ -56,13 +68,12 @@ const PROTOTYPE_ATTACKS = [
   },
 ];
 
+/* eslint-disable no-proto */
 describe('global prototype pollution protection', () => {
   const context = new Context();
   const { update } = context;
 
   PROTOTYPE_ATTACKS.forEach((test) => describe(`update: ${test.name}`, () => {
-    /* eslint-disable no-proto */
-
     function runAttack(target) {
       const input = target.factory();
       const spec = JSON.parse(test.attack('injected', 'gotchya'));
@@ -94,38 +105,54 @@ describe('global prototype pollution protection', () => {
       expect(() => undefined.__proto__).toThrow();
       expect(() => undefined.injected).toThrow();
     });
-
-    afterEach(() => {
-      // Do not allow failures to leak to other tests
-      ATTACK_TARGETS.forEach((target) => {
-        delete target.type.__proto__.injected;
-        delete target.type.prototype.injected;
-      });
-    });
-
-    /* eslint-enable no-proto */
   }));
+
+  it('does not pollute the Object prototype from combineSpecs', () => {
+    context.combine([
+      {},
+      JSON.parse('{"__proto__": {"injected": "gotchya"}}'),
+      JSON.parse('{"constructor": {"prototype": {"injected": "gotchya"}}}'),
+      JSON.parse('{"constructor": {"__proto__": {"injected": "gotchya"}}}'),
+    ]);
+
+    expect(Object.__proto__.injected).toBeUndefined();
+    expect(Object.injected).toBeUndefined();
+    expect(({}).__proto__.injected).toBeUndefined();
+    expect(({}).injected).toBeUndefined();
+    expect(global.injected).toBeUndefined();
+  });
+
+  afterEach(() => {
+    // Do not allow failures to leak to other tests
+    ATTACK_TARGETS.forEach((target) => {
+      delete target.type.__proto__.injected;
+      delete target.type.prototype.injected;
+    });
+  });
 });
 
 describe('local prototype pollution protection', () => {
   const context = new Context();
   const { update } = context;
 
+  function updateOrThrow(initial, spec) {
+    try {
+      return update(initial, spec);
+    } catch (ignore) {
+      return {}; // Throwing is OK
+    }
+  }
+
   PROTOTYPE_ATTACKS.forEach((test) => describe(`update: ${test.name}`, () => {
     it('does not pollute the local prototype of arrays', () => {
       const spec = JSON.parse(test.attack('push', 'gotchya'));
-      let updated = [];
-      try {
-        updated = update([], spec);
-      } catch (ignore) {
-        // Throwing is OK
-      }
+      const updated = updateOrThrow([], spec);
       expect(typeof updated.push).not.toEqual('string');
     });
 
     it('does not pollute the local prototype of objects', () => {
       const spec = JSON.parse(test.attack('hasOwnProperty', 'gotchya'));
-      const updated = update({}, spec);
+      const updated = updateOrThrow({}, spec);
       delete updated.hasOwnProperty; // OK if set as literal property
       expect(typeof updated.hasOwnProperty).toEqual('function');
       expect(updated.hasOwnProperty).toBe(Object.prototype.hasOwnProperty);
@@ -133,11 +160,61 @@ describe('local prototype pollution protection', () => {
 
     it('does not pollute the local prototype of objects by unsetting', () => {
       const spec = JSON.parse(test.attack('hasOwnProperty', UNSET_TOKEN));
-      const updated = update({}, spec);
+      const updated = updateOrThrow({}, spec);
       expect(typeof updated.hasOwnProperty).toEqual('function');
       expect(updated.hasOwnProperty).toBe(Object.prototype.hasOwnProperty);
     });
+
+    it('does not convert existing __proto__ fields into a property', () => {
+      const spec = JSON.parse(test.attack('injected', 'meh'));
+      const updated = updateOrThrow({ __proto__: { original: 'oops' } }, spec);
+      expect(updated.__proto__.original).toBeUndefined();
+    });
   }));
+
+  it('does not pollute the output prototype from combineSpecs', () => {
+    const result = context.combine([
+      {},
+      JSON.parse('{"__proto__": {"injected": "gotchya"}}'),
+    ]);
+
+    expect(result.injected).toBeUndefined();
+  });
+
+  afterEach(() => {
+    // Do not allow failures to leak to other tests
+    ATTACK_TARGETS.forEach((target) => {
+      delete target.type.__proto__.injected;
+      delete target.type.prototype.injected;
+    });
+  });
+});
+/* eslint-enable no-proto */
+
+describe('condition code injection attacks', () => {
+  const context = new Context();
+  const { update } = context;
+
+  it('does not execute arbitrary functions', () => {
+    expect(() => update([0], ['deleteWhere', { 'hasOwnProperty': 1 }]))
+      .toThrow('unknown condition type: hasOwnProperty');
+  });
+});
+
+describe('RPN code injection attacks', () => {
+  const context = new Context();
+  const { update } = context;
+
+  it('does not execute arbitrary functions', () => {
+    expect(() => update(0, ['rpn', 0, '__proto__']))
+      .toThrow('unknown function __proto__');
+
+    expect(() => update(0, ['rpn', 0, 'constructor']))
+      .toThrow('unknown function constructor');
+
+    expect(() => update(0, ['rpn', 0, 'hasOwnProperty']))
+      .toThrow('unknown function hasOwnProperty');
+  });
 });
 
 describe('without enableRiskyStringOps', () => {

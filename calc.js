@@ -12,7 +12,7 @@ function isInt(x) {
 }
 
 /* eslint-disable quote-props, no-bitwise */
-const MATH_FUNCTIONS = {
+const MATH_FUNCTIONS_OBJ = {
   Number: [1, 1, (v) => Number.parseFloat(v)],
   '+': [2, Number.POSITIVE_INFINITY, (...v) => {
     if (v.some((arg) => typeof arg !== 'number')) {
@@ -52,10 +52,10 @@ const MATH_FUNCTIONS = {
   'asinh', 'acosh', 'atanh',
   'round', 'floor', 'ceil', 'trunc',
 ].forEach((name) => {
-  MATH_FUNCTIONS[name] = [1, 1, Math[name]];
+  MATH_FUNCTIONS_OBJ[name] = [1, 1, Math[name]];
 });
 
-const STRING_FUNCTIONS = {
+const STRING_FUNCTIONS_OBJ = {
   String: [1, 2, (v, dp = null) => {
     if (dp === null) {
       return String(v);
@@ -109,14 +109,18 @@ const STRING_FUNCTIONS = {
 };
 /* eslint-enable quote-props, no-bitwise */
 
-const ALL_FUNCTIONS = Object.assign({}, MATH_FUNCTIONS, STRING_FUNCTIONS);
+const MATH_FUNCTIONS = new Map(Object.entries(MATH_FUNCTIONS_OBJ));
+const ALL_FUNCTIONS = new Map([
+  ...Object.entries(MATH_FUNCTIONS_OBJ),
+  ...Object.entries(STRING_FUNCTIONS_OBJ),
+]);
 
 function applyFunction(functions, token, stack) {
   const [funcName, arityStr] = token.split(':');
-  if (!functions[funcName]) {
+  if (!functions.has(funcName)) {
     throw new Error(`unknown function ${funcName}`);
   }
-  const [minArity, maxArity, fn] = functions[funcName];
+  const [minArity, maxArity, fn] = functions.get(funcName);
   const arity = arityStr ? Number.parseInt(arityStr, 10) : minArity;
   if (arity < minArity || arity > maxArity) {
     throw new Error(`invalid arity for ${token}`);

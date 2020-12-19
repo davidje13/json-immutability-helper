@@ -12,8 +12,16 @@ function invariant(condition, msgFn) {
   }
 }
 
+const safeGet = (o, key) => (
+  Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined
+);
+
 const isOp = Array.isArray;
 const isEquals = (x, y) => (x === y);
+const isArrayIndex = (key, limit) => {
+  const v = Number(key);
+  return (v >= 0 && v < limit && v.toFixed(0) === key);
+};
 const copy = (o) => (
   Array.isArray(o) ? [...o] :
     (typeof o === 'object' && o) ? Object.assign({}, o) :
@@ -27,17 +35,26 @@ function getSeqSteps(spec) {
   return [spec];
 }
 
+const addProperty = (o, key, value) => Object.defineProperty(o, key, {
+  value,
+  configurable: true,
+  enumerable: true,
+  writable: true,
+});
+
 function combineSpecs(spec1, spec2) {
   if (isOp(spec1) || isOp(spec2)) {
     return ['seq', ...getSeqSteps(spec1), ...getSeqSteps(spec2)];
   }
 
   const result = Object.assign({}, spec1);
-  Object.keys(spec2).forEach((key) => {
-    if (result[key] === undefined) {
-      result[key] = spec2[key];
+  Object.entries(spec2).forEach(([key, value2]) => {
+    if (Object.prototype.hasOwnProperty.call(result, key)) {
+      result[key] = combineSpecs(result[key], value2);
+    } else if (result[key] === undefined) {
+      result[key] = value2;
     } else {
-      result[key] = combineSpecs(result[key], spec2[key]);
+      addProperty(result, key, value2);
     }
   });
   return result;
@@ -49,24 +66,26 @@ function conditionPartPredicate(condition, context) {
     () => `expected spec of condition to be an object; got ${condition}`
   );
 
-  const checks = Object.keys(condition)
-    .filter((key) => (key !== 'key'))
-    .map((key) => {
+  const checks = Object.entries(condition)
+    .filter(([key]) => (key !== 'key'))
+    .map(([key, param]) => {
       const type = context.conditionTypes.get(key);
       invariant(type, () => `unknown condition type: ${key}`);
-      return type(condition[key]);
+      return type(param);
     });
 
-  if (condition.key !== undefined) {
-    if (!checks.length) {
-      return (o) => (o[condition.key] !== undefined);
-    }
-    return (o) => checks.every((c) => c(o[condition.key]));
+  if (condition.key === undefined) {
+    invariant(checks.length > 0, () => `unknown condition ${condition}`);
+    return (o) => checks.every((c) => c(o));
   }
 
-  invariant(checks.length > 0, () => `unknown condition ${condition}`);
-
-  return (o) => checks.every((c) => c(o));
+  if (!checks.length) {
+    checks.push(defaultConditions.notNullish());
+  }
+  return (o) => {
+    const v = safeGet(o, condition.key);
+    return checks.every((c) => c(v));
+  };
 }
 
 function deleteIndices(arr, indices) {
@@ -80,20 +99,6 @@ function deleteIndices(arr, indices) {
     }
   }
   arr.length -= del;
-}
-
-function makeKeyChecker(object, path = '') {
-  if (!Array.isArray(object)) {
-    return () => null;
-  }
-
-  const { length } = object;
-  return (key) => {
-    const index = Number(key);
-    if (index < 0 || index >= length || index.toFixed(0) !== key) {
-      throw new Error(`/${path}: cannot modify array property ${key}`);
-    }
-  };
 }
 
 const UNSET_TOKEN = Symbol('unset');
@@ -142,9 +147,8 @@ class JsonContext {
   }
 
   extendAll(commands) {
-    Object.keys(commands).forEach((name) => {
-      this.commands.set(name, commands[name]);
-    });
+    Object.entries(commands)
+      .forEach(([name, command]) => this.extend(name, command));
   }
 
   extendCondition(name, condition) {
@@ -152,9 +156,8 @@ class JsonContext {
   }
 
   extendConditionAll(conditions) {
-    Object.keys(conditions).forEach((name) => {
-      this.conditionTypes.set(name, conditions[name]);
-    });
+    Object.entries(conditions)
+      .forEach(([name, cond]) => this.extendCondition(name, cond));
   }
 
   enableRiskyStringOps() {
@@ -191,38 +194,36 @@ class JsonContext {
     );
 
     const nextPath = path ? `${path}/` : '';
-    const diffEntries = Object.keys(spec).map((key) => [key, this.update(
-      initial[key],
-      spec[key],
-      { path: `${nextPath}${key}`, allowUnset: true }
-    )]);
+    const diffEntries = Object.entries(spec).map(
+      ([key, s]) => [key, this.update(safeGet(initial, key), s, {
+        path: `${nextPath}${key}`,
+        allowUnset: true,
+      })]
+    );
     return this.applyMerge(initial, diffEntries, path);
   }
 
   applyMerge(initial, diffEntries, path = '') {
     let updated = null;
     const deleted = [];
-    const checkKey = makeKeyChecker(initial, path);
+    const array = Array.isArray(initial);
     diffEntries.forEach(([key, newValue]) => {
-      checkKey(key);
-      const newExist = newValue !== UNSET_TOKEN;
+      if (array && !isArrayIndex(key, initial.length)) {
+        throw new Error(`/${path}: cannot modify array property ${key}`);
+      }
 
-      if (
-        (newExist && initial[key] !== newValue) ||
-        newExist !== Object.prototype.hasOwnProperty.call(initial, key)
-      ) {
+      const newExist = newValue !== UNSET_TOKEN;
+      const oldExist = Object.prototype.hasOwnProperty.call(initial, key);
+
+      if (newExist !== oldExist || (newExist && initial[key] !== newValue)) {
         updated = updated || this.copy(initial);
         if (newExist) {
-          if (key === '__proto__') {
-            Object.defineProperty(updated, key, {
-              value: newValue,
-              enumerable: true,
-              writable: true,
-            });
+          if (!oldExist && initial[key] !== undefined) {
+            addProperty(updated, key, newValue);
           } else {
             updated[key] = newValue;
           }
-        } else if (Array.isArray(updated)) {
+        } else if (array) {
           deleted.push(Number(key));
         } else {
           delete updated[key];
@@ -240,21 +241,18 @@ class JsonContext {
     return specs.reduce(combineSpecs, {});
   }
 
-  makeConditionPredicate(condition) {
-    if (!Array.isArray(condition)) {
-      return conditionPartPredicate(condition, this);
+  makeConditionPredicate(cond) {
+    if (!Array.isArray(cond)) {
+      return conditionPartPredicate(cond, this);
     }
 
-    invariant(condition.length > 0, 'update(): empty condition.');
+    invariant(cond.length > 0, 'update(): empty condition.');
 
-    if (typeof condition[0] === 'string' && condition.length === 2) {
-      return conditionPartPredicate({
-        key: condition[0],
-        equals: condition[1],
-      }, this);
+    if (typeof cond[0] === 'string' && cond.length === 2) {
+      return conditionPartPredicate({ key: cond[0], equals: cond[1] }, this);
     }
 
-    const parts = condition.map((x) => conditionPartPredicate(x, this));
+    const parts = cond.map((x) => conditionPartPredicate(x, this));
     return (o) => parts.every((part) => part(o));
   }
 

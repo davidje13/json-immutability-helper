@@ -243,6 +243,8 @@ Conditions can check multiple properties by wrapping them in an array
 - `greaterThanOrEqual`: checks for greater-than-or-equal.
 - `lessThan`: checks for strictly-less-than.
 - `lessThanOrEqual`: checks for less-than-or-equal.
+- `notNullish`: this checks for `null` or `undefined`.
+  This is the default if a key is provided but no checks.
 
 You can add new conditions with:
 

@@ -36,6 +36,20 @@ describe('key presence', () => {
   it('does not match', () => {
     expect(matches({key: 'nope'})).toEqual(false);
   });
+
+  it('matches falsy but non-nullish values', () => {
+    expect(matches({key: 'value'}, {value: 0})).toEqual(true);
+    expect(matches({key: 'value'}, {value: false})).toEqual(true);
+  });
+
+  it('does not match nullish values', () => {
+    expect(matches({key: 'value'}, {value: null})).toEqual(false);
+    expect(matches({key: 'value'}, {value: undefined})).toEqual(false);
+  });
+
+  it('does not match __proto__', () => {
+    expect(matches({key: '__proto__'})).toEqual(false);
+  });
 });
 
 describe('equals', () => {
@@ -55,6 +69,17 @@ describe('key equals', () => {
 
   it('does not match', () => {
     expect(matches({key: 'foo', equals: 'nope'})).toEqual(false);
+  });
+
+  it('checks missing properties', () => {
+    expect(matches({key: 'nope', equals: 'nope'})).toEqual(false);
+    expect(matches({key: 'nope', equals: null})).toEqual(false);
+    expect(matches({key: 'nope', equals: undefined})).toEqual(true);
+  });
+
+  it('matches __proto__ as undefined', () => {
+    expect(matches({key: '__proto__', equals: null})).toEqual(false);
+    expect(matches({key: '__proto__', equals: undefined})).toEqual(true);
   });
 });
 
@@ -76,6 +101,17 @@ describe('key not', () => {
   it('does not match', () => {
     expect(matches({key: 'foo', not: 'bar'})).toEqual(false);
   });
+
+  it('checks missing properties', () => {
+    expect(matches({key: 'nope', not: 'nope'})).toEqual(true);
+    expect(matches({key: 'nope', not: null})).toEqual(true);
+    expect(matches({key: 'nope', not: undefined})).toEqual(false);
+  });
+
+  it('matches __proto__ as undefined', () => {
+    expect(matches({key: '__proto__', not: null})).toEqual(true);
+    expect(matches({key: '__proto__', not: undefined})).toEqual(false);
+  });
 });
 
 describe('key greaterThan', () => {
@@ -85,6 +121,11 @@ describe('key greaterThan', () => {
 
   it('does not match', () => {
     expect(matches({key: 'value', greaterThan: 5})).toEqual(false);
+  });
+
+  it('checks missing properties', () => {
+    expect(matches({key: 'nope', greaterThan: 1})).toEqual(false);
+    expect(matches({key: 'nope', greaterThan: -1})).toEqual(false);
   });
 });
 
@@ -96,6 +137,11 @@ describe('key lessThan', () => {
   it('does not match', () => {
     expect(matches({key: 'value', lessThan: 5})).toEqual(false);
   });
+
+  it('checks missing properties', () => {
+    expect(matches({key: 'nope', lessThan: 1})).toEqual(false);
+    expect(matches({key: 'nope', lessThan: -1})).toEqual(false);
+  });
 });
 
 describe('key greaterThanOrEqual', () => {
@@ -106,6 +152,11 @@ describe('key greaterThanOrEqual', () => {
   it('does not match', () => {
     expect(matches({key: 'value', greaterThanOrEqual: 6})).toEqual(false);
   });
+
+  it('checks missing properties', () => {
+    expect(matches({key: 'nope', greaterThanOrEqual: 1})).toEqual(false);
+    expect(matches({key: 'nope', greaterThanOrEqual: -1})).toEqual(false);
+  });
 });
 
 describe('key lessThanOrEqual', () => {
@@ -115,6 +166,11 @@ describe('key lessThanOrEqual', () => {
 
   it('does not match', () => {
     expect(matches({key: 'value', lessThanOrEqual: 4})).toEqual(false);
+  });
+
+  it('checks missing properties', () => {
+    expect(matches({key: 'nope', lessThanOrEqual: 1})).toEqual(false);
+    expect(matches({key: 'nope', lessThanOrEqual: -1})).toEqual(false);
   });
 });
 
