@@ -1,6 +1,6 @@
 {
   "name": "json-immutability-helper",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "json-serialisable mutability helpers, built on immutability-helper",
   "files": [
     "index.js",
