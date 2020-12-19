@@ -8,6 +8,7 @@ declare module 'json-immutability-helper' {
     greaterThan?: T;
     lessThan?: T;
     not?: T;
+    notNullish?: null,
   }
 
   interface ConditionKeyValue<K, V> extends ConditionValue<V> {
