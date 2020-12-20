@@ -52,7 +52,7 @@ const rpnCommand = config('primitive', 'operations:primitive...')((
   let compiledRpn = context[COMPILED_RPN];
   if (!compiledRpn) {
     compiledRpn = rpn(
-      context.rpnFunctions,
+      context.rpnOperators,
       context.rpnConstants,
       context
     );

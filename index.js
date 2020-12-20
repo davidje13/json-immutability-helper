@@ -131,7 +131,7 @@ class JsonContext {
       commands: [...this.commands.entries()],
       conditions: [...this.conditions.entries()],
       limits: Object.assign({}, this.limits),
-      rpnFunctions: Object.assign({}, this.rpnFunctions),
+      rpnOperators: Object.assign({}, this.rpnOperators),
       rpnConstants: Object.assign({}, this.rpnConstants),
       isEquals: this.isEquals,
       copy: this.copy,
@@ -140,7 +140,7 @@ class JsonContext {
       commands: [...v.commands, ...Object.entries(cur.commands || {})],
       conditions: [...v.conditions, ...Object.entries(cur.conditions || {})],
       limits: Object.assign(v.limits, cur.limits),
-      rpnFunctions: Object.assign(v.rpnFunctions, cur.rpnFunctions),
+      rpnOperators: Object.assign(v.rpnOperators, cur.rpnOperators),
       rpnConstants: Object.assign(v.rpnConstants, cur.rpnConstants),
     }), base));
   }
@@ -269,7 +269,7 @@ const BASE_CONFIG = {
     recursionDepth: 10,
     recursionBreadth: 100000,
   },
-  rpnFunctions: {},
+  rpnOperators: {},
   rpnConstants: {},
   isEquals: (x, y) => (x === y),
   copy: (o) => (

@@ -5,8 +5,8 @@ const { stringCommands } = require('../commands/string');
 const calc = rpn(
   Object.assign(
     {},
-    mathCommands.rpnFunctions,
-    stringCommands.rpnFunctions
+    mathCommands.rpnOperators,
+    stringCommands.rpnOperators
   ),
   Object.assign(
     {},

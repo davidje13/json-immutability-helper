@@ -12,12 +12,12 @@ interface Limits {
 }
 
 type RpnValue = number | string;
-type RpnCommand = [number, number, (...args: RpnValue[]) => RpnValue];
+type RpnOperator = [number, number, (...args: RpnValue[]) => RpnValue];
 
 interface Extension {
   commands?: Record<string, DirectiveFn>;
   conditions?: Record<string, ConditionFn>;
-  rpnFunctions?: Record<string, RpnCommand>;
+  rpnOperators?: Record<string, RpnOperator>;
   rpnConstants?: Record<string, RpnValue>;
   limits?: Partial<Limits>;
   isEquals?: EqualFn;

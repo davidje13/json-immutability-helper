@@ -6,7 +6,7 @@ function isInt(x) {
 }
 
 /* eslint-disable quote-props */
-const STRING_FUNCTIONS = {
+const rpnOperators = {
   String: [1, 2, (v, dp = null) => {
     if (dp === null) {
       return String(v);
@@ -82,6 +82,6 @@ const commands = {
 module.exports = {
   stringCommands: {
     commands,
-    rpnFunctions: STRING_FUNCTIONS,
+    rpnOperators,
   },
 };

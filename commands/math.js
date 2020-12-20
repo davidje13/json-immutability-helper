@@ -3,7 +3,7 @@ const { rpnCommand } = require('./util/rpn');
 const inf = Number.POSITIVE_INFINITY;
 
 /* eslint-disable quote-props, no-bitwise */
-const MATH_FUNCTIONS = {
+const rpnOperators = {
   Number: [1, 1, (v) => Number.parseFloat(v)],
   '+': [2, inf, (...v) => v.reduce((a, b) => (a + Number(b)), 0)],
   '-': [2, 2, (a, b) => (a - b)],
@@ -34,7 +34,7 @@ const MATH_FUNCTIONS = {
   'asinh', 'acosh', 'atanh',
   'round', 'floor', 'ceil', 'trunc',
 ].forEach((name) => {
-  MATH_FUNCTIONS[name] = [1, 1, Math[name]];
+  rpnOperators[name] = [1, 1, Math[name]];
 });
 
 const commands = {
@@ -44,7 +44,7 @@ const commands = {
 module.exports = {
   mathCommands: {
     commands,
-    rpnFunctions: MATH_FUNCTIONS,
+    rpnOperators,
     rpnConstants: {
       e: Math.E,
       pi: Math.PI,
