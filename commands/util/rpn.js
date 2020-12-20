@@ -1,16 +1,9 @@
 const config = require('./commandTypeCheck');
 
-const CONSTANTS = {
-  e: Math.E,
-  pi: Math.PI,
-  Inf: Number.POSITIVE_INFINITY,
-  NaN: Number.NaN,
-};
-
-const rpn = (functionsObj, constants) => {
+const rpn = (functionsObj, constants, context) => {
   const functions = new Map([...Object.entries(functionsObj)]);
 
-  function applyFunction(token, stack, context) {
+  function applyFunction(token, stack) {
     const [funcName, arityStr] = token.split(':');
     if (!functions.has(funcName)) {
       throw new Error(`unknown function ${funcName}`);
@@ -26,7 +19,7 @@ const rpn = (functionsObj, constants) => {
     stack.push(fn.apply(context, stack.splice(-arity)));
   }
 
-  return (tokens, values, context) => {
+  return (tokens, values) => {
     const stack = [];
     const vars = Object.assign({}, constants, values);
     tokens.forEach((token) => {
@@ -39,7 +32,7 @@ const rpn = (functionsObj, constants) => {
       } else if (Object.prototype.hasOwnProperty.call(vars, token)) {
         stack.push(vars[token]);
       } else {
-        applyFunction(token, stack, context);
+        applyFunction(token, stack);
       }
     });
     if (stack.length !== 1) {
@@ -49,23 +42,31 @@ const rpn = (functionsObj, constants) => {
   };
 };
 
-function makeRpnCommand(inputType, funcs) {
-  const execRpn = rpn(funcs, CONSTANTS);
-  return config(inputType, 'operations:primitive...')((
-    object,
-    tokens,
-    context
-  ) => {
-    const result = execRpn(tokens, { x: object }, context);
-    context.invariant(
-      typeof object === typeof result,
-      'cannot change type of property'
+const COMPILED_RPN = Symbol('compiled-rpn');
+
+const rpnCommand = config('primitive', 'operations:primitive...')((
+  object,
+  tokens,
+  context
+) => {
+  let compiledRpn = context[COMPILED_RPN];
+  if (!compiledRpn) {
+    compiledRpn = rpn(
+      context.rpnFunctions,
+      context.rpnConstants,
+      context
     );
-    return result;
-  });
-}
+    context[COMPILED_RPN] = compiledRpn;
+  }
+  const result = compiledRpn(tokens, { x: object });
+  context.invariant(
+    typeof object === typeof result,
+    'cannot change type of property'
+  );
+  return result;
+});
 
 module.exports = {
   rpn,
-  makeRpnCommand,
+  rpnCommand,
 };

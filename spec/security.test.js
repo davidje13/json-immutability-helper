@@ -202,7 +202,7 @@ describe('condition code injection attacks', () => {
 });
 
 describe('RPN code injection attacks', () => {
-  const { update } = context.with(stringCommands);
+  const { update } = context.with(mathCommands, stringCommands);
 
   it('does not execute arbitrary functions', () => {
     expect(() => update(0, ['rpn', 0, '__proto__']))
@@ -220,40 +220,53 @@ describe('without string commands', () => {
   const { update } = context.with(mathCommands);
 
   it('rejects rpn string operations by default', () => {
-    expect(() => update('', ['rpn', '"v"'])).toThrow();
-    expect(() => update(0, ['rpn', 2, 'String', 'Number'])).toThrow();
-    expect(() => update(0, ['rpn', '"2"', '"3"', '+', 'Number'])).toThrow();
-    expect(() => update(0, ['rpn', '"0"', 10, 'padStart', 'Number'])).toThrow();
-    expect(() => update(0, ['rpn', '"0"', 10, 'padEnd', 'Number'])).toThrow();
-    expect(() => update(0, ['rpn', '"0"', 10, '^', 'Number'])).toThrow();
+    expect(() => update(0, ['rpn', 2, 'String', 'Number']))
+      .toThrow('unknown function String');
+
+    expect(() => update(0, ['rpn', '"0"', 10, 'padStart', 'Number']))
+      .toThrow('unknown function padStart');
+
+    expect(() => update(0, ['rpn', '"0"', 10, 'padEnd', 'Number']))
+      .toThrow('unknown function padEnd');
   });
 
   it('rejects replaceAll by default', () => {
-    expect(() => update('.', ['replaceAll', 'a', 'A'])).toThrow();
+    expect(() => update('.', ['replaceAll', 'a', 'A']))
+      .toThrow('replaceAll: unknown command');
   });
 });
 
 describe('with string commands', () => {
-  const { update } = context.with(stringCommands);
+  const { update } = context.with(mathCommands, stringCommands);
 
   it('allows rpn string operations', () => {
     expect(() => update('', ['rpn', '"v"'])).not.toThrow();
     expect(() => update(0, ['rpn', 2, 'String', 'Number'])).not.toThrow();
-    expect(() => update(0, ['rpn', '"2"', '"3"', '+', 'Number'])).not.toThrow();
+    expect(() => update(0, ['rpn', '"2"', '"3"', 'concat', 'Number']))
+      .not.toThrow();
     expect(() => update(0, ['rpn', '"0"', 10, 'padStart', 'Number']))
       .not.toThrow();
     expect(() => update(0, ['rpn', '"0"', 10, 'padEnd', 'Number']))
       .not.toThrow();
-    expect(() => update(0, ['rpn', '"0"', 10, '^', 'Number'])).not.toThrow();
+    expect(() => update(0, ['rpn', '"0"', 10, 'repeat', 'Number']))
+      .not.toThrow();
   });
 
   it('blocks rpn operations which generate lots of data', () => {
-    expect(() => update('.'.repeat(10000), ['rpn', 'x', 'x', '+'])).toThrow();
+    expect(() => update('.'.repeat(10000), ['rpn', 'x', 'x', 'concat']))
+      .toThrow('string concatenation too long');
 
-    expect(() => update('.', ['rpn', 'x', 20000, 'padStart'])).toThrow();
-    expect(() => update('.', ['rpn', 'x', 20000, 'padEnd'])).toThrow();
-    expect(() => update('.', ['rpn', 'x', 20000, '^'])).toThrow();
-    expect(() => update('.'.repeat(100), ['rpn', 'x', 200, '^'])).toThrow();
+    expect(() => update('.', ['rpn', 'x', 20000, 'padStart']))
+      .toThrow('unsupported padding length 20000');
+
+    expect(() => update('.', ['rpn', 'x', 20000, 'padEnd']))
+      .toThrow('unsupported padding length 20000');
+
+    expect(() => update('.', ['rpn', 'x', 20000, 'repeat']))
+      .toThrow('unsupported repeat count 20000');
+
+    expect(() => update('.'.repeat(100), ['rpn', 'x', 200, 'repeat']))
+      .toThrow('unsupported repeat count 200');
   });
 
   it('ignores regular expression syntax in replaceAll', () => {
@@ -270,7 +283,7 @@ describe('with string commands', () => {
 });
 
 describe('"billion laughs" protection', () => {
-  const { update } = context.with(listCommands, stringCommands);
+  const { update } = context.with(listCommands, mathCommands, stringCommands);
 
   it('replaceAll prevents recursive growth', () => {
     const tm0 = Date.now();

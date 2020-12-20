@@ -1,31 +1,23 @@
-const { makeRpnCommand } = require('./util/rpn');
+const { rpnCommand } = require('./util/rpn');
+
+const inf = Number.POSITIVE_INFINITY;
 
 /* eslint-disable quote-props, no-bitwise */
 const MATH_FUNCTIONS = {
   Number: [1, 1, (v) => Number.parseFloat(v)],
-  '+': [2, Number.POSITIVE_INFINITY, (...v) => {
-    if (v.some((arg) => typeof arg !== 'number')) {
-      throw new Error('cannot concatenate strings');
-    }
-    return v.reduce((a, b) => (a + b), 0);
-  }],
+  '+': [2, inf, (...v) => v.reduce((a, b) => (a + Number(b)), 0)],
   '-': [2, 2, (a, b) => (a - b)],
-  '*': [2, Number.POSITIVE_INFINITY, (...v) => v.reduce((a, b) => (a * b), 1)],
+  '*': [2, inf, (...v) => v.reduce((a, b) => (a * Number(b)), 1)],
   '/': [2, 2, (a, b) => (a / b)],
   '//': [2, 2, (a, b) => Math.trunc(a / b)],
-  '^': [2, 2, (a, b) => {
-    if (typeof a === 'string') {
-      throw new Error('cannot repeat strings');
-    }
-    return Math.pow(a, b);
-  }],
+  '^': [2, 2, (a, b) => Math.pow(a, b)],
   '%': [2, 2, (a, b) => (a % b)],
   mod: [2, 2, (a, b) => (((a % b) + b) % b)],
   neg: [1, 1, (a) => -a],
   log: [1, 2, (v, b) => (b ? (Math.log(v) / Math.log(b)) : Math.log(v))],
   exp: [1, 2, (v, b) => (b ? (Math.pow(b, v)) : Math.exp(v))],
-  max: [2, Number.POSITIVE_INFINITY, Math.max],
-  min: [2, Number.POSITIVE_INFINITY, Math.min],
+  max: [2, inf, Math.max],
+  min: [2, inf, Math.min],
   bitor: [2, 2, (a, b) => (a | b)],
   bitand: [2, 2, (a, b) => (a & b)],
   bitxor: [2, 2, (a, b) => (a ^ b)],
@@ -46,10 +38,18 @@ const MATH_FUNCTIONS = {
 });
 
 const commands = {
-  rpn: makeRpnCommand('number', MATH_FUNCTIONS),
+  rpn: rpnCommand,
 };
 
 module.exports = {
-  MATH_FUNCTIONS,
-  mathCommands: { commands },
+  mathCommands: {
+    commands,
+    rpnFunctions: MATH_FUNCTIONS,
+    rpnConstants: {
+      e: Math.E,
+      pi: Math.PI,
+      Inf: inf,
+      NaN: Number.NaN,
+    },
+  },
 };

@@ -11,9 +11,14 @@ interface Limits {
   recursionBreadth: number;
 }
 
+type RpnValue = number | string;
+type RpnCommand = [number, number, (...args: RpnValue[]) => RpnValue];
+
 interface Extension {
   commands?: Record<string, DirectiveFn>;
   conditions?: Record<string, ConditionFn>;
+  rpnFunctions?: Record<string, RpnCommand>;
+  rpnConstants?: Record<string, RpnValue>;
   limits?: Partial<Limits>;
   isEquals?: EqualFn;
   copy?: CopyFn;

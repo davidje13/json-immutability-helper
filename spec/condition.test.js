@@ -16,15 +16,16 @@ function matches(condition, state = initial, context = defaultContext) {
 
 describe('unknown condition', () => {
   it('is rejected', () => {
-    expect(() => matches({key: 'foo', nope: 'bar'})).toThrow();
+    expect(() => matches({key: 'foo', nope: 'bar'}))
+      .toThrow('unknown condition type: nope');
   });
 });
 
 describe('empty condition', () => {
   it('is rejected', () => {
-    expect(() => matches({})).toThrow();
-    expect(() => matches([])).toThrow();
-    expect(() => matches([{}])).toThrow();
+    expect(() => matches({})).toThrow('invalid condition');
+    expect(() => matches([])).toThrow('empty condition');
+    expect(() => matches([{}])).toThrow('invalid condition');
   });
 });
 

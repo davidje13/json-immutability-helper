@@ -65,7 +65,7 @@ function conditionPartPredicate(condition, context) {
     });
 
   if (condition.key === undefined) {
-    invariant(checks.length > 0, () => `unknown condition ${condition}`);
+    invariant(checks.length > 0, () => 'invalid condition');
     return (o) => checks.every((c) => c(o));
   }
 
@@ -100,13 +100,10 @@ function bindAll(o, fns) {
 }
 
 class JsonContext {
-  constructor({ commands, conditions, limits, isEquals, copy }) {
-    Object.assign(this, {
-      commands: new Map(commands),
-      conditions: new Map(conditions),
-      limits,
-      isEquals,
-      copy,
+  constructor(options) {
+    Object.assign(this, options, {
+      commands: new Map(options.commands),
+      conditions: new Map(options.conditions),
       nestDepth: 0,
       nestBreadth: 1,
       UNSET_TOKEN,
@@ -134,6 +131,8 @@ class JsonContext {
       commands: [...this.commands.entries()],
       conditions: [...this.conditions.entries()],
       limits: Object.assign({}, this.limits),
+      rpnFunctions: Object.assign({}, this.rpnFunctions),
+      rpnConstants: Object.assign({}, this.rpnConstants),
       isEquals: this.isEquals,
       copy: this.copy,
     };
@@ -141,6 +140,8 @@ class JsonContext {
       commands: [...v.commands, ...Object.entries(cur.commands || {})],
       conditions: [...v.conditions, ...Object.entries(cur.conditions || {})],
       limits: Object.assign(v.limits, cur.limits),
+      rpnFunctions: Object.assign(v.rpnFunctions, cur.rpnFunctions),
+      rpnConstants: Object.assign(v.rpnConstants, cur.rpnConstants),
     }), base));
   }
 
@@ -268,6 +269,8 @@ const BASE_CONFIG = {
     recursionDepth: 10,
     recursionBreadth: 100000,
   },
+  rpnFunctions: {},
+  rpnConstants: {},
   isEquals: (x, y) => (x === y),
   copy: (o) => (
     Array.isArray(o) ? [...o] :

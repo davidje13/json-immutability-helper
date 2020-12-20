@@ -17,7 +17,8 @@ describe('toggle', () => {
   });
 
   it('rejects operations on unset values', () => {
-    expect(() => update(undefined, ['toggle'])).toThrow();
+    expect(() => update(undefined, ['toggle']))
+      .toThrow('expected target to be boolean');
   });
 
   it('has alias ~', () => {

@@ -1,12 +1,22 @@
 const { rpn } = require('../commands/util/rpn');
-const { ALL_FUNCTIONS } = require('../commands/string');
+const { mathCommands } = require('../commands/math');
+const { stringCommands } = require('../commands/string');
 
-const CONTEXT = { limits: { stringLength: 1000 } };
+const calc = rpn(
+  Object.assign(
+    {},
+    mathCommands.rpnFunctions,
+    stringCommands.rpnFunctions
+  ),
+  Object.assign(
+    {},
+    mathCommands.rpnConstants,
+    stringCommands.rpnConstants
+  ),
+  { limits: { stringLength: 1000 } }
+);
 
-const execRpn = rpn(ALL_FUNCTIONS);
-const calc = (tokens, values) => execRpn(tokens, values, CONTEXT);
-
-describe('calc', () => {
+describe('rpn', () => {
   it('computes results of reverse-polish-notation expressions', () => {
     expect(calc([1])).toEqual(1);
     expect(calc([2, 3, '+'])).toEqual(2 + 3);
@@ -18,8 +28,11 @@ describe('calc', () => {
   });
 
   it('rejects invalid strings', () => {
-    expect(() => calc(['"unterminated'])).toThrow();
-    expect(() => calc(['"invalid \\. escape"'])).toThrow();
+    expect(() => calc(['"unterminated']))
+      .toThrow('Unexpected end of JSON input');
+
+    expect(() => calc(['"invalid \\. escape"']))
+      .toThrow('Unexpected token . in JSON');
   });
 
   it('accepts custom variables', () => {
@@ -35,16 +48,16 @@ describe('calc', () => {
 
   it('rejects unsupported numbers of function arguments', () => {
     expect(() => calc([1, 2, '-:2'])).not.toThrow();
-    expect(() => calc([1, 2, 2, '-:3'])).toThrow();
-    expect(() => calc(['log:0'])).toThrow();
+    expect(() => calc([1, 2, 2, '-:3'])).toThrow('invalid arity for -:3');
+    expect(() => calc(['log:0'])).toThrow('invalid arity for log:0');
     expect(() => calc([1, 'log:1'])).not.toThrow();
     expect(() => calc([1, 2, 'log:2'])).not.toThrow();
-    expect(() => calc([1, 2, 3, 'log:3'])).toThrow();
+    expect(() => calc([1, 2, 3, 'log:3'])).toThrow('invalid arity for log:3');
   });
 
   it('rejects mismatched arguments', () => {
-    expect(() => calc([1, '+'])).toThrow();
-    expect(() => calc([1, 2, 3, '+'])).toThrow();
+    expect(() => calc([1, '+'])).toThrow('argument mismatch for +');
+    expect(() => calc([1, 2, 3, '+'])).toThrow('argument mismatch');
   });
 });
 
@@ -102,9 +115,9 @@ describe('Number', () => {
 describe('number functions', () => {
   it('+, -, *, /', () => {
     expect(calc([1, 2, '+'])).toEqual(3);
-    expect(calc(['"0"', '"0"', '+'])).toEqual('00');
-    expect(calc(['"0"', 1, '+'])).toEqual('01');
-    expect(calc([1, '"0"', '+'])).toEqual('10');
+    expect(calc(['"0"', '"0"', '+'])).toEqual(0);
+    expect(calc(['"0"', 1, '+'])).toEqual(1);
+    expect(calc([1, '"0"', '+'])).toEqual(1);
 
     expect(calc([1, 2, '-'])).toEqual(-1);
     expect(calc(['"1"', '"2"', '-'])).toEqual(-1);
@@ -117,15 +130,13 @@ describe('number functions', () => {
 
   it('variadic +, *', () => {
     expect(calc([1, 2, 3, '+:3'])).toEqual(6);
-    expect(calc([1, 2, '"0"', '+:3'])).toEqual('120');
 
     expect(calc([2, 3, 4, '*:3'])).toEqual(24);
   });
 
   it('^', () => {
     expect(calc([2, 3, '^'])).toEqual(8);
-    expect(calc(['"2"', 3, '^'])).toEqual('222');
-    expect(calc(['"foo"', 3, '^'])).toEqual('foofoofoo');
+    expect(calc(['"2"', 3, '^'])).toEqual(8);
   });
 
   it('%', () => {
@@ -238,6 +249,19 @@ describe('string functions', () => {
   it('length', () => {
     expect(calc(['"hi"', 'length'])).toEqual(2);
     expect(calc(['""', 'length'])).toEqual(0);
+  });
+
+  it('concat', () => {
+    expect(calc([1, 2, 'concat'])).toEqual('12');
+    expect(calc(['"0"', '"0"', 'concat'])).toEqual('00');
+    expect(calc(['"0"', 1, 'concat'])).toEqual('01');
+    expect(calc([1, '"0"', 'concat'])).toEqual('10');
+    expect(calc([1, 2, '"0"', 'concat:3'])).toEqual('120');
+  });
+
+  it('repeat', () => {
+    expect(calc(['"2"', 3, 'repeat'])).toEqual('222');
+    expect(calc(['"foo"', 3, 'repeat'])).toEqual('foofoofoo');
   });
 
   it('indexOf, lastIndexOf', () => {

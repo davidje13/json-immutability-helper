@@ -52,9 +52,9 @@ describe('subtract', () => {
 describe('rpn', () => {
   const update2 = update.context.with(mathCommands).update;
 
-  it('operates on numbers', () => {
+  it('operates on primitives', () => {
     expect(() => update2([], ['rpn']))
-      .toThrow('/ rpn: expected target to be number');
+      .toThrow('/ rpn: expected target to be primitive');
   });
 
   it('takes command tokens', () => {
@@ -63,7 +63,8 @@ describe('rpn', () => {
   });
 
   it('rejects changes of type', () => {
-    expect(() => update2(7, ['rpn', '"abc"'])).toThrow();
+    expect(() => update2(7, ['rpn', '"abc"']))
+      .toThrow('cannot change type of property');
   });
 
   it('applies a calculation in reverse Polish notation', () => {
@@ -74,6 +75,11 @@ describe('rpn', () => {
   it('provides the original numeric value as x', () => {
     const result = update2(2, ['rpn', 10, 'x', '/']);
     expect(result).toEqual(5);
+  });
+
+  it('provides mathematical constants', () => {
+    const result = update2(2, ['rpn', 'pi']);
+    expect(result).toEqual(Math.PI);
   });
 
   it('handles multiple operations', () => {

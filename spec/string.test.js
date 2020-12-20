@@ -1,7 +1,8 @@
+const { mathCommands } = require('../commands/math');
 const { stringCommands } = require('../commands/string');
-const { update } = require('../index').with(stringCommands);
+const { update } = require('../index').with(mathCommands, stringCommands);
 
-describe('replaceAll with enableRiskyStringOps', () => {
+describe('replaceAll with stringCommands', () => {
   it('operates on strings', () => {
     expect(() => update(0, ['replaceAll', '', '']))
       .toThrow('/ replaceAll: expected target to be string');
@@ -69,15 +70,18 @@ describe('replaceAll with enableRiskyStringOps', () => {
   });
 });
 
-describe('rpn with enableRiskyStringOps', () => {
+describe('rpn with stringCommands', () => {
   it('operates on numbers and strings', () => {
     expect(() => update([], ['rpn']))
       .toThrow('/ rpn: expected target to be primitive');
   });
 
   it('rejects changes of type', () => {
-    expect(() => update('abc', ['rpn', 7])).toThrow();
-    expect(() => update(7, ['rpn', '"abc"'])).toThrow();
+    expect(() => update('abc', ['rpn', 7]))
+      .toThrow('cannot change type of property');
+
+    expect(() => update(7, ['rpn', '"abc"']))
+      .toThrow('cannot change type of property');
   });
 
   it('can return a string', () => {
@@ -95,8 +99,13 @@ describe('rpn with enableRiskyStringOps', () => {
     expect(result).toEqual(2);
   });
 
+  it('uses mathematical addition', () => {
+    const result = update('', ['rpn', '"2"', '"3"', '+', 'String']);
+    expect(result).toEqual('5');
+  });
+
   it('allows string concatenation', () => {
-    const result = update(0, ['rpn', '"2"', '"3"', '+', 'Number']);
-    expect(result).toEqual(23);
+    const result = update('', ['rpn', '"2"', '"3"', 'concat']);
+    expect(result).toEqual('23');
   });
 });

@@ -470,22 +470,17 @@ Available constants:
 - `Inf`: positive infinity
 - `NaN`: not-a-number
 
-Available functions/operators:
+Available functions/operators from `mathCommands`:
 
-- `value 'String'`: converts the value to a string
-- `value dp 'String:2'`: converts the value to a rounded string
-  (decimal places can be a positive or negative integer)
 - `value 'Number'`: converts the value to a number
-
-- `a b '+'`: adds two numbers or concatenates two strings (mixed
-  values are concatenated as strings)
+- `a b '+'`: adds two numbers
+- `a b c ... '+:n'`: adds many numbers
 - `a b '-'`: subtracts `b` from `a`
 - `a b '*'`: multiplies two numbers
 - `a b '/'`: divides `a` by `b`
 - `a b '//'`: divides `a` by `b`, returning the truncated integer
   result
-- `a b '^'`: raises `a` to the power of `b`, or if `a` is a string:
-  repeats the string `b` times
+- `a b '^'`: raises `a` to the power of `b`
 - `a b '%'`: returns the remainder of `a / b` (can be negative)
 - `a b 'mod'`: returns the *positive* remainder of `a / b`
 - `a 'neg'`: negates `a`
@@ -528,7 +523,15 @@ Available functions/operators:
 - `x 'trunc'`: returns the largest integer with absolute value less
   than or equal to `abs(x)` ("round towards zero")
 
+Available functions/operators from `stringCommands`:
+
+- `value 'String'`: converts the value to a string
+- `value dp 'String:2'`: converts the value to a rounded string
+  (decimal places can be a positive or negative integer)
 - `string 'length'`: returns the length of `string` in characters
+- `a b c ... 'concat:n'`: concatenates strings
+  (the default arity is 2)
+- `string count 'repeat'`: repeats `string` `count` times
 - `string search 'indexOf'`: returns the index of the first
   occurrence of `search` in `string` (0-based), or -1 if it is not
   found
@@ -561,13 +564,12 @@ Available functions/operators:
   end of the string.
 
 As a basic protection against memory exhaution attacks, the generated
-string length for the `^`, `padStart` and `padEnd` operations is
-capped to 1024 characters, and `String` only accepts decimal places
-within the range -20 &ndash; 20. These restrictions ensure that
-memory usage can only be linear in the number of operations, but
-could still become very high. As the risk cannot be fully mitigated,
-string operations are disabled by default and must be explicitly
-enabled by using `stringCommands`.
+string length for all operations is capped to 1024 characters, and
+`String` only accepts decimal places within the range -20 &ndash; 20.
+These restrictions ensure that memory usage can only be linear in the
+number of operations, but could still become very high. As the risk
+cannot be fully mitigated, string operations are disabled by default
+and must be explicitly enabled by using `stringCommands`.
 
 ## Other context methods
 
