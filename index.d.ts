@@ -1,6 +1,25 @@
-declare module 'json-immutability-helper' {
-  const SHARED_UNSET_TOKEN: unique symbol;
+const SHARED_UNSET_TOKEN: unique symbol;
 
+type DirectiveFn = <T>(old: Readonly<T>, args: ReadonlyArray<unknown>, context: Readonly<Context>) => T | typeof SHARED_UNSET_TOKEN;
+type ConditionFn = <T>(param: T) => (actual: T) => boolean;
+type EqualFn = (x: unknown, y: unknown) => boolean;
+type CopyFn = <T>(o: Readonly<T>) => T;
+
+interface Limits {
+  stringLength: number;
+  recursionDepth: number;
+  recursionBreadth: number;
+}
+
+interface Extension {
+  commands?: Record<string, DirectiveFn>;
+  conditions?: Record<string, ConditionFn>;
+  limits?: Partial<Limits>;
+  isEquals?: EqualFn;
+  copy?: CopyFn;
+}
+
+declare module 'json-immutability-helper' {
   interface ConditionValue<T> {
     equals?: T;
     greaterThanOrEqual?: T;
@@ -69,9 +88,6 @@ declare module 'json-immutability-helper' {
     ['merge', Partial<Readonly<T>>, Readonly<T>?] |
     { [K in keyof T]?: Spec<T[K]> };
 
-  type DirectiveFn<T> = (old: Readonly<T>, args: ReadonlyArray<any>, context: Readonly<Context>) => T | typeof SHARED_UNSET_TOKEN;
-  type ConditionFn<T> = (param: T) => (actual: T) => boolean;
-
   interface OptionsDisallowUnset {
     path?: string;
     allowUnset?: false;
@@ -81,41 +97,52 @@ declare module 'json-immutability-helper' {
     allowUnset: true;
   }
 
-  export class Context {
-    public isEquals: (x: unknown, y: unknown) => boolean;
-    public copy: <T>(o: Readonly<T>) => T;
+  type CombineFn = <T>(specs: Spec<T>[]) => Spec<T>;
+
+  function update<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset): T;
+  function update<T>(object: T, spec: UnsettableSpec<T>, options: OptionsAllowUnset): T | typeof SHARED_UNSET_TOKEN;
+  type Update = typeof update & {
+    readonly context: Context;
+    readonly combine: CombineFn;
+    readonly UNSET_TOKEN: typeof SHARED_UNSET_TOKEN;
+    readonly with: (...extensions: Extension[]) => Update;
+  };
+
+  class Context {
+    public readonly isEquals: EqualFn;
+    public readonly copy: CopyFn;
+    public readonly update: Update;
+    public readonly combine: CombineFn;
+    public readonly limits: Readonly<Limits>;
     public readonly UNSET_TOKEN: typeof SHARED_UNSET_TOKEN;
 
-    public constructor();
-
-    public extend<T>(directive: string, fn: DirectiveFn<T>): void;
-
-    public extendAll<T>(directives: { [key: string]: DirectiveFn<T> }): void;
-
-    public enableRiskyStringOps(): void;
-
-    public extendCondition<T>(name: string, check: ConditionFn<T>): void;
-
-    public extendConditionAll<T>(checks: { [key: string]: ConditionFn<T> }): void;
-
-    public update<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset): T;
-    public update<T>(object: T, spec: UnsettableSpec<T>, options: OptionsAllowUnset): T | typeof UNSET_TOKEN;
-
-    public combine<T>(specs: Spec<T>[]): Spec<T>;
+    public with(...extensions: Extension[]): Context;
 
     public makeConditionPredicate<T>(condition: Condition<T>[]): (v: T) => boolean;
 
     public invariant(
-      condition: any,
+      condition: unknown,
       message?: string | (() => string),
     ): asserts condition;
   }
 
-  const defaultContext: Context;
-  export const UNSET_TOKEN: typeof defaultContext.UNSET_TOKEN;
-  export const update: typeof defaultContext.update;
-  export const combine: typeof defaultContext.combine;
-  export const invariant: typeof defaultContext.invariant;
+  export const context: Context;
+  export const update: typeof context.update;
+  export const combine: typeof context.combine;
+  export const invariant: typeof context.invariant;
+  export const UNSET_TOKEN: typeof context.UNSET_TOKEN;
 
-  export default defaultContext;
+  export default context;
+}
+
+declare module 'json-immutability-helper/commands/list' {
+  export const listCommands: Readonly<Extension>;
+}
+
+declare module 'json-immutability-helper/commands/math' {
+  export const mathCommands: Readonly<Extension>;
+}
+
+declare module 'json-immutability-helper/commands/string' {
+  export const stringCommands: Readonly<Extension>;
 }

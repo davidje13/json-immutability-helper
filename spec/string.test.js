@@ -1,8 +1,5 @@
-const { Context } = require('../index');
-
-const context = new Context();
-context.enableRiskyStringOps();
-const { update } = context;
+const { stringCommands } = require('../commands/string');
+const { update } = require('../index').with(stringCommands);
 
 describe('replaceAll with enableRiskyStringOps', () => {
   it('operates on strings', () => {

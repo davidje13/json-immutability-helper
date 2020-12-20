@@ -1,9 +1,5 @@
-const defaultConditions = require('./conditions');
-const { defaultCommands, riskyStringCommands } = require('./commands');
-const {
-  MAX_RECURSION_DEPTH,
-  MAX_RECURSION_BREADTH,
-} = require('./limits');
+const { basicCommands } = require('./commands/basic');
+const { basicConditions } = require('./conditions/basic');
 
 function invariant(condition, msgFn) {
   if (!condition) {
@@ -16,17 +12,18 @@ const safeGet = (o, key) => (
   Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined
 );
 
+const addProperty = (o, key, value) => Object.defineProperty(o, key, {
+  value,
+  configurable: true,
+  enumerable: true,
+  writable: true,
+});
+
 const isOp = Array.isArray;
-const isEquals = (x, y) => (x === y);
 const isArrayIndex = (key, limit) => {
   const v = Number(key);
   return (v >= 0 && v < limit && v.toFixed(0) === key);
 };
-const copy = (o) => (
-  Array.isArray(o) ? [...o] :
-    (typeof o === 'object' && o) ? Object.assign({}, o) :
-      o
-);
 
 function getSeqSteps(spec) {
   if (isOp(spec) && spec[0] === 'seq') {
@@ -34,13 +31,6 @@ function getSeqSteps(spec) {
   }
   return [spec];
 }
-
-const addProperty = (o, key, value) => Object.defineProperty(o, key, {
-  value,
-  configurable: true,
-  enumerable: true,
-  writable: true,
-});
 
 function combineSpecs(spec1, spec2) {
   if (isOp(spec1) || isOp(spec2)) {
@@ -69,7 +59,7 @@ function conditionPartPredicate(condition, context) {
   const checks = Object.entries(condition)
     .filter(([key]) => (key !== 'key'))
     .map(([key, param]) => {
-      const type = context.conditionTypes.get(key);
+      const type = context.conditions.get(key);
       invariant(type, () => `unknown condition type: ${key}`);
       return type(param);
     });
@@ -80,7 +70,7 @@ function conditionPartPredicate(condition, context) {
   }
 
   if (!checks.length) {
-    checks.push(defaultConditions.notNullish());
+    checks.push(basicConditions.conditions.notNullish());
   }
   return (o) => {
     const v = safeGet(o, condition.key);
@@ -110,23 +100,21 @@ function bindAll(o, fns) {
 }
 
 class JsonContext {
-  constructor() {
+  constructor({ commands, conditions, limits, isEquals, copy }) {
     Object.assign(this, {
-      commands: new Map(),
-      conditionTypes: new Map(),
-      nestDepth: 0,
-      nestBreadth: 1,
+      commands: new Map(commands),
+      conditions: new Map(conditions),
+      limits,
       isEquals,
       copy,
+      nestDepth: 0,
+      nestBreadth: 1,
       UNSET_TOKEN,
       invariant,
     });
 
     bindAll(this, [
-      'extend',
-      'extendAll',
-      'extendCondition',
-      'extendConditionAll',
+      'with',
       'update',
       'applyMerge',
       'combine',
@@ -134,34 +122,26 @@ class JsonContext {
     ]);
 
     Object.assign(this.update, {
+      context: this,
       combine: this.combine,
       UNSET_TOKEN: this.UNSET_TOKEN,
+      with: (...extensions) => this.with(...extensions).update,
     });
-
-    this.extendAll(defaultCommands);
-    this.extendConditionAll(defaultConditions);
   }
 
-  extend(name, fn) {
-    this.commands.set(name, fn);
-  }
-
-  extendAll(commands) {
-    Object.entries(commands)
-      .forEach(([name, command]) => this.extend(name, command));
-  }
-
-  extendCondition(name, condition) {
-    this.conditionTypes.set(name, condition);
-  }
-
-  extendConditionAll(conditions) {
-    Object.entries(conditions)
-      .forEach(([name, cond]) => this.extendCondition(name, cond));
-  }
-
-  enableRiskyStringOps() {
-    this.extendAll(riskyStringCommands);
+  with(...overrides) {
+    const base = {
+      commands: [...this.commands.entries()],
+      conditions: [...this.conditions.entries()],
+      limits: Object.assign({}, this.limits),
+      isEquals: this.isEquals,
+      copy: this.copy,
+    };
+    return new JsonContext(overrides.reduce((v, cur) => Object.assign(v, cur, {
+      commands: [...v.commands, ...Object.entries(cur.commands || {})],
+      conditions: [...v.conditions, ...Object.entries(cur.conditions || {})],
+      limits: Object.assign(v.limits, cur.limits),
+    }), base));
   }
 
   /* eslint-disable-next-line max-statements */
@@ -266,8 +246,8 @@ class JsonContext {
     this.nestBreadth *= iterations;
 
     invariant(
-      this.nestDepth < MAX_RECURSION_DEPTH &&
-      this.nestBreadth < MAX_RECURSION_BREADTH,
+      this.nestDepth < this.limits.recursionDepth &&
+      this.nestBreadth < this.limits.recursionBreadth,
       `too much recursion: ${this.nestDepth} deep, ~${this.nestBreadth} items`
     );
 
@@ -280,16 +260,33 @@ class JsonContext {
   }
 }
 
-const defaultContext = new JsonContext();
+const BASE_CONFIG = {
+  commands: [],
+  conditions: [],
+  limits: {
+    stringLength: 10240,
+    recursionDepth: 10,
+    recursionBreadth: 100000,
+  },
+  isEquals: (x, y) => (x === y),
+  copy: (o) => (
+    Array.isArray(o) ? [...o] :
+      (typeof o === 'object' && o) ? Object.assign({}, o) :
+        o
+  ),
+};
+
+const defaultContext = new JsonContext(BASE_CONFIG)
+  .with(basicCommands, basicConditions);
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-exports.Context = JsonContext;
+exports.context = defaultContext;
 exports.update = defaultContext.update;
 exports.combine = defaultContext.combine;
 exports.invariant = invariant;
 exports.UNSET_TOKEN = UNSET_TOKEN;
 exports.default = defaultContext;
 
-module.exports = Object.assign(exports.default, { Context: JsonContext });
+module.exports = Object.assign(exports.default, { context: defaultContext });
 exports.default.default = module.exports;

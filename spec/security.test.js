@@ -1,4 +1,7 @@
-const { Context, UNSET_TOKEN } = require('../index');
+const { listCommands } = require('../commands/list');
+const { mathCommands } = require('../commands/math');
+const { stringCommands } = require('../commands/string');
+const { context, UNSET_TOKEN } = require('../index');
 
 const ATTACK_TARGETS = [
   { type: Object, factory: () => ({}) },
@@ -70,7 +73,6 @@ const PROTOTYPE_ATTACKS = [
 
 /* eslint-disable no-proto */
 describe('global prototype pollution protection', () => {
-  const context = new Context();
   const { update } = context;
 
   PROTOTYPE_ATTACKS.forEach((test) => describe(`update: ${test.name}`, () => {
@@ -132,7 +134,6 @@ describe('global prototype pollution protection', () => {
 });
 
 describe('local prototype pollution protection', () => {
-  const context = new Context();
   const { update } = context;
 
   function updateOrThrow(initial, spec) {
@@ -192,18 +193,16 @@ describe('local prototype pollution protection', () => {
 /* eslint-enable no-proto */
 
 describe('condition code injection attacks', () => {
-  const context = new Context();
   const { update } = context;
 
   it('does not execute arbitrary functions', () => {
-    expect(() => update([0], ['deleteWhere', { 'hasOwnProperty': 1 }]))
+    expect(() => update({}, ['updateIf', { 'hasOwnProperty': 1 }, ['unset']]))
       .toThrow('unknown condition type: hasOwnProperty');
   });
 });
 
 describe('RPN code injection attacks', () => {
-  const context = new Context();
-  const { update } = context;
+  const { update } = context.with(stringCommands);
 
   it('does not execute arbitrary functions', () => {
     expect(() => update(0, ['rpn', 0, '__proto__']))
@@ -217,9 +216,8 @@ describe('RPN code injection attacks', () => {
   });
 });
 
-describe('without enableRiskyStringOps', () => {
-  const context = new Context();
-  const { update } = context;
+describe('without string commands', () => {
+  const { update } = context.with(mathCommands);
 
   it('rejects rpn string operations by default', () => {
     expect(() => update('', ['rpn', '"v"'])).toThrow();
@@ -235,10 +233,8 @@ describe('without enableRiskyStringOps', () => {
   });
 });
 
-describe('with enableRiskyStringOps', () => {
-  const context = new Context();
-  context.enableRiskyStringOps();
-  const { update } = context;
+describe('with string commands', () => {
+  const { update } = context.with(stringCommands);
 
   it('allows rpn string operations', () => {
     expect(() => update('', ['rpn', '"v"'])).not.toThrow();
@@ -274,9 +270,7 @@ describe('with enableRiskyStringOps', () => {
 });
 
 describe('"billion laughs" protection', () => {
-  const context = new Context();
-  context.enableRiskyStringOps();
-  const { update } = context;
+  const { update } = context.with(listCommands, stringCommands);
 
   it('replaceAll prevents recursive growth', () => {
     const tm0 = Date.now();

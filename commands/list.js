@@ -1,6 +1,4 @@
-const config = require('./commandTypeCheck');
-const calc = require('./calc');
-const { MAX_TOTAL_STRING_SIZE } = require('./limits');
+const config = require('./util/commandTypeCheck');
 
 function findLast(list, check) {
   for (let i = list.length; (i--) > 0;) {
@@ -34,52 +32,7 @@ function updateAtIndex(context, [index, spec], original) {
   return context.update(original, { [index]: ['=', newItem] });
 }
 
-function makeRpnCommand(inputType, funcs) {
-  return config(inputType, 'operations:primitive...')((
-    object,
-    tokens,
-    context
-  ) => {
-    const result = calc.applyReversePolish(tokens, { x: object }, funcs);
-    context.invariant(
-      typeof object === typeof result,
-      'cannot change type of property'
-    );
-    return result;
-  });
-}
-
-const defaultCommands = {
-  set: config('*', 'value')((object, [value]) => value),
-
-  unset: config('*')((object, options, context) => context.UNSET_TOKEN),
-
-  init: config('*', 'value')((object, [value]) => (
-    (object === undefined) ? value : object
-  )),
-
-  updateIf: config('*', 'condition', 'spec', 'spec?')((
-    object,
-    [condition, spec, elseSpec = null],
-    context
-  ) => {
-    const check = context.makeConditionPredicate(condition);
-    if (!check(object)) {
-      if (!elseSpec) {
-        return object;
-      }
-      return context.update(object, elseSpec, { allowUnset: true });
-    }
-    return context.update(object, spec, { allowUnset: true });
-  }),
-
-  seq: config('*', 'spec...')((object, specs, context) => specs.reduce(
-    (o, spec) => context.update(o, spec, { allowUnset: true }),
-    object
-  )),
-
-  toggle: config('boolean')((object) => !object),
-
+const commands = {
   push: config('array', 'value...')((object, values) => (
     values.length ? Array.prototype.concat.call(object, values) : object
   )),
@@ -101,15 +54,6 @@ const defaultCommands = {
       }
     });
     return updatedObject || object;
-  }),
-
-  merge: config('object?', 'merge:object', 'initial:object?')((
-    object,
-    [value, init],
-    context
-  ) => {
-    const initedObject = (object === undefined) ? init : object;
-    return context.applyMerge(initedObject, Object.entries(value));
   }),
 
   insertBeforeFirstWhere: config('array', 'condition', 'value...')((
@@ -240,46 +184,8 @@ const defaultCommands = {
     const index = findLast(object, predicate);
     return updateAtIndex(context, [index, ['unset']], object);
   }),
-
-  add: config('number', 'number')((object, [value]) => object + value),
-
-  subtract: config('number', 'number')((object, [value]) => object - value),
-
-  rpn: makeRpnCommand('number', calc.MATH_FUNCTIONS),
 };
-
-const riskyStringCommands = {
-  replaceAll: config('string', 'find:string', 'replace:string')((
-    object,
-    [find, replace],
-    context
-  ) => {
-    if (!find || find === replace) {
-      return object;
-    }
-    const parts = String.prototype.split.call(object, find);
-    if (replace.length > find.length) {
-      const count = parts.length - 1;
-      const diff = count * (replace.length - find.length);
-      context.invariant(
-        object.length + diff <= MAX_TOTAL_STRING_SIZE,
-        'too much data'
-      );
-      context.incLoopNesting(count, () => null);
-    }
-    return parts.join(replace);
-  }),
-
-  rpn: makeRpnCommand('primitive', calc.ALL_FUNCTIONS),
-};
-
-// Aliases
-defaultCommands['='] = defaultCommands.set;
-defaultCommands['+'] = defaultCommands.add;
-defaultCommands['-'] = defaultCommands.subtract;
-defaultCommands['~'] = defaultCommands.toggle;
 
 module.exports = {
-  defaultCommands,
-  riskyStringCommands,
+  listCommands: { commands },
 };

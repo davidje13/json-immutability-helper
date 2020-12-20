@@ -15,17 +15,19 @@ npm install --save json-immutability-helper
 
 ## Motivation
 
-When working with collaborative state shared over a network, it can be
-desirable to share state deltas rather than full state objects. This
-allows parallel editing from different editors, and reduces bandwidth
-requirements.
+When working with collaborative state shared over a network, it can
+be desirable to share state deltas rather than full state objects.
+This allows parallel editing from different editors, and reduces
+bandwidth requirements.
 
-Sharing functions between browsers and servers is not desirable, as it
-introduces security concerns. Instead, this package provides a
-foundational set of primitive operations which cover typical mutations.
+Sharing functions between browsers and servers is not desirable, as
+it introduces security concerns. Instead, this package provides a
+foundational set of primitive operations which cover typical
+mutations.
 
 Because the operations are intended to be shared, all inputs are
-assumed to be potentially malicious, with necessary mitigations applied.
+assumed to be potentially malicious, with necessary mitigations
+applied.
 
 ## Usage
 
@@ -67,8 +69,8 @@ const updatedState = update(initialState, {
 // updatedState = { foo: { bar: { baz: 7 }, extra: 1 } }
 ```
 
-Note that arrays in the spec define commands. To navigate to a particular
-item in an array, use a number as an object key:
+Note that arrays in the spec define commands. To navigate to a
+particular item in an array, use a number as an object key:
 
 ```javascript
 const { update } = require('json-immutability-helper');
@@ -93,10 +95,11 @@ const spec = `
 `;
 ```
 
-With list commands:
+With list commands (note `.with(listCommands)`):
 
 ```javascript
-const { update } = require('json-immutability-helper');
+const { listCommands } = require('json-immutability-helper/commands/list');
+const { update } = require('json-immutability-helper').with(listCommands);
 
 const initialState = {
   items: [
@@ -183,8 +186,9 @@ const expectedItems = [1, 5, 5, 4];
 
 #### Working with objects
 
-A common use-case is working with lists of objects. In this situation,
-you can provide a `key` to test a particular property of the object:
+A common use-case is working with lists of objects. In this
+situation, you can provide a `key` to test a particular property of
+the object:
 
 ```javascript
 const items = [
@@ -249,16 +253,17 @@ Conditions can check multiple properties by wrapping them in an array
 You can add new conditions with:
 
 ```javascript
-update.extendCondition(
-  'conditionName',
-  (parameter) => (actualValue) => {
-    // parameter is the value assigned to the condition
-    // actualValue is the value of the object being tested
+const modifiedUpdate = update.with({
+  conditions: {
+    conditionName: (parameter) => (actualValue) => {
+      // parameter is the value assigned to the condition
+      // actualValue is the value of the object being tested
 
-    // example: greaterThan
-    return actualValue > parameter;
-  }
-);
+      // example: greaterThan
+      return actualValue > parameter;
+    },
+  },
+});
 ```
 
 ## Commands reference
@@ -298,7 +303,24 @@ update.extendCondition(
   (note that for mathematical operations it is usually better to
   use `rpn`, described below).
 
-### Array
+### Object
+
+- `['merge', object, initial?]`
+  Merges the keys of object into the current target. Similar to
+  calling `Object.assign`. If `initial` is provided and the target
+  value is undefined, it will be assigned the value of `initial`
+  before merging
+  (equivalent to `['seq', ['init', initial], ['merge', object]]`).
+
+### Boolean
+
+- `['toggle']` alias `['~']`
+  toggles the current value
+  (`true` &rarr; `false`; `false` &rarr; `true`).
+
+### List
+
+Use `.with(listCommands)` to enable these commands.
 
 - `['push', items...]`
   inserts one or more items at the end of the array.
@@ -337,12 +359,12 @@ update.extendCondition(
   `['updateAll', ['updateIf', condition, spec]]`.
 
 - `['updateFirstWhere', condition, spec]`
-  applies the given `spec` to the first item in the array which matches
-  the `condition`. If no item matches, does nothing.
+  applies the given `spec` to the first item in the array which
+  matches the `condition`. If no item matches, does nothing.
 
 - `['updateLastWhere', condition, spec]`
-  applies the given `spec` to the last item in the array which matches
-  the `condition`. If no item matches, does nothing.
+  applies the given `spec` to the last item in the array which
+  matches the `condition`. If no item matches, does nothing.
 
 - `['deleteWhere', condition]`
   deletes all items in the array which match the `condition`. If no
@@ -359,51 +381,40 @@ update.extendCondition(
   no item matches, does nothing. Same as
   `['updateLastWhere', condition, ['unset']]`.
 
-### Object
-
-- `['merge', object, initial?]`
-  Merges the keys of object into the current target. Similar to
-  calling `Object.assign`. If `initial` is provided and the target
-  value is undefined, it will be assigned the value of `initial`
-  before merging
-  (equivalent to `['seq', ['init', initial], ['merge', object]]`).
-
 ### String
+
+Use `.with(stringCommands)` to enable these commands.
 
 - `['replaceAll', search, replace]`
   replaces all occurrences of `search` in the string with `replace`.
   Note that the `search` is used as a literal, not as a regular
   expression.
-  Note that use of `replaceAll` is disabled unless `.enableRiskyStringOps()`
-  has been called.
 
 - `['rpn', operations...]`
   reverse Polish notation command; see below for details.
-  Note that this usage of `rpn` is disabled unless `.enableRiskyStringOps()`
-  has been called.
 
 ### Number
 
 - `['add', value]` alias `['+', value]`
-  adds the given `value` to the current value.
+  adds the given `value` to the current value. This is available in
+  the default command set and does not need an extension.
 
 - `['subtract', value]` alias `['-', value]`
-  subtracts the given `value` from the current value.
+  subtracts the given `value` from the current value. This is
+  available in the default command set and does not need an
+  extension.
+
+Use `.with(mathCommands)` to enable the following
+command:
 
 - `['rpn', operations...]`
   reverse Polish notation command; see below for details.
 
-### Boolean
-
-- `['toggle']` alias `['~']`
-  toggles the current value
-  (`true` &rarr; `false`; `false` &rarr; `true`).
-
 ### `rpn`
 
-The `rpn` command lets you specify updates in reverse Polish notation.
-This is especially useful for applying complex mathematical operations or
-string manipulations.
+The `rpn` command lets you specify updates in reverse Polish
+notation. This is especially useful for applying complex mathematical
+operations or string manipulations.
 
 Some examples:
 
@@ -418,16 +429,14 @@ update(5, ['rpn', 'x', 2, '*', 10, '+']); // = 20
 update(5, ['rpn', 'x', 'sin', 2, 'x', 'cos', '*', '+']); // ~= -0.3916
 ```
 
-String manipulation is also supported, but disabled by default due to its
-ability to construct large strings, which could be used by malicious clients
-to launch memory exhaustion attacks against a server. To enable string
-manipulation, call `.enableRiskyStringOps()` on the context:
+String manipulation is also supported, but should only be enabled if
+needed due to its ability to construct large strings, which could be
+used by malicious clients to launch memory exhaustion attacks against
+a server. To enable string manipulation, use `.with(stringCommands)`:
 
 ```javascript
-const defaultContext = require('json-immutability-helper');
-
-defaultContext.enableRiskyStringOps();
-const update = defaultContext.update;
+const { stringCommands } = require('json-immutability-helper/commands/string');
+const { update } = require('json-immutability-helper').with(stringCommands);
 
 // compute x.substr(4, 3)
 update('foo bar baz', ['rpn', 'x', 4, 3, 'substr']); // = bar
@@ -436,9 +445,10 @@ update('foo bar baz', ['rpn', 'x', 4, 3, 'substr']); // = bar
 update('3', ['rpn', 'x', 2, 'leftPad']); // = 03
 ```
 
-Some functions accept optional parameters or are variadic. By default it
-is assumed that the minimum number of parameters are passed to each function.
-To specify a different number, add `:<num>` to the end of the function name:
+Some functions accept optional parameters or are variadic. By default
+it is assumed that the minimum number of parameters are passed to
+each function. To specify a different number, add `:<num>` to the end
+of the function name:
 
 ```javascript
 // compute max(x, -x, 2)
@@ -448,8 +458,9 @@ update(4, ['rpn', 'x', 'x', 'neg', 2, 'max:3']); // = 4
 update(8, ['rpn', 'x', 2, 'log:2']); // = 3
 ```
 
-String literals can be specified as JSON-encoded strings (this means that for
-transport, strings may be double-encoded). For example: `'"foo"'`.
+String literals can be specified as JSON-encoded strings (this means
+that for transport, strings may be double-encoded).
+For example: `'"foo"'`.
 
 Available constants:
 
@@ -462,32 +473,36 @@ Available constants:
 Available functions/operators:
 
 - `value 'String'`: converts the value to a string
-- `value dp 'String:2'`: converts the value to a rounded string (decimal places
-  can be a positive or negative integer)
+- `value dp 'String:2'`: converts the value to a rounded string
+  (decimal places can be a positive or negative integer)
 - `value 'Number'`: converts the value to a number
 
-- `a b '+'`: adds two numbers or concatenates two strings (mixed values are
-  concatenated as strings)
+- `a b '+'`: adds two numbers or concatenates two strings (mixed
+  values are concatenated as strings)
 - `a b '-'`: subtracts `b` from `a`
 - `a b '*'`: multiplies two numbers
 - `a b '/'`: divides `a` by `b`
-- `a b '//'`: divides `a` by `b`, returning the truncated integer result
-- `a b '^'`: raises `a` to the power of `b`, or if `a` is a string: repeats the
-  string `b` times
+- `a b '//'`: divides `a` by `b`, returning the truncated integer
+  result
+- `a b '^'`: raises `a` to the power of `b`, or if `a` is a string:
+  repeats the string `b` times
 - `a b '%'`: returns the remainder of `a / b` (can be negative)
 - `a b 'mod'`: returns the *positive* remainder of `a / b`
 - `a 'neg'`: negates `a`
 - `a 'abs'`: returns the absolute value of `a`
 - `value 'log'`: returns the natural logarithm of `value`
-- `value base 'log:2'`: returns the logarithm of `value` in base `base`
+- `value base 'log:2'`: returns the logarithm of `value` in base
+  `base`
 - `value 'log2'`: returns the logarithm of `value` in base 2
   (same as `value 2 'log:2'`)
 - `value 'log10'`: returns the logarithm of `value` in base 10
   (same as `value 10 'log:2'`)
 - `value 'exp'`: returns the exponent of `value` (i.e. `e^value`)
 - `value base 'exp:2'`: returns `base^value`
-- `v1 v2 v3 ... 'max:n'`: returns the largest value (the default arity is 2)
-- `v1 v2 v3 ... 'min:n'`: returns the smallest value (the default arity is 2)
+- `v1 v2 v3 ... 'max:n'`: returns the largest value
+  (the default arity is 2)
+- `v1 v2 v3 ... 'min:n'`: returns the smallest value
+  (the default arity is 2)
 - `a b 'bitor'`: returns the bitwise-or of `a` and `b`
 - `a b 'bitand'`: returns the bitwise-and of `a` and `b`
 - `a b 'bitxor'`: returns the bitwise-xor of `a` and `b`
@@ -506,89 +521,134 @@ Available functions/operators:
 - `x 'atanh'`: returns `atanh(x)`
 - `x 'round'`: rounds `x` to the nearest integer ("round halves-up")
   (for control over the number of decimal places, see `'String'`)
-- `x 'floor'`: returns the highest integer which is less than or equal to `x`
-  ("round down")
-- `x 'ceil'`: returns the lowest integer which is greater than or equal to `x`
-  ("round up")
-- `x 'trunc'`: returns the largest integer with absolute value less than or
-  equal to `abs(x)` ("round towards zero")
+- `x 'floor'`: returns the highest integer which is less than or
+  equal to `x` ("round down")
+- `x 'ceil'`: returns the lowest integer which is greater than or
+  equal to `x` ("round up")
+- `x 'trunc'`: returns the largest integer with absolute value less
+  than or equal to `abs(x)` ("round towards zero")
 
 - `string 'length'`: returns the length of `string` in characters
-- `string search 'indexOf'`: returns the index of the first occurrence of
-  `search` in `string` (0-based), or -1 if it is not found
-- `string search start 'indexOf:3'`: returns the index of the first occurrence
-  of `search` in `string`, skipping the first `start` characters
-- `string search 'lastIndexOf'`: returns the index of the last occurrence of
-  `search` in `string` (0-based), or -1 if it is not found
-- `string search end 'lastIndexOf:3'`: returns the index of the last occurrence
-  of `search` in `string` within the range up to `end`
-- `string length 'padStart'`: pads the start of `string` with spaces until it
-  is at least `length` characters long
-- `string length padding 'padStart:3'`: pads the start of `string` with
-  `padding` until it is at least `length` characters long (fragments of the
-  `padding` string may be used)
-- `string length 'padEnd'`: pads the end of `string` with spaces until it
-  is at least `length` characters long
+- `string search 'indexOf'`: returns the index of the first
+  occurrence of `search` in `string` (0-based), or -1 if it is not
+  found
+- `string search start 'indexOf:3'`: returns the index of the first
+  occurrence of `search` in `string`, skipping the first `start`
+  characters
+- `string search 'lastIndexOf'`: returns the index of the last
+  occurrence of `search` in `string` (0-based), or -1 if it is not
+  found
+- `string search end 'lastIndexOf:3'`: returns the index of the last
+  occurrence of `search` in `string` within the range up to `end`
+- `string length 'padStart'`: pads the start of `string` with spaces
+  until it is at least `length` characters long
+- `string length padding 'padStart:3'`: pads the start of `string`
+  with `padding` until it is at least `length` characters long
+  (fragments of the `padding` string may be used)
+- `string length 'padEnd'`: pads the end of `string` with spaces
+  until it is at least `length` characters long
 - `string length padding 'padEnd:3'`: pads the end of `string` with
-  `padding` until it is at least `length` characters long (fragments of the
-  `padding` string may be used)
-- `string from 'slice'`: returns a substring of `string` from `from` to the
-  end of the string. If `from` is negative, it counts from the end of the
-  string.
-- `string from to 'slice:3'`: returns a substring of `string` from `from` to
-  `to` (exclusive). If `from` or `to` are negative, they cound from the end
-  of the string.
-- `string from length 'substr'`: returns a substring of `string` from `from`
-  of length `length`. If `from` is negative it counts from the end of the
-  string.
+  `padding` until it is at least `length` characters long (fragments
+  of the `padding` string may be used)
+- `string from 'slice'`: returns a substring of `string` from `from`
+  to the end of the string. If `from` is negative, it counts from the
+  end of the string.
+- `string from to 'slice:3'`: returns a substring of `string` from
+  `from` to `to` (exclusive). If `from` or `to` are negative, they
+  count from the end of the string.
+- `string from length 'substr'`: returns a substring of `string` from
+  `from` of length `length`. If `from` is negative it counts from the
+  end of the string.
 
-As a basic protection against memory exhaution attacks, the generated string
-length for the `^`, `padStart` and `padEnd` operations is capped to 1024
-characters, and `String` only accepts decimal places within the range -20
-&ndash; 20. These restrictions ensure that memory usage can only be linear in
-the number of operations, but could still become very high. As the risk
-cannot be fully mitigated, string operations are disabled by default and must
-be explicitly enabled by calling `enableRiskyStringOps`.
+As a basic protection against memory exhaution attacks, the generated
+string length for the `^`, `padStart` and `padEnd` operations is
+capped to 1024 characters, and `String` only accepts decimal places
+within the range -20 &ndash; 20. These restrictions ensure that
+memory usage can only be linear in the number of operations, but
+could still become very high. As the risk cannot be fully mitigated,
+string operations are disabled by default and must be explicitly
+enabled by using `stringCommands`.
 
 ## Other context methods
 
-You can access the default context, or create your own scoped context:
+You can access the default context, or create your own scoped
+context:
 
 ```javascript
 const defaultContext = require('json-immutability-helper');
 ```
 
 ```javascript
-const { Context } = require('json-immutability-helper');
-const myContext = new Context();
+const defaultContext = require('json-immutability-helper');
+const myContext = defaultContext.with(/* extensions here */);
 ```
 
-- `.extend(name, (object, args, context) => newValue)`
-  adds a new command which can be used in the same places as built-in
-  commands. `object` is the previous value for the current position.
-  `args` is an array of parameters (excluding the command name).
-  `context` is an object which contains the methods listed here, as
-  well as `update`.
+- `.with(...extensions)`
+  returns a new context which copies the current context with the
+  given extensions added. Does not mutate the current context.
+  If called with no extensions, this just makes a copy of the current
+  context, though this is generally not useful (the context is
+  immutable anyway).
 
-- `.extendAll(object)`
-  same as calling `extend` for all key/value pairs in the given object.
+  Extensions can be:
 
-- `.enableRiskyStringOps()`
-  enables `replaceAll` and the string manipulation operators in the `rpn`
-  command, which are disabled by default due to their potential to amplify
-  memory exhaustion attacks.
+  - `listCommands`: `require('json-immutability-helper/commands/list')`
+  - `mathCommands`: `require('json-immutability-helper/commands/math')`
+  - `stringCommands`: `require('json-immutability-helper/commands/string')`
 
-- `.extendCondition(name, (param) => (actual) => boolean)`
-  adds a new condition which can be used in the same places as built-in
-  conditions.
+  Or a custom extension (all fields are optional; any omitted field
+  is left unchanged):
 
-- `.extendConditionAll(object)`
-  same as calling `extendCondition` for all key/value pairs in the
-  given object.
+  ```javascript
+  const myExtension = {
+    commands: {
+      myCommand: (object, args, context) => newValue,
+      /* etc. */
+    },
+    conditions: {
+      myCondition: (param) => (actual) => boolean,
+      /* etc. */
+    },
+    limits: {
+      stringLength: 1024,
+      recursionDepth: 10,
+      recursionBreadth: 10000,
+    },
+    isEquals: (x, y) => (x === y),
+    copy: (o) => myCopyFunction(o),
+  }
+  ```
+
+  The `commands` section defines new commands which can be used in
+  the same places as built-in commands. `object` is the previous
+  value for the current position. `args` is an array of parameters
+  (excluding the command name). `context` is an object which contains
+  the methods listed here, as well as `update`.
+
+  The `conditions` section defines new conditions which can be used
+  in the same places as built-in conditions.
+
+  The `limits` are used by various built-in commands to ensure
+  resource usage does not grow too high. You can omit the entire
+  section or individual entries to leave the defaults, or specify
+  higher or lower limits.
+
+  `isEquals` is the function used internally to determine whether a
+  command caused a value to change (if this returns `false`, the
+  original value will be used rather than the new value)
+
+  `copy` is the function used internally to make shallow copies of
+  data structures. The default implementation can clone objects,
+  arrays, and primitive values.
+
+  Note that as a convenience it is also possible to call `.with` on
+  the `update` function itself. This does the same thing, but returns
+  a new `update` function rather than a new `context` (equivalent to
+  calling `update.context.with(...).update`).
 
 - `.combine(specs)`
-  generates a single spec which is equivalent to applying all the given
-  specs sequentially. Conceptually this is identical to using
+  generates a single spec which is equivalent to applying all the
+  given specs sequentially. Conceptually this is identical to using
   `['seq', ...specs]`, but `combine` optimises common paths where
   possible.
   Note that the specs must be provided in an array, not as variadic
@@ -609,3 +669,35 @@ available as direct imports:
 ```javascript
 const { update, combine, invariant } = require('json-immutability-helper');
 ```
+
+## Extending with .with()
+
+By default, `json-immutability-helper` exposes minimal commands for
+reduced code size and increased security. If you need additional
+commands, you can add built-in extensions (see the command list above
+to see which commands need which extensions). Note that if you do not
+need a particular extension you should not enable it, as all of these
+have tradeoffs with bundle size and potential attacks (e.g. resource
+exhaustion by generating large strings).
+
+```javascript
+const { listCommands } = require('json-immutability-helper/commands/list');
+const { mathCommands } = require('json-immutability-helper/commands/math');
+const { stringCommands } = require('json-immutability-helper/commands/string');
+const { update } = require('json-immutability-helper').with(listCommands, mathCommands, stringCommands);
+```
+
+or with ES6 imports:
+
+```javascript
+import { listCommands } from 'json-immutability-helper/commands/list';
+import { mathCommands } from 'json-immutability-helper/commands/math';
+import { stringCommands } from 'json-immutability-helper/commands/string';
+import context from 'json-immutability-helper';
+
+const { update } = context.with(listCommands, mathCommands, stringCommands);
+```
+
+Avoid calling `.with` inside functions or in loops. Ideally it should
+be called once, and the resulting `update` function can be called
+many times.

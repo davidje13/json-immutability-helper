@@ -1,6 +1,4 @@
-const { Context } = require('../index');
-
-const context = new Context();
+const defaultContext = require('../index');
 
 const initial = {
   foo: 'bar',
@@ -8,10 +6,12 @@ const initial = {
   value: 5,
 };
 
-function matches(condition, state = initial) {
-  const updatedState = context.update([state], ['deleteWhere', condition]);
-
-  return updatedState.length === 0;
+function matches(condition, state = initial, context = defaultContext) {
+  const updatedState = context.update(
+    state,
+    ['updateIf', condition, ['set', 'match']]
+  );
+  return updatedState === 'match';
 }
 
 describe('unknown condition', () => {
@@ -219,23 +219,39 @@ describe('multiple conditions on multiple properties', () => {
   });
 });
 
-describe('extendCondition', () => {
+describe('with', () => {
   it('adds custom conditions', () => {
-    context.extendCondition('multiple', (c) => (v) => ((v % c) === 0));
+    const ctx = defaultContext.with({
+      conditions: {
+        'multiple': (c) => (v) => ((v % c) === 0),
+      },
+    });
 
-    expect(matches({multiple: 3}, 9)).toEqual(true);
-    expect(matches({multiple: 3}, 10)).toEqual(false);
+    expect(matches({multiple: 3}, 9, ctx)).toEqual(true);
+    expect(matches({multiple: 3}, 10, ctx)).toEqual(false);
   });
-});
 
-describe('extendConditionAll', () => {
+  it('preserves existing conditions', () => {
+    const ctx = defaultContext.with({
+      conditions: {
+        'multiple': (c) => (v) => ((v % c) === 0),
+      },
+    });
+
+    expect(matches({equals: 'bar'}, 'bar', ctx)).toEqual(true);
+  });
+
   it('adds multiple custom conditions', () => {
-    const longerThan = (c) => (v) => (v.length > c);
-    const shorterThan = (c) => (v) => (v.length < c);
-    context.extendConditionAll({longerThan, shorterThan});
+    const ctx = defaultContext.with({
+      conditions: {
+        longerThan: (c) => (v) => (v.length > c),
+        shorterThan: (c) => (v) => (v.length < c),
+      },
+    });
 
-    expect(matches({longerThan: 3, shorterThan: 5}, 'abcd')).toEqual(true);
-    expect(matches({longerThan: 3, shorterThan: 5}, 'ab')).toEqual(false);
-    expect(matches({longerThan: 3, shorterThan: 5}, 'abcdef')).toEqual(false);
+    const condition = {longerThan: 3, shorterThan: 5};
+    expect(matches(condition, 'abcd', ctx)).toEqual(true);
+    expect(matches(condition, 'ab', ctx)).toEqual(false);
+    expect(matches(condition, 'abcdef', ctx)).toEqual(false);
   });
 });

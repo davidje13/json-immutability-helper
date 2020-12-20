@@ -1,10 +1,9 @@
-const { update, Context } = require('../index');
+const defaultContext = require('../index');
 
-describe('Context', () => {
+describe('with', () => {
   it('scopes command mutations', () => {
-    const context1 = new Context();
-    const context2 = new Context();
-    context1.extend('foo', () => true);
+    const context1 = defaultContext.with({ commands: { foo: () => true } });
+    const context2 = defaultContext.with();
 
     const spec = ['foo'];
     expect(() => context1.update({}, spec)).not.toThrow();
@@ -12,18 +11,18 @@ describe('Context', () => {
   });
 
   it('scopes command mutations from the global update', () => {
-    const context = new Context();
-    context.extend('foo', () => true);
+    const context = defaultContext.with({ commands: { foo: () => true } });
 
     const spec = ['foo'];
     expect(() => context.update({}, spec)).not.toThrow();
-    expect(() => update({}, spec)).toThrow();
+    expect(() => defaultContext.update({}, spec)).toThrow();
   });
 
   it('scopes condition mutations', () => {
-    const context1 = new Context();
-    const context2 = new Context();
-    context1.extendCondition('scopedMultiple', (c) => (v) => ((v % c) === 0));
+    const context1 = defaultContext.with({ conditions: {
+      scopedMultiple: (c) => (v) => ((v % c) === 0),
+    } });
+    const context2 = defaultContext.with();
 
     const spec = ['updateIf', {scopedMultiple: 3}, ['=', 1]];
     expect(() => context1.update(9, spec)).not.toThrow();
@@ -31,11 +30,12 @@ describe('Context', () => {
   });
 
   it('scopes condition mutations from the global update', () => {
-    const context = new Context();
-    context.extendCondition('scopedMultiple', (c) => (v) => ((v % c) === 0));
+    const context = defaultContext.with({ conditions: {
+      scopedMultiple: (c) => (v) => ((v % c) === 0),
+    } });
 
     const spec = ['updateIf', {scopedMultiple: 3}, ['=', 1]];
     expect(() => context.update(9, spec)).not.toThrow();
-    expect(() => update(9, spec)).toThrow();
+    expect(() => defaultContext.update(9, spec)).toThrow();
   });
 });

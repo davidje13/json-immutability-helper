@@ -1,4 +1,10 @@
-const calc = require('../calc').applyReversePolish;
+const { rpn } = require('../commands/util/rpn');
+const { ALL_FUNCTIONS } = require('../commands/string');
+
+const CONTEXT = { limits: { stringLength: 1000 } };
+
+const execRpn = rpn(ALL_FUNCTIONS);
+const calc = (tokens, values) => execRpn(tokens, values, CONTEXT);
 
 describe('calc', () => {
   it('computes results of reverse-polish-notation expressions', () => {
@@ -16,13 +22,8 @@ describe('calc', () => {
     expect(() => calc(['"invalid \\. escape"'])).toThrow();
   });
 
-  it('accepts custom variables and known constants', () => {
+  it('accepts custom variables', () => {
     expect(calc(['foo'], { foo: 7 })).toEqual(7);
-
-    expect(calc(['pi'])).toEqual(Math.PI);
-    expect(calc(['e'])).toEqual(Math.E);
-    expect(calc(['Inf'])).toEqual(Number.POSITIVE_INFINITY);
-    expect(calc(['NaN'])).toEqual(Number.NaN);
   });
 
   it('performs calculations with custom variables', () => {
@@ -197,9 +198,9 @@ describe('trig functions', () => {
   });
 
   it('sin, cos, tan, asin, acos, atan', () => {
-    expect(calc(['pi', 2, '/', 'sin'])).toBeCloseTo(1);
-    expect(calc(['pi', 2, '/', 'cos'])).toBeCloseTo(0);
-    expect(calc(['pi', 4, '/', 'tan'])).toBeCloseTo(1);
+    expect(calc([Math.PI, 2, '/', 'sin'])).toBeCloseTo(1);
+    expect(calc([Math.PI, 2, '/', 'cos'])).toBeCloseTo(0);
+    expect(calc([Math.PI, 4, '/', 'tan'])).toBeCloseTo(1);
     expect(calc([1, 'asin'])).toBeCloseTo(Math.PI / 2);
     expect(calc([0, 'acos'])).toBeCloseTo(Math.PI / 2);
     expect(calc([1, 'atan'])).toBeCloseTo(Math.PI / 4);

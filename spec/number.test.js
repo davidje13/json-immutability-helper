@@ -1,3 +1,4 @@
+const { mathCommands } = require('../commands/math');
 const { update } = require('../index');
 
 describe('add', () => {
@@ -49,32 +50,34 @@ describe('subtract', () => {
 });
 
 describe('rpn', () => {
+  const update2 = update.context.with(mathCommands).update;
+
   it('operates on numbers', () => {
-    expect(() => update([], ['rpn']))
+    expect(() => update2([], ['rpn']))
       .toThrow('/ rpn: expected target to be number');
   });
 
   it('takes command tokens', () => {
-    expect(() => update(0, ['rpn', []]))
+    expect(() => update2(0, ['rpn', []]))
       .toThrow('/ rpn: expected [command, operations...]');
   });
 
   it('rejects changes of type', () => {
-    expect(() => update(7, ['rpn', '"abc"'])).toThrow();
+    expect(() => update2(7, ['rpn', '"abc"'])).toThrow();
   });
 
   it('applies a calculation in reverse Polish notation', () => {
-    const result = update(0, ['rpn', 7, 2, '+']);
+    const result = update2(0, ['rpn', 7, 2, '+']);
     expect(result).toEqual(9);
   });
 
   it('provides the original numeric value as x', () => {
-    const result = update(2, ['rpn', 10, 'x', '/']);
+    const result = update2(2, ['rpn', 10, 'x', '/']);
     expect(result).toEqual(5);
   });
 
   it('handles multiple operations', () => {
-    const result = update(9, ['rpn', 'x', 'x', 1, '+', '/']);
+    const result = update2(9, ['rpn', 'x', 'x', 1, '+', '/']);
     expect(result).toEqual(0.9);
   });
 });

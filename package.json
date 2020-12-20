@@ -1,15 +1,12 @@
 {
   "name": "json-immutability-helper",
-  "version": "2.4.1",
+  "version": "3.0.0-alpha.1",
   "description": "json-serialisable mutability helpers, built on immutability-helper",
   "files": [
     "index.js",
-    "conditions.js",
-    "commands.js",
-    "commandTypeCheck.js",
-    "calc.js",
-    "limits.js",
-    "index.d.ts"
+    "index.d.ts",
+    "commands",
+    "conditions"
   ],
   "main": "index.js",
   "types": "index.d.ts",
@@ -19,6 +16,7 @@
     "posttest": "npm run lint",
     "test:watch": "jest --watch"
   },
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/davidje13/json-immutability-helper.git"
