@@ -1,30 +1,30 @@
-const SHARED_UNSET_TOKEN: unique symbol;
-
-type DirectiveFn = <T>(old: Readonly<T>, args: ReadonlyArray<unknown>, context: Readonly<Context>) => T | typeof SHARED_UNSET_TOKEN;
-type ConditionFn = <T>(param: T) => (actual: T) => boolean;
-type EqualFn = (x: unknown, y: unknown) => boolean;
-type CopyFn = <T>(o: Readonly<T>) => T;
-
-interface Limits {
-  stringLength: number;
-  recursionDepth: number;
-  recursionBreadth: number;
-}
-
-type RpnValue = number | string;
-type RpnOperator = [number, number, (...args: RpnValue[]) => RpnValue];
-
-interface Extension {
-  commands?: Record<string, DirectiveFn>;
-  conditions?: Record<string, ConditionFn>;
-  rpnOperators?: Record<string, RpnOperator>;
-  rpnConstants?: Record<string, RpnValue>;
-  limits?: Partial<Limits>;
-  isEquals?: EqualFn;
-  copy?: CopyFn;
-}
-
 declare module 'json-immutability-helper' {
+  const SHARED_UNSET_TOKEN: unique symbol;
+
+  type DirectiveFn = <T>(old: Readonly<T>, args: ReadonlyArray<unknown>, context: Readonly<Context>) => T | typeof SHARED_UNSET_TOKEN;
+  type ConditionFn = <T>(param: T) => (actual: T) => boolean;
+  type EqualFn = (x: unknown, y: unknown) => boolean;
+  type CopyFn = <T>(o: Readonly<T>) => T;
+
+  interface Limits {
+    stringLength: number;
+    recursionDepth: number;
+    recursionBreadth: number;
+  }
+
+  type RpnValue = number | string;
+  type RpnOperator = [number, number, (...args: RpnValue[]) => RpnValue];
+
+  export interface Extension {
+    commands?: Record<string, DirectiveFn>;
+    conditions?: Record<string, ConditionFn>;
+    rpnOperators?: Record<string, RpnOperator>;
+    rpnConstants?: Record<string, RpnValue>;
+    limits?: Partial<Limits>;
+    isEquals?: EqualFn;
+    copy?: CopyFn;
+  }
+
   interface ConditionValue<T> {
     equals?: T;
     greaterThanOrEqual?: T;
@@ -104,9 +104,9 @@ declare module 'json-immutability-helper' {
 
   type CombineFn = <T>(specs: Spec<T>[]) => Spec<T>;
 
-  function update<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset): T;
-  function update<T>(object: T, spec: UnsettableSpec<T>, options: OptionsAllowUnset): T | typeof SHARED_UNSET_TOKEN;
-  type Update = typeof update & {
+  function updateFn<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset): T;
+  function updateFn<T>(object: T, spec: UnsettableSpec<T>, options: OptionsAllowUnset): T | typeof SHARED_UNSET_TOKEN;
+  type Update = typeof updateFn & {
     readonly context: Context;
     readonly combine: CombineFn;
     readonly UNSET_TOKEN: typeof SHARED_UNSET_TOKEN;
@@ -141,13 +141,16 @@ declare module 'json-immutability-helper' {
 }
 
 declare module 'json-immutability-helper/commands/list' {
+  import type { Extension } from 'json-immutability-helper';
   export const listCommands: Readonly<Extension>;
 }
 
 declare module 'json-immutability-helper/commands/math' {
+  import type { Extension } from 'json-immutability-helper';
   export const mathCommands: Readonly<Extension>;
 }
 
 declare module 'json-immutability-helper/commands/string' {
+  import type { Extension } from 'json-immutability-helper';
   export const stringCommands: Readonly<Extension>;
 }
