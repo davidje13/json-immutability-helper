@@ -9,6 +9,5 @@ const conditions = {
   notNullish: () => (v) => (v != null),
 };
 
-module.exports = {
-  basicConditions: { conditions },
-};
+const basicConditions = { conditions };
+module.exports = basicConditions;

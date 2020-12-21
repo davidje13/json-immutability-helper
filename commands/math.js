@@ -41,15 +41,14 @@ const commands = {
   rpn: rpnCommand,
 };
 
-module.exports = {
-  mathCommands: {
-    commands,
-    rpnOperators,
-    rpnConstants: {
-      e: Math.E,
-      pi: Math.PI,
-      Inf: inf,
-      NaN: Number.NaN,
-    },
+const mathCommands = {
+  commands,
+  rpnOperators,
+  rpnConstants: {
+    e: Math.E,
+    pi: Math.PI,
+    Inf: inf,
+    NaN: Number.NaN,
   },
 };
+module.exports = mathCommands;

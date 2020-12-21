@@ -1,6 +1,6 @@
-const { listCommands } = require('../commands/list');
-const { mathCommands } = require('../commands/math');
-const { stringCommands } = require('../commands/string');
+const listCommands = require('../commands/list');
+const mathCommands = require('../commands/math');
+const stringCommands = require('../commands/string');
 const { context, UNSET_TOKEN } = require('../index');
 
 const ATTACK_TARGETS = [

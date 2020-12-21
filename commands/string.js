@@ -79,9 +79,8 @@ const commands = {
   rpn: rpnCommand,
 };
 
-module.exports = {
-  stringCommands: {
-    commands,
-    rpnOperators,
-  },
+const stringCommands = {
+  commands,
+  rpnOperators,
 };
+module.exports = stringCommands;

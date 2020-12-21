@@ -1,5 +1,5 @@
-const { mathCommands } = require('../commands/math');
-const { stringCommands } = require('../commands/string');
+const mathCommands = require('../commands/math');
+const stringCommands = require('../commands/string');
 const { update } = require('../index').with(mathCommands, stringCommands);
 
 describe('replaceAll with stringCommands', () => {

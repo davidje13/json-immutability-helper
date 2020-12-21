@@ -1,4 +1,4 @@
-const { listCommands } = require('../commands/list');
+const listCommands = require('../commands/list');
 const { update } = require('../index').with(listCommands);
 
 const initial = ['a', 'b', 'c'];

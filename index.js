@@ -1,5 +1,5 @@
-const { basicCommands } = require('./commands/basic');
-const { basicConditions } = require('./conditions/basic');
+const basicCommands = require('./commands/basic');
+const basicConditions = require('./conditions/basic');
 
 function invariant(condition, msgFn) {
   if (!condition) {

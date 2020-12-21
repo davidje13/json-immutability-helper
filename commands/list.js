@@ -186,6 +186,5 @@ const commands = {
   }),
 };
 
-module.exports = {
-  listCommands: { commands },
-};
+const listCommands = { commands };
+module.exports = listCommands;

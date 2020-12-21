@@ -51,6 +51,5 @@ commands['+'] = commands.add;
 commands['-'] = commands.subtract;
 commands['~'] = commands.toggle;
 
-module.exports = {
-  basicCommands: { commands },
-};
+const basicCommands = { commands };
+module.exports = basicCommands;

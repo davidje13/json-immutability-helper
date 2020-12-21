@@ -98,7 +98,7 @@ const spec = `
 With list commands (note `.with(listCommands)`):
 
 ```javascript
-const { listCommands } = require('json-immutability-helper/commands/list');
+const listCommands = require('json-immutability-helper/commands/list');
 const { update } = require('json-immutability-helper').with(listCommands);
 
 const initialState = {
@@ -435,7 +435,7 @@ used by malicious clients to launch memory exhaustion attacks against
 a server. To enable string manipulation, use `.with(stringCommands)`:
 
 ```javascript
-const { stringCommands } = require('json-immutability-helper/commands/string');
+const stringCommands = require('json-immutability-helper/commands/string');
 const { update } = require('json-immutability-helper').with(stringCommands);
 
 // compute x.substr(4, 3)
@@ -683,18 +683,18 @@ have tradeoffs with bundle size and potential attacks (e.g. resource
 exhaustion by generating large strings).
 
 ```javascript
-const { listCommands } = require('json-immutability-helper/commands/list');
-const { mathCommands } = require('json-immutability-helper/commands/math');
-const { stringCommands } = require('json-immutability-helper/commands/string');
+const listCommands = require('json-immutability-helper/commands/list');
+const mathCommands = require('json-immutability-helper/commands/math');
+const stringCommands = require('json-immutability-helper/commands/string');
 const { update } = require('json-immutability-helper').with(listCommands, mathCommands, stringCommands);
 ```
 
 or with ES6 imports:
 
 ```javascript
-import { listCommands } from 'json-immutability-helper/commands/list';
-import { mathCommands } from 'json-immutability-helper/commands/math';
-import { stringCommands } from 'json-immutability-helper/commands/string';
+import listCommands from 'json-immutability-helper/commands/list';
+import mathCommands from 'json-immutability-helper/commands/math';
+import stringCommands from 'json-immutability-helper/commands/string';
 import context from 'json-immutability-helper';
 
 const { update } = context.with(listCommands, mathCommands, stringCommands);

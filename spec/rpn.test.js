@@ -1,6 +1,6 @@
 const { rpn } = require('../commands/util/rpn');
-const { mathCommands } = require('../commands/math');
-const { stringCommands } = require('../commands/string');
+const mathCommands = require('../commands/math');
+const stringCommands = require('../commands/string');
 
 const calc = rpn(
   Object.assign(

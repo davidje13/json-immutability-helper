@@ -1,4 +1,4 @@
-const { mathCommands } = require('../commands/math');
+const mathCommands = require('../commands/math');
 const { update } = require('../index');
 
 describe('add', () => {

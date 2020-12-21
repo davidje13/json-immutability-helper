@@ -142,15 +142,18 @@ declare module 'json-immutability-helper' {
 
 declare module 'json-immutability-helper/commands/list' {
   import type { Extension } from 'json-immutability-helper';
-  export const listCommands: Readonly<Extension>;
+  const extension: Readonly<Extension>;
+  export default extension;
 }
 
 declare module 'json-immutability-helper/commands/math' {
   import type { Extension } from 'json-immutability-helper';
-  export const mathCommands: Readonly<Extension>;
+  const extension: Readonly<Extension>;
+  export default extension;
 }
 
 declare module 'json-immutability-helper/commands/string' {
   import type { Extension } from 'json-immutability-helper';
-  export const stringCommands: Readonly<Extension>;
+  const extension: Readonly<Extension>;
+  export default extension;
 }

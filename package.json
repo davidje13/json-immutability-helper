@@ -4,15 +4,23 @@
   "description": "json-serialisable mutability helpers, built on immutability-helper",
   "files": [
     "index.js",
+    "index.mjs",
     "index.d.ts",
     "commands",
     "conditions"
   ],
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./commands/*": "./commands/*.js"
+  },
   "scripts": {
     "lint": "eslint --format codeframe --ext mjs,js .",
-    "test": "jest",
+    "test": "node spec/importCJS.js && node spec/importESM.mjs && jest",
     "posttest": "npm run lint",
     "test:watch": "jest --watch"
   },
