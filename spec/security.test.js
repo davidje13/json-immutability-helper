@@ -90,11 +90,11 @@ describe('global prototype pollution protection', () => {
       it(`does not pollute the ${target.type.name} prototype`, () => {
         runAttack(target);
 
-        expect(target.type.__proto__.injected).toBeUndefined();
-        expect(target.type.injected).toBeUndefined();
-        expect(target.factory().__proto__.injected).toBeUndefined();
-        expect(target.factory().injected).toBeUndefined();
-        expect(global.injected).toBeUndefined();
+        expect(target.type.__proto__.injected).isUndefined();
+        expect(target.type.injected).isUndefined();
+        expect(target.factory().__proto__.injected).isUndefined();
+        expect(target.factory().injected).isUndefined();
+        expect(global.injected).isUndefined();
       });
     });
 
@@ -102,10 +102,10 @@ describe('global prototype pollution protection', () => {
       runAttack(NULL_TARGET);
       runAttack(UNDEFINED_TARGET);
 
-      expect(() => null.__proto__).toThrow();
-      expect(() => null.injected).toThrow();
-      expect(() => undefined.__proto__).toThrow();
-      expect(() => undefined.injected).toThrow();
+      expect(() => null.__proto__).throws();
+      expect(() => null.injected).throws();
+      expect(() => undefined.__proto__).throws();
+      expect(() => undefined.injected).throws();
     });
   }));
 
@@ -117,11 +117,11 @@ describe('global prototype pollution protection', () => {
       JSON.parse('{"constructor": {"__proto__": {"injected": "gotchya"}}}'),
     ]);
 
-    expect(Object.__proto__.injected).toBeUndefined();
-    expect(Object.injected).toBeUndefined();
-    expect(({}).__proto__.injected).toBeUndefined();
-    expect(({}).injected).toBeUndefined();
-    expect(global.injected).toBeUndefined();
+    expect(Object.__proto__.injected).isUndefined();
+    expect(Object.injected).isUndefined();
+    expect(({}).__proto__.injected).isUndefined();
+    expect(({}).injected).isUndefined();
+    expect(global.injected).isUndefined();
   });
 
   afterEach(() => {
@@ -148,28 +148,28 @@ describe('local prototype pollution protection', () => {
     it('does not pollute the local prototype of arrays', () => {
       const spec = JSON.parse(test.attack('push', 'gotchya'));
       const updated = updateOrThrow([], spec);
-      expect(typeof updated.push).not.toEqual('string');
+      expect(typeof updated.push).not(equals('string'));
     });
 
     it('does not pollute the local prototype of objects', () => {
       const spec = JSON.parse(test.attack('hasOwnProperty', 'gotchya'));
       const updated = updateOrThrow({}, spec);
       delete updated.hasOwnProperty; // OK if set as literal property
-      expect(typeof updated.hasOwnProperty).toEqual('function');
-      expect(updated.hasOwnProperty).toBe(Object.prototype.hasOwnProperty);
+      expect(typeof updated.hasOwnProperty).equals('function');
+      expect(updated.hasOwnProperty).same(Object.prototype.hasOwnProperty);
     });
 
     it('does not pollute the local prototype of objects by unsetting', () => {
       const spec = JSON.parse(test.attack('hasOwnProperty', UNSET_TOKEN));
       const updated = updateOrThrow({}, spec);
-      expect(typeof updated.hasOwnProperty).toEqual('function');
-      expect(updated.hasOwnProperty).toBe(Object.prototype.hasOwnProperty);
+      expect(typeof updated.hasOwnProperty).equals('function');
+      expect(updated.hasOwnProperty).same(Object.prototype.hasOwnProperty);
     });
 
     it('does not convert existing __proto__ fields into a property', () => {
       const spec = JSON.parse(test.attack('injected', 'meh'));
       const updated = updateOrThrow({ __proto__: { original: 'oops' } }, spec);
-      expect(updated.__proto__.original).toBeUndefined();
+      expect(updated.__proto__.original).isUndefined();
     });
   }));
 
@@ -179,7 +179,7 @@ describe('local prototype pollution protection', () => {
       JSON.parse('{"__proto__": {"injected": "gotchya"}}'),
     ]);
 
-    expect(result.injected).toBeUndefined();
+    expect(result.injected).isUndefined();
   });
 
   afterEach(() => {
@@ -197,7 +197,7 @@ describe('condition code injection attacks', () => {
 
   it('does not execute arbitrary functions', () => {
     expect(() => update({}, ['updateIf', { 'hasOwnProperty': 1 }, ['unset']]))
-      .toThrow('unknown condition type: hasOwnProperty');
+      .throws('unknown condition type: hasOwnProperty');
   });
 });
 
@@ -206,13 +206,13 @@ describe('RPN code injection attacks', () => {
 
   it('does not execute arbitrary functions', () => {
     expect(() => update(0, ['rpn', 0, '__proto__']))
-      .toThrow('unknown function __proto__');
+      .throws('unknown function __proto__');
 
     expect(() => update(0, ['rpn', 0, 'constructor']))
-      .toThrow('unknown function constructor');
+      .throws('unknown function constructor');
 
     expect(() => update(0, ['rpn', 0, 'hasOwnProperty']))
-      .toThrow('unknown function hasOwnProperty');
+      .throws('unknown function hasOwnProperty');
   });
 });
 
@@ -221,18 +221,18 @@ describe('without string commands', () => {
 
   it('rejects rpn string operations by default', () => {
     expect(() => update(0, ['rpn', 2, 'String', 'Number']))
-      .toThrow('unknown function String');
+      .throws('unknown function String');
 
     expect(() => update(0, ['rpn', '"0"', 10, 'padStart', 'Number']))
-      .toThrow('unknown function padStart');
+      .throws('unknown function padStart');
 
     expect(() => update(0, ['rpn', '"0"', 10, 'padEnd', 'Number']))
-      .toThrow('unknown function padEnd');
+      .throws('unknown function padEnd');
   });
 
   it('rejects replaceAll by default', () => {
     expect(() => update('.', ['replaceAll', 'a', 'A']))
-      .toThrow('replaceAll: unknown command');
+      .throws('replaceAll: unknown command');
   });
 });
 
@@ -240,33 +240,33 @@ describe('with string commands', () => {
   const { update } = context.with(mathCommands, stringCommands);
 
   it('allows rpn string operations', () => {
-    expect(() => update('', ['rpn', '"v"'])).not.toThrow();
-    expect(() => update(0, ['rpn', 2, 'String', 'Number'])).not.toThrow();
+    expect(() => update('', ['rpn', '"v"'])).resolves();
+    expect(() => update(0, ['rpn', 2, 'String', 'Number'])).resolves();
     expect(() => update(0, ['rpn', '"2"', '"3"', 'concat', 'Number']))
-      .not.toThrow();
+      .resolves();
     expect(() => update(0, ['rpn', '"0"', 10, 'padStart', 'Number']))
-      .not.toThrow();
+      .resolves();
     expect(() => update(0, ['rpn', '"0"', 10, 'padEnd', 'Number']))
-      .not.toThrow();
+      .resolves();
     expect(() => update(0, ['rpn', '"0"', 10, 'repeat', 'Number']))
-      .not.toThrow();
+      .resolves();
   });
 
   it('blocks rpn operations which generate lots of data', () => {
     expect(() => update('.'.repeat(10000), ['rpn', 'x', 'x', 'concat']))
-      .toThrow('string concatenation too long');
+      .throws('string concatenation too long');
 
     expect(() => update('.', ['rpn', 'x', 20000, 'padStart']))
-      .toThrow('unsupported padding length 20000');
+      .throws('unsupported padding length 20000');
 
     expect(() => update('.', ['rpn', 'x', 20000, 'padEnd']))
-      .toThrow('unsupported padding length 20000');
+      .throws('unsupported padding length 20000');
 
     expect(() => update('.', ['rpn', 'x', 20000, 'repeat']))
-      .toThrow('unsupported repeat count 20000');
+      .throws('unsupported repeat count 20000');
 
     expect(() => update('.'.repeat(100), ['rpn', 'x', 200, 'repeat']))
-      .toThrow('unsupported repeat count 200');
+      .throws('unsupported repeat count 200');
   });
 
   it('ignores regular expression syntax in replaceAll', () => {
@@ -294,7 +294,7 @@ describe('"billion laughs" protection', () => {
       ['replaceAll', '.', '..........'],
       ['replaceAll', '.', '..........'],
       ['replaceAll', '.', '..........'],
-    ])).toThrow('too much data');
+    ])).throws('too much data');
     const tm1 = Date.now();
     expect(tm1 - tm0).toBeLessThan(50);
   });
@@ -313,7 +313,7 @@ describe('"billion laughs" protection', () => {
           ]],
         ]],
       ]],
-    ])).toThrow('too much recursion');
+    ])).throws('too much recursion');
     /* eslint-enable array-bracket-newline, comma-spacing */
     const tm1 = Date.now();
     expect(tm1 - tm0).toBeLessThan(50);
@@ -330,7 +330,7 @@ describe('"billion laughs" protection', () => {
           ['updateAll', ['replaceAll', '.', '..........']],
         ]],
       ]],
-    ])).toThrow('too much recursion');
+    ])).throws('too much recursion');
     /* eslint-enable array-bracket-newline, comma-spacing */
     const tm1 = Date.now();
     expect(tm1 - tm0).toBeLessThan(50);

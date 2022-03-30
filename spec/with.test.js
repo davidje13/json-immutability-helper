@@ -6,16 +6,16 @@ describe('with', () => {
     const context2 = defaultContext.with();
 
     const spec = ['foo'];
-    expect(() => context1.update({}, spec)).not.toThrow();
-    expect(() => context2.update({}, spec)).toThrow();
+    expect(() => context1.update({}, spec)).resolves();
+    expect(() => context2.update({}, spec)).throws();
   });
 
   it('scopes command mutations from the global update', () => {
     const context = defaultContext.with({ commands: { foo: () => true } });
 
     const spec = ['foo'];
-    expect(() => context.update({}, spec)).not.toThrow();
-    expect(() => defaultContext.update({}, spec)).toThrow();
+    expect(() => context.update({}, spec)).resolves();
+    expect(() => defaultContext.update({}, spec)).throws();
   });
 
   it('scopes condition mutations', () => {
@@ -25,8 +25,8 @@ describe('with', () => {
     const context2 = defaultContext.with();
 
     const spec = ['updateIf', {scopedMultiple: 3}, ['=', 1]];
-    expect(() => context1.update(9, spec)).not.toThrow();
-    expect(() => context2.update(9, spec)).toThrow();
+    expect(() => context1.update(9, spec)).resolves();
+    expect(() => context2.update(9, spec)).throws();
   });
 
   it('scopes condition mutations from the global update', () => {
@@ -35,7 +35,7 @@ describe('with', () => {
     } });
 
     const spec = ['updateIf', {scopedMultiple: 3}, ['=', 1]];
-    expect(() => context.update(9, spec)).not.toThrow();
-    expect(() => defaultContext.update(9, spec)).toThrow();
+    expect(() => context.update(9, spec)).resolves();
+    expect(() => defaultContext.update(9, spec)).throws();
   });
 });

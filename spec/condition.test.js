@@ -17,161 +17,161 @@ function matches(condition, state = initial, context = defaultContext) {
 describe('unknown condition', () => {
   it('is rejected', () => {
     expect(() => matches({key: 'foo', nope: 'bar'}))
-      .toThrow('unknown condition type: nope');
+      .throws('unknown condition type: nope');
   });
 });
 
 describe('empty condition', () => {
   it('is rejected', () => {
-    expect(() => matches({})).toThrow('invalid condition');
-    expect(() => matches([])).toThrow('empty condition');
-    expect(() => matches([{}])).toThrow('invalid condition');
+    expect(() => matches({})).throws('invalid condition');
+    expect(() => matches([])).throws('empty condition');
+    expect(() => matches([{}])).throws('invalid condition');
   });
 });
 
 describe('key presence', () => {
   it('matches', () => {
-    expect(matches({key: 'value'})).toEqual(true);
+    expect(matches({key: 'value'})).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({key: 'nope'})).toEqual(false);
+    expect(matches({key: 'nope'})).equals(false);
   });
 
   it('matches falsy but non-nullish values', () => {
-    expect(matches({key: 'value'}, {value: 0})).toEqual(true);
-    expect(matches({key: 'value'}, {value: false})).toEqual(true);
+    expect(matches({key: 'value'}, {value: 0})).equals(true);
+    expect(matches({key: 'value'}, {value: false})).equals(true);
   });
 
   it('does not match nullish values', () => {
-    expect(matches({key: 'value'}, {value: null})).toEqual(false);
-    expect(matches({key: 'value'}, {value: undefined})).toEqual(false);
+    expect(matches({key: 'value'}, {value: null})).equals(false);
+    expect(matches({key: 'value'}, {value: undefined})).equals(false);
   });
 
   it('does not match __proto__', () => {
-    expect(matches({key: '__proto__'})).toEqual(false);
+    expect(matches({key: '__proto__'})).equals(false);
   });
 });
 
 describe('equals', () => {
   it('matches', () => {
-    expect(matches({equals: 'bar'}, 'bar')).toEqual(true);
+    expect(matches({equals: 'bar'}, 'bar')).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({equals: 'nope'}, 'bar')).toEqual(false);
+    expect(matches({equals: 'nope'}, 'bar')).equals(false);
   });
 });
 
 describe('key equals', () => {
   it('matches', () => {
-    expect(matches({key: 'foo', equals: 'bar'})).toEqual(true);
+    expect(matches({key: 'foo', equals: 'bar'})).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({key: 'foo', equals: 'nope'})).toEqual(false);
+    expect(matches({key: 'foo', equals: 'nope'})).equals(false);
   });
 
   it('checks missing properties', () => {
-    expect(matches({key: 'nope', equals: 'nope'})).toEqual(false);
-    expect(matches({key: 'nope', equals: null})).toEqual(false);
-    expect(matches({key: 'nope', equals: undefined})).toEqual(true);
+    expect(matches({key: 'nope', equals: 'nope'})).equals(false);
+    expect(matches({key: 'nope', equals: null})).equals(false);
+    expect(matches({key: 'nope', equals: undefined})).equals(true);
   });
 
   it('matches __proto__ as undefined', () => {
-    expect(matches({key: '__proto__', equals: null})).toEqual(false);
-    expect(matches({key: '__proto__', equals: undefined})).toEqual(true);
+    expect(matches({key: '__proto__', equals: null})).equals(false);
+    expect(matches({key: '__proto__', equals: undefined})).equals(true);
   });
 });
 
 describe('key equals shorthand', () => {
   it('matches', () => {
-    expect(matches(['foo', 'bar'])).toEqual(true);
+    expect(matches(['foo', 'bar'])).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches(['foo', 'nope'])).toEqual(false);
+    expect(matches(['foo', 'nope'])).equals(false);
   });
 });
 
 describe('key not', () => {
   it('matches', () => {
-    expect(matches({key: 'foo', not: 'nope'})).toEqual(true);
+    expect(matches({key: 'foo', not: 'nope'})).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({key: 'foo', not: 'bar'})).toEqual(false);
+    expect(matches({key: 'foo', not: 'bar'})).equals(false);
   });
 
   it('checks missing properties', () => {
-    expect(matches({key: 'nope', not: 'nope'})).toEqual(true);
-    expect(matches({key: 'nope', not: null})).toEqual(true);
-    expect(matches({key: 'nope', not: undefined})).toEqual(false);
+    expect(matches({key: 'nope', not: 'nope'})).equals(true);
+    expect(matches({key: 'nope', not: null})).equals(true);
+    expect(matches({key: 'nope', not: undefined})).equals(false);
   });
 
   it('matches __proto__ as undefined', () => {
-    expect(matches({key: '__proto__', not: null})).toEqual(true);
-    expect(matches({key: '__proto__', not: undefined})).toEqual(false);
+    expect(matches({key: '__proto__', not: null})).equals(true);
+    expect(matches({key: '__proto__', not: undefined})).equals(false);
   });
 });
 
 describe('key greaterThan', () => {
   it('matches', () => {
-    expect(matches({key: 'value', greaterThan: 4})).toEqual(true);
+    expect(matches({key: 'value', greaterThan: 4})).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({key: 'value', greaterThan: 5})).toEqual(false);
+    expect(matches({key: 'value', greaterThan: 5})).equals(false);
   });
 
   it('checks missing properties', () => {
-    expect(matches({key: 'nope', greaterThan: 1})).toEqual(false);
-    expect(matches({key: 'nope', greaterThan: -1})).toEqual(false);
+    expect(matches({key: 'nope', greaterThan: 1})).equals(false);
+    expect(matches({key: 'nope', greaterThan: -1})).equals(false);
   });
 });
 
 describe('key lessThan', () => {
   it('matches', () => {
-    expect(matches({key: 'value', lessThan: 6})).toEqual(true);
+    expect(matches({key: 'value', lessThan: 6})).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({key: 'value', lessThan: 5})).toEqual(false);
+    expect(matches({key: 'value', lessThan: 5})).equals(false);
   });
 
   it('checks missing properties', () => {
-    expect(matches({key: 'nope', lessThan: 1})).toEqual(false);
-    expect(matches({key: 'nope', lessThan: -1})).toEqual(false);
+    expect(matches({key: 'nope', lessThan: 1})).equals(false);
+    expect(matches({key: 'nope', lessThan: -1})).equals(false);
   });
 });
 
 describe('key greaterThanOrEqual', () => {
   it('matches', () => {
-    expect(matches({key: 'value', greaterThanOrEqual: 5})).toEqual(true);
+    expect(matches({key: 'value', greaterThanOrEqual: 5})).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({key: 'value', greaterThanOrEqual: 6})).toEqual(false);
+    expect(matches({key: 'value', greaterThanOrEqual: 6})).equals(false);
   });
 
   it('checks missing properties', () => {
-    expect(matches({key: 'nope', greaterThanOrEqual: 1})).toEqual(false);
-    expect(matches({key: 'nope', greaterThanOrEqual: -1})).toEqual(false);
+    expect(matches({key: 'nope', greaterThanOrEqual: 1})).equals(false);
+    expect(matches({key: 'nope', greaterThanOrEqual: -1})).equals(false);
   });
 });
 
 describe('key lessThanOrEqual', () => {
   it('matches', () => {
-    expect(matches({key: 'value', lessThanOrEqual: 5})).toEqual(true);
+    expect(matches({key: 'value', lessThanOrEqual: 5})).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({key: 'value', lessThanOrEqual: 4})).toEqual(false);
+    expect(matches({key: 'value', lessThanOrEqual: 4})).equals(false);
   });
 
   it('checks missing properties', () => {
-    expect(matches({key: 'nope', lessThanOrEqual: 1})).toEqual(false);
-    expect(matches({key: 'nope', lessThanOrEqual: -1})).toEqual(false);
+    expect(matches({key: 'nope', lessThanOrEqual: 1})).equals(false);
+    expect(matches({key: 'nope', lessThanOrEqual: -1})).equals(false);
   });
 });
 
@@ -181,7 +181,7 @@ describe('multiple conditions on a single property', () => {
       key: 'value',
       greaterThan: 2,
       lessThan: 8,
-    })).toEqual(true);
+    })).equals(true);
   });
 
   it('does not match if any condition fails', () => {
@@ -189,13 +189,13 @@ describe('multiple conditions on a single property', () => {
       key: 'value',
       greaterThan: 6,
       lessThan: 8,
-    })).toEqual(false);
+    })).equals(false);
 
     expect(matches({
       key: 'value',
       greaterThan: 2,
       lessThan: 4,
-    })).toEqual(false);
+    })).equals(false);
   });
 });
 
@@ -204,19 +204,19 @@ describe('multiple conditions on multiple properties', () => {
     expect(matches([
       {key: 'foo', equals: 'bar'},
       {key: 'value', greaterThan: 2},
-    ])).toEqual(true);
+    ])).equals(true);
   });
 
   it('does not match if any condition fails', () => {
     expect(matches([
       {key: 'foo', equals: 'nope'},
       {key: 'value', greaterThan: 2},
-    ])).toEqual(false);
+    ])).equals(false);
 
     expect(matches([
       {key: 'foo', equals: 'bar'},
       {key: 'value', greaterThan: 10},
-    ])).toEqual(false);
+    ])).equals(false);
   });
 });
 
@@ -228,8 +228,8 @@ describe('with', () => {
       },
     });
 
-    expect(matches({multiple: 3}, 9, ctx)).toEqual(true);
-    expect(matches({multiple: 3}, 10, ctx)).toEqual(false);
+    expect(matches({multiple: 3}, 9, ctx)).equals(true);
+    expect(matches({multiple: 3}, 10, ctx)).equals(false);
   });
 
   it('preserves existing conditions', () => {
@@ -239,7 +239,7 @@ describe('with', () => {
       },
     });
 
-    expect(matches({equals: 'bar'}, 'bar', ctx)).toEqual(true);
+    expect(matches({equals: 'bar'}, 'bar', ctx)).equals(true);
   });
 
   it('adds multiple custom conditions', () => {
@@ -251,8 +251,8 @@ describe('with', () => {
     });
 
     const condition = {longerThan: 3, shorterThan: 5};
-    expect(matches(condition, 'abcd', ctx)).toEqual(true);
-    expect(matches(condition, 'ab', ctx)).toEqual(false);
-    expect(matches(condition, 'abcdef', ctx)).toEqual(false);
+    expect(matches(condition, 'abcd', ctx)).equals(true);
+    expect(matches(condition, 'ab', ctx)).equals(false);
+    expect(matches(condition, 'abcdef', ctx)).equals(false);
   });
 });

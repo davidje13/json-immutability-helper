@@ -8,7 +8,7 @@ describe('combine', () => {
       { baz: ['=', 3] },
     ]);
 
-    expect(spec).toEqual({
+    expect(spec).equals({
       foo: ['=', 1],
       bar: ['=', 2],
       baz: ['=', 3],
@@ -21,7 +21,7 @@ describe('combine', () => {
       { foo: ['=', 2] },
     ]);
 
-    expect(spec).toEqual({ foo: ['seq', ['=', 1], ['=', 2]] });
+    expect(spec).equals({ foo: ['seq', ['=', 1], ['=', 2]] });
   });
 
   it('merges recursively', () => {
@@ -30,7 +30,7 @@ describe('combine', () => {
       { foo: { zig: ['=', 4] } },
     ]);
 
-    expect(spec).toEqual({ foo: {
+    expect(spec).equals({ foo: {
       bar: { baz: ['=', 3] },
       zig: ['=', 4],
     } });
@@ -42,7 +42,7 @@ describe('combine', () => {
       { foo: ['=', 4] },
     ]);
 
-    expect(spec).toEqual({ foo: [
+    expect(spec).equals({ foo: [
       'seq',
       { bar: { baz: ['=', 3] } },
       ['=', 4],
@@ -57,7 +57,7 @@ describe('combine', () => {
       { foo: ['=', 4] },
     ]);
 
-    expect(spec).toEqual({ foo: [
+    expect(spec).equals({ foo: [
       'seq',
       ['=', 1],
       ['=', 2],
@@ -72,7 +72,7 @@ describe('combine', () => {
       { foo: ['seq', ['=', 3], ['=', 4]] },
     ]);
 
-    expect(spec).toEqual({ foo: [
+    expect(spec).equals({ foo: [
       'seq',
       ['=', 1],
       ['=', 2],

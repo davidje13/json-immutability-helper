@@ -6,7 +6,6 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:node/recommended',
-    'plugin:jest/recommended',
   ],
   rules: {
     'accessor-pairs': ['error'],
@@ -181,6 +180,7 @@ module.exports = {
     rules: {
       'max-statements': ['error', 20],
       'max-lines': ['error', 500],
+      'no-undef': ['off'],
       'node/no-unsupported-features/es-builtins': ['off'],
     },
   }],

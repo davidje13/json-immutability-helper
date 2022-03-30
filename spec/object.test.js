@@ -5,58 +5,58 @@ const initial = { foo: '1', bar: '2' };
 describe('unknown command', () => {
   it('throws an error', () => {
     expect(() => update(0, ['nope']))
-      .toThrow('/ nope: unknown command');
+      .throws('/ nope: unknown command');
   });
 
   it('includes the path to the command', () => {
     expect(() => update({ a: { b: 1 } }, { a: { b: ['nope'] } }))
-      .toThrow('/a/b nope: unknown command');
+      .throws('/a/b nope: unknown command');
   });
 });
 
 describe('merge', () => {
   it('operates on objects', () => {
     expect(() => update(0, ['merge', {}]))
-      .toThrow('/ merge: expected target to be object');
+      .throws('/ merge: expected target to be object');
   });
 
   it('takes an object to merge', () => {
     expect(() => update({}, ['merge']))
-      .toThrow('/ merge: expected [command, merge, initial?]');
+      .throws('/ merge: expected [command, merge, initial?]');
   });
 
   it('adds new values', () => {
     const updated = update(initial, ['merge', { abc: '3', def: '4' }]);
 
-    expect(updated).toEqual({ foo: '1', bar: '2', abc: '3', def: '4' });
-    expect(updated).not.toBe(initial);
+    expect(updated).equals({ foo: '1', bar: '2', abc: '3', def: '4' });
+    expect(updated).not(same(initial));
   });
 
   it('replaces existing values', () => {
     const updated = update(initial, ['merge', { bar: '3' }]);
 
-    expect(updated).toEqual({ foo: '1', bar: '3' });
-    expect(updated).not.toBe(initial);
+    expect(updated).equals({ foo: '1', bar: '3' });
+    expect(updated).not(same(initial));
   });
 
   it('sets indices in arrays', () => {
     const initArr = ['a', 'b', 'c', 'd'];
     const updated = update(initArr, ['merge', { '1': 'B', '2': 'C' }]);
 
-    expect(updated).toEqual(['a', 'B', 'C', 'd']);
-    expect(updated).not.toBe(initArr);
+    expect(updated).equals(['a', 'B', 'C', 'd']);
+    expect(updated).not(same(initArr));
   });
 
   it('rejects attempts to add properties to arrays', () => {
     const initArr = ['a', 'b', 'c'];
     expect(() => update(initArr, ['merge', { foo: 1 }]))
-      .toThrow('cannot modify array property foo');
+      .throws('cannot modify array property foo');
   });
 
   it('rejects attempts to modify array length directly', () => {
     const initArr = ['a', 'b', 'c'];
     expect(() => update(initArr, ['merge', { length: 1 }]))
-      .toThrow('cannot modify array property length');
+      .throws('cannot modify array property length');
   });
 
   it('sets __proto__ as a literal value', () => {
@@ -65,28 +65,28 @@ describe('merge', () => {
     const updated = update({}, spec);
 
     /* eslint-disable-next-line no-proto */
-    expect(updated.__proto__.foo).toEqual(1);
-    expect(updated.foo).toBeUndefined();
+    expect(updated.__proto__.foo).equals(1);
+    expect(updated.foo).isUndefined();
   });
 
   it('makes no change if no value has changed', () => {
     const updated = update(initial, ['merge', { foo: '1' }]);
 
-    expect(updated).toEqual({ foo: '1', bar: '2' });
-    expect(updated).toBe(initial);
+    expect(updated).equals({ foo: '1', bar: '2' });
+    expect(updated).same(initial);
   });
 
   it('removes values if set to UNSET_TOKEN', () => {
     const updated = update(initial, ['merge', { bar: update.UNSET_TOKEN }]);
 
-    expect(updated).toEqual({ foo: '1' });
-    expect(updated).not.toBe(initial);
+    expect(updated).equals({ foo: '1' });
+    expect(updated).not(same(initial));
   });
 
   it('ignores requests to unset values which are not set', () => {
     const updated = update(initial, ['merge', { nope: update.UNSET_TOKEN }]);
 
-    expect(updated).toBe(initial);
+    expect(updated).same(initial);
   });
 
   it('repacks arrays after removing indices', () => {
@@ -96,19 +96,19 @@ describe('merge', () => {
       '2': update.UNSET_TOKEN,
     }]);
 
-    expect(updated).toEqual(['a', 'd']);
-    expect(updated).not.toBe(initArr);
+    expect(updated).equals(['a', 'd']);
+    expect(updated).not(same(initArr));
   });
 
   it('ignores the default if there is already a value', () => {
     const updated = update(initial, ['merge', { abc: '3' }, { nope: 'no' }]);
 
-    expect(updated).toEqual({ foo: '1', bar: '2', abc: '3' });
+    expect(updated).equals({ foo: '1', bar: '2', abc: '3' });
   });
 
   it('uses the default if the value is undefined', () => {
     const updated = update(undefined, ['merge', { abc: '3' }, { init: 'yup' }]);
 
-    expect(updated).toEqual({ init: 'yup', abc: '3' });
+    expect(updated).equals({ init: 'yup', abc: '3' });
   });
 });

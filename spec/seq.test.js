@@ -13,8 +13,8 @@ describe('seq', () => {
       { seven: ['=', 8] },
     ]);
 
-    expect(updated).not.toBe(initial);
-    expect(updated).toEqual({ foo: 'baz', seven: 8 });
+    expect(updated).not(same(initial));
+    expect(updated).equals({ foo: 'baz', seven: 8 });
   });
 
   it('applies specs sequentially to the current property', () => {
@@ -22,6 +22,6 @@ describe('seq', () => {
       seven: ['seq', ['add', 5], ['subtract', 2]],
     });
 
-    expect(updated).toEqual({ foo: 'bar', seven: 10 });
+    expect(updated).equals({ foo: 'bar', seven: 10 });
   });
 });

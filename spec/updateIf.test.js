@@ -26,8 +26,8 @@ describe('updateIf', () => {
       elseSpec,
     ]);
 
-    expect(updated).not.toBe(initial);
-    expect(updated.seven).toEqual('matched');
+    expect(updated).not(same(initial));
+    expect(updated.seven).equals('matched');
   });
 
   it('applies an optional else spec if condition is not matched', () => {
@@ -38,8 +38,8 @@ describe('updateIf', () => {
       elseSpec,
     ]);
 
-    expect(updated).not.toBe(initial);
-    expect(updated.seven).toEqual('not matched');
+    expect(updated).not(same(initial));
+    expect(updated.seven).equals('not matched');
   });
 
   it('does nothing if condition is not matched and else is not given', () => {
@@ -49,6 +49,6 @@ describe('updateIf', () => {
       matchSpec,
     ]);
 
-    expect(updated).toBe(initial);
+    expect(updated).same(initial);
   });
 });

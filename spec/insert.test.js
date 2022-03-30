@@ -12,7 +12,7 @@ describe('insertBeforeFirstWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual([10, 'item-1', 'item-2', 9, 11, 9, -1]);
+    expect(updated).equals([10, 'item-1', 'item-2', 9, 11, 9, -1]);
   });
 
   it('inserts at the end if no items match', () => {
@@ -23,7 +23,7 @@ describe('insertBeforeFirstWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual([10, 9, 11, 9, -1, 'item-1', 'item-2']);
+    expect(updated).equals([10, 9, 11, 9, -1, 'item-1', 'item-2']);
   });
 });
 
@@ -36,7 +36,7 @@ describe('insertAfterFirstWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual([10, 9, 'item-1', 'item-2', 11, 9, -1]);
+    expect(updated).equals([10, 9, 'item-1', 'item-2', 11, 9, -1]);
   });
 
   it('inserts at the end if no items match', () => {
@@ -47,7 +47,7 @@ describe('insertAfterFirstWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual([10, 9, 11, 9, -1, 'item-1', 'item-2']);
+    expect(updated).equals([10, 9, 11, 9, -1, 'item-1', 'item-2']);
   });
 });
 
@@ -60,7 +60,7 @@ describe('insertBeforeLastWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual([10, 9, 11, 'item-1', 'item-2', 9, -1]);
+    expect(updated).equals([10, 9, 11, 'item-1', 'item-2', 9, -1]);
   });
 
   it('inserts at the start if no items match', () => {
@@ -71,7 +71,7 @@ describe('insertBeforeLastWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual(['item-1', 'item-2', 10, 9, 11, 9, -1]);
+    expect(updated).equals(['item-1', 'item-2', 10, 9, 11, 9, -1]);
   });
 });
 
@@ -84,7 +84,7 @@ describe('insertAfterLastWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual([10, 9, 11, 9, 'item-1', 'item-2', -1]);
+    expect(updated).equals([10, 9, 11, 9, 'item-1', 'item-2', -1]);
   });
 
   it('inserts at the start if no items match', () => {
@@ -95,6 +95,6 @@ describe('insertAfterLastWhere', () => {
       'item-2',
     ]);
 
-    expect(updated).toEqual(['item-1', 'item-2', 10, 9, 11, 9, -1]);
+    expect(updated).equals(['item-1', 'item-2', 10, 9, 11, 9, -1]);
   });
 });

@@ -19,10 +19,9 @@
     "./commands/*": "./commands/*.js"
   },
   "scripts": {
-    "lint": "eslint --format codeframe --ext mjs,js .",
-    "test": "node spec/importCJS.js && node spec/importESM.mjs && jest",
-    "posttest": "npm run lint",
-    "test:watch": "jest --watch"
+    "lint": "eslint --ext mjs,js .",
+    "test": "node spec/importCJS.js && node spec/importESM.mjs && lean-test",
+    "posttest": "npm run lint"
   },
   "sideEffects": false,
   "repository": {
@@ -40,9 +39,8 @@
   },
   "homepage": "https://github.com/davidje13/json-immutability-helper#readme",
   "devDependencies": {
-    "eslint": "7.x",
-    "eslint-plugin-jest": "24.x",
+    "eslint": "8.x",
     "eslint-plugin-node": "11.x",
-    "jest": "26.x"
+    "lean-test": "1.x"
   }
 }
