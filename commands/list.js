@@ -118,8 +118,10 @@ const commands = {
     context.incLoopNesting(object.length, () => {
       for (let i = 0; i < object.length; i++) {
         const originalItem = object[i];
-        const newItem = context.update(originalItem, spec);
-        combined[i] = ['=', newItem];
+        const newItem = context.update(originalItem, spec, { allowUnset: true });
+        if (newItem !== originalItem) {
+          combined[i] = ['=', newItem];
+        }
       }
     });
     return context.update(object, combined);
@@ -136,8 +138,10 @@ const commands = {
     context.incLoopNesting(indices.length, () => {
       indices.forEach((index) => {
         const originalItem = object[index];
-        const newItem = context.update(originalItem, spec);
-        combined[index] = ['=', newItem];
+        const newItem = context.update(originalItem, spec, { allowUnset: true });
+        if (newItem !== originalItem) {
+          combined[index] = ['=', newItem];
+        }
       });
     });
     return context.update(object, combined);

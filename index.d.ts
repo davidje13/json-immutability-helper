@@ -49,7 +49,13 @@ declare module 'json-immutability-helper' {
 
   type Condition<T> = ConditionEntry<T> | ConditionEntry<T>[];
 
-  export type Spec<T> =
+  type IfUnsettable<T, Unsettable, True> = T extends undefined
+    ? True
+    : Unsettable extends true
+      ? True
+      : never;
+
+  export type Spec<T, Unsettable extends boolean = false> =
     | (T extends string
         ? StringSpec
         : T extends boolean
@@ -59,24 +65,19 @@ declare module 'json-immutability-helper' {
             : T extends ReadonlyArray<infer U>
               ? ArraySpec<U>
               : ObjectSpec<T>)
-    | ['=', T]
-    | ['set', T]
-    | (T extends undefined ? ['unset'] : never)
+    | ['=' | 'set', T | IfUnsettable<T, Unsettable, typeof SHARED_UNSET_TOKEN>]
     | ['init', T]
-    | ['updateIf', Condition<T>, Spec<T>, Spec<T>?]
-    | ['seq', ...Spec<T>[]];
-
-  type UnsettableSpec<T> = Spec<T> | ['unset'];
+    | ['updateIf', Condition<T>, Spec<T, Unsettable>, Spec<T, Unsettable>?]
+    | ['seq', ...Spec<T, Unsettable>[]]
+    | IfUnsettable<T, Unsettable, ['unset']>;
 
   type StringSpec = ['replaceAll', string, string] | ['rpn', ...(number | string)[]];
 
   type BooleanSpec = ['~'] | ['toggle'];
 
   type NumberSpec =
-    | ['+', number]
-    | ['add', number]
-    | ['-', number]
-    | ['subtract', number]
+    | ['+' | 'add', number]
+    | ['-' | 'subtract', number]
     | ['rpn', ...(number | string)[]];
 
   type ArraySpec<T> =
@@ -87,38 +88,45 @@ declare module 'json-immutability-helper' {
     | ['insertAfterFirstWhere', Condition<T>, ...T[]]
     | ['insertBeforeLastWhere', Condition<T>, ...T[]]
     | ['insertAfterLastWhere', Condition<T>, ...T[]]
-    | ['updateAll', UnsettableSpec<T>]
-    | ['updateWhere', Condition<T>, UnsettableSpec<T>]
-    | ['updateFirstWhere', Condition<T>, UnsettableSpec<T>]
-    | ['updateLastWhere', Condition<T>, UnsettableSpec<T>]
+    | ['updateAll', Spec<T, true>]
+    | ['updateWhere', Condition<T>, Spec<T, true>]
+    | ['updateFirstWhere', Condition<T>, Spec<T, true>]
+    | ['updateLastWhere', Condition<T>, Spec<T, true>]
     | ['deleteWhere', Condition<T>]
     | ['deleteFirstWhere', Condition<T>]
     | ['deleteLastWhere', Condition<T>]
-    | { [index: number]: UnsettableSpec<T> };
+    | { [index: number]: Spec<T, true> };
 
   type ObjectSpec<T> =
     | ['merge', Partial<Readonly<T>>, Readonly<T>?]
-    | { [K in keyof T]?: Spec<T[K]> };
+    | { [K in keyof T]?: Spec<T[K], {} extends Pick<T, K> ? true : false> };
 
-  interface OptionsDisallowUnset {
+  interface Options {
     path?: string;
-    allowUnset?: false;
   }
 
-  type OptionsAllowUnset =
-    | Omit<OptionsDisallowUnset, 'allowUnset'>
-    | {
-        allowUnset: true;
-      };
+  type CombineFn = <T, Unsettable extends boolean>(
+    specs: Spec<T, Unsettable>[],
+  ) => Spec<T, Unsettable>;
 
-  type CombineFn = <T>(specs: Spec<T>[]) => Spec<T>;
-
-  function updateFn<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset): T;
   function updateFn<T>(
     object: T,
-    spec: UnsettableSpec<T>,
-    options: OptionsAllowUnset,
+    spec: Spec<T, false>,
+    options?: Options & { allowUnset?: false },
+  ): T;
+
+  function updateFn<T>(
+    object: T,
+    spec: Spec<T, true>,
+    options?: Options & { allowUnset?: false },
+  ): T | undefined;
+
+  function updateFn<T>(
+    object: T,
+    spec: Spec<T, true>,
+    options: Options & { allowUnset: true },
   ): T | typeof SHARED_UNSET_TOKEN;
+
   type Update = typeof updateFn & {
     readonly context: Context;
     readonly combine: CombineFn;

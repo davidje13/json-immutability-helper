@@ -21,7 +21,7 @@
   "scripts": {
     "format": "prettier --write .",
     "lint": "prettier --check .",
-    "test": "node spec/importCJS.js && node spec/importESM.mjs && lean-test",
+    "test": "node spec/importCJS.js && node spec/importESM.mjs && tsc && lean-test",
     "posttest": "npm run lint"
   },
   "sideEffects": false,
@@ -40,7 +40,8 @@
   },
   "homepage": "https://github.com/davidje13/json-immutability-helper#readme",
   "devDependencies": {
+    "lean-test": "2.x",
     "prettier": "3.3.2",
-    "lean-test": "2.x"
+    "typescript": "5.5.x"
   }
 }
