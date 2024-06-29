@@ -49,11 +49,7 @@ declare module 'json-immutability-helper' {
 
   type Condition<T> = ConditionEntry<T> | ConditionEntry<T>[];
 
-  type IfUnsettable<T, Unsettable, True> = T extends undefined
-    ? True
-    : Unsettable extends true
-      ? True
-      : never;
+  type If<T, True> = T extends true ? True : never;
 
   export type Spec<T, Unsettable extends boolean = false> =
     | (T extends string
@@ -65,11 +61,11 @@ declare module 'json-immutability-helper' {
             : T extends ReadonlyArray<infer U>
               ? ArraySpec<U>
               : ObjectSpec<T>)
-    | ['=' | 'set', T | IfUnsettable<T, Unsettable, typeof SHARED_UNSET_TOKEN>]
+    | ['=' | 'set', T | If<Unsettable, typeof SHARED_UNSET_TOKEN>]
     | ['init', T]
     | ['updateIf', Condition<T>, Spec<T, Unsettable>, Spec<T, Unsettable>?]
     | ['seq', ...Spec<T, Unsettable>[]]
-    | IfUnsettable<T, Unsettable, ['unset']>;
+    | If<Unsettable, ['unset']>;
 
   type StringSpec = ['replaceAll', string, string] | ['rpn', ...(number | string)[]];
 

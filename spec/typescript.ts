@@ -37,11 +37,12 @@ update({ foo: 'bar' } as ObjRequired, { foo: ['=', undefined] }); // cannot set 
 
 type ObjUndef = { foo: string | undefined };
 assertType(update({ foo: 'bar' } as ObjUndef, { foo: ['=', 'baz'] }))<ObjUndef>();
-assertType(update({ foo: 'bar' } as ObjUndef, { foo: ['unset'] }))<ObjUndef>(); // TODO: ideally this would be restricted
 assertType(update({ foo: 'bar' } as ObjUndef, { foo: ['=', undefined] }))<ObjUndef>();
 
 // @ts-expect-error
 update({ foo: 'bar' } as ObjUndef, { foo: ['=', 1] }); // incorrect type
+// @ts-expect-error
+update({ foo: 'bar' } as ObjUndef, { foo: ['unset'] }); // cannot unset required property
 
 type ObjOptional = { foo?: string };
 assertType(update({ foo: 'bar' } as ObjOptional, { foo: ['=', 'baz'] }))<ObjOptional>();
