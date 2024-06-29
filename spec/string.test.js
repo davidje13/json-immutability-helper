@@ -4,13 +4,15 @@ const { update } = require('../index').with(mathCommands, stringCommands);
 
 describe('replaceAll with stringCommands', () => {
   it('operates on strings', () => {
-    expect(() => update(0, ['replaceAll', '', '']))
-      .throws('/ replaceAll: expected target to be string');
+    expect(() => update(0, ['replaceAll', '', ''])).throws(
+      '/ replaceAll: expected target to be string',
+    );
   });
 
   it('takes 2 arguments', () => {
-    expect(() => update('', ['replaceAll']))
-      .throws('/ replaceAll: expected [command, find, replace]');
+    expect(() => update('', ['replaceAll'])).throws(
+      '/ replaceAll: expected [command, find, replace]',
+    );
   });
 
   it('replaces all occurrences of a string', () => {
@@ -72,16 +74,13 @@ describe('replaceAll with stringCommands', () => {
 
 describe('rpn with stringCommands', () => {
   it('operates on numbers and strings', () => {
-    expect(() => update([], ['rpn']))
-      .throws('/ rpn: expected target to be primitive');
+    expect(() => update([], ['rpn'])).throws('/ rpn: expected target to be primitive');
   });
 
   it('rejects changes of type', () => {
-    expect(() => update('abc', ['rpn', 7]))
-      .throws('cannot change type of property');
+    expect(() => update('abc', ['rpn', 7])).throws('cannot change type of property');
 
-    expect(() => update(7, ['rpn', '"abc"']))
-      .throws('cannot change type of property');
+    expect(() => update(7, ['rpn', '"abc"'])).throws('cannot change type of property');
   });
 
   it('can return a string', () => {

@@ -4,25 +4,23 @@ const initial = { foo: '1', bar: '2' };
 
 describe('unknown command', () => {
   it('throws an error', () => {
-    expect(() => update(0, ['nope']))
-      .throws('/ nope: unknown command');
+    expect(() => update(0, ['nope'])).throws('/ nope: unknown command');
   });
 
   it('includes the path to the command', () => {
-    expect(() => update({ a: { b: 1 } }, { a: { b: ['nope'] } }))
-      .throws('/a/b nope: unknown command');
+    expect(() => update({ a: { b: 1 } }, { a: { b: ['nope'] } })).throws(
+      '/a/b nope: unknown command',
+    );
   });
 });
 
 describe('merge', () => {
   it('operates on objects', () => {
-    expect(() => update(0, ['merge', {}]))
-      .throws('/ merge: expected target to be object');
+    expect(() => update(0, ['merge', {}])).throws('/ merge: expected target to be object');
   });
 
   it('takes an object to merge', () => {
-    expect(() => update({}, ['merge']))
-      .throws('/ merge: expected [command, merge, initial?]');
+    expect(() => update({}, ['merge'])).throws('/ merge: expected [command, merge, initial?]');
   });
 
   it('adds new values', () => {
@@ -41,7 +39,7 @@ describe('merge', () => {
 
   it('sets indices in arrays', () => {
     const initArr = ['a', 'b', 'c', 'd'];
-    const updated = update(initArr, ['merge', { '1': 'B', '2': 'C' }]);
+    const updated = update(initArr, ['merge', { 1: 'B', 2: 'C' }]);
 
     expect(updated).equals(['a', 'B', 'C', 'd']);
     expect(updated).not(same(initArr));
@@ -49,14 +47,14 @@ describe('merge', () => {
 
   it('rejects attempts to add properties to arrays', () => {
     const initArr = ['a', 'b', 'c'];
-    expect(() => update(initArr, ['merge', { foo: 1 }]))
-      .throws('cannot modify array property foo');
+    expect(() => update(initArr, ['merge', { foo: 1 }])).throws('cannot modify array property foo');
   });
 
   it('rejects attempts to modify array length directly', () => {
     const initArr = ['a', 'b', 'c'];
-    expect(() => update(initArr, ['merge', { length: 1 }]))
-      .throws('cannot modify array property length');
+    expect(() => update(initArr, ['merge', { length: 1 }])).throws(
+      'cannot modify array property length',
+    );
   });
 
   it('sets __proto__ as a literal value', () => {
@@ -91,10 +89,13 @@ describe('merge', () => {
 
   it('repacks arrays after removing indices', () => {
     const initArr = ['a', 'b', 'c', 'd'];
-    const updated = update(initArr, ['merge', {
-      '1': update.UNSET_TOKEN,
-      '2': update.UNSET_TOKEN,
-    }]);
+    const updated = update(initArr, [
+      'merge',
+      {
+        1: update.UNSET_TOKEN,
+        2: update.UNSET_TOKEN,
+      },
+    ]);
 
     expect(updated).equals(['a', 'd']);
     expect(updated).not(same(initArr));

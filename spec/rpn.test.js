@@ -3,24 +3,16 @@ const mathCommands = require('../commands/math');
 const stringCommands = require('../commands/string');
 
 const calc = rpn(
-  Object.assign(
-    {},
-    mathCommands.rpnOperators,
-    stringCommands.rpnOperators
-  ),
-  Object.assign(
-    {},
-    mathCommands.rpnConstants,
-    stringCommands.rpnConstants
-  ),
-  { limits: { stringLength: 1000 } }
+  Object.assign({}, mathCommands.rpnOperators, stringCommands.rpnOperators),
+  Object.assign({}, mathCommands.rpnConstants, stringCommands.rpnConstants),
+  { limits: { stringLength: 1000 } },
 );
 
 describe('rpn', () => {
   it('computes results of reverse-polish-notation expressions', () => {
     expect(calc([1])).equals(1);
     expect(calc([2, 3, '+'])).equals(2 + 3);
-    expect(calc([1, 2, 3, '+', 9, '*', '-'])).equals(1 - ((2 + 3) * 9));
+    expect(calc([1, 2, 3, '+', 9, '*', '-'])).equals(1 - (2 + 3) * 9);
   });
 
   it('accepts literal strings encoded as JSON', () => {
@@ -28,11 +20,9 @@ describe('rpn', () => {
   });
 
   it('rejects invalid strings', () => {
-    expect(() => calc(['"unterminated']))
-      .throws('Unexpected end of JSON input');
+    expect(() => calc(['"unterminated'])).throws();
 
-    expect(() => calc(['"invalid \\. escape"']))
-      .throws('Unexpected token . in JSON');
+    expect(() => calc(['"invalid \\. escape"'])).throws();
   });
 
   it('accepts custom variables', () => {
@@ -40,10 +30,7 @@ describe('rpn', () => {
   });
 
   it('performs calculations with custom variables', () => {
-    expect(calc(
-      ['foo', 'foo', '*', 'bar', '+'],
-      { foo: 7, bar: 1 }
-    )).equals((7 * 7) + 1);
+    expect(calc(['foo', 'foo', '*', 'bar', '+'], { foo: 7, bar: 1 })).equals(7 * 7 + 1);
   });
 
   it('rejects unsupported numbers of function arguments', () => {

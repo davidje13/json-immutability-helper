@@ -19,22 +19,26 @@ describe('with', () => {
   });
 
   it('scopes condition mutations', () => {
-    const context1 = defaultContext.with({ conditions: {
-      scopedMultiple: (c) => (v) => ((v % c) === 0),
-    } });
+    const context1 = defaultContext.with({
+      conditions: {
+        scopedMultiple: (c) => (v) => v % c === 0,
+      },
+    });
     const context2 = defaultContext.with();
 
-    const spec = ['updateIf', {scopedMultiple: 3}, ['=', 1]];
+    const spec = ['updateIf', { scopedMultiple: 3 }, ['=', 1]];
     expect(() => context1.update(9, spec)).resolves();
     expect(() => context2.update(9, spec)).throws();
   });
 
   it('scopes condition mutations from the global update', () => {
-    const context = defaultContext.with({ conditions: {
-      scopedMultiple: (c) => (v) => ((v % c) === 0),
-    } });
+    const context = defaultContext.with({
+      conditions: {
+        scopedMultiple: (c) => (v) => v % c === 0,
+      },
+    });
 
-    const spec = ['updateIf', {scopedMultiple: 3}, ['=', 1]];
+    const spec = ['updateIf', { scopedMultiple: 3 }, ['=', 1]];
     expect(() => context.update(9, spec)).resolves();
     expect(() => defaultContext.update(9, spec)).throws();
   });

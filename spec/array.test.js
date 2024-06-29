@@ -5,8 +5,7 @@ const initial = ['a', 'b', 'c'];
 
 describe('push', () => {
   it('operates on arrays', () => {
-    expect(() => update({}, ['push']))
-      .throws('/ push: expected target to be array');
+    expect(() => update({}, ['push'])).throws('/ push: expected target to be array');
   });
 
   it('appends values', () => {
@@ -25,8 +24,7 @@ describe('push', () => {
 
 describe('unshift', () => {
   it('operates on arrays', () => {
-    expect(() => update({}, ['unshift']))
-      .throws('/ unshift: expected target to be array');
+    expect(() => update({}, ['unshift'])).throws('/ unshift: expected target to be array');
   });
 
   it('prepends values', () => {
@@ -45,8 +43,7 @@ describe('unshift', () => {
 
 describe('splice', () => {
   it('operates on arrays', () => {
-    expect(() => update({}, ['splice']))
-      .throws('/ splice: expected target to be array');
+    expect(() => update({}, ['splice'])).throws('/ splice: expected target to be array');
   });
 
   it('invokes splice', () => {

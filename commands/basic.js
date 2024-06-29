@@ -5,15 +5,14 @@ const commands = {
 
   unset: config('*')((object, options, context) => context.UNSET_TOKEN),
 
-  init: config('*', 'value')((object, [value]) => (
-    (object === undefined) ? value : object
-  )),
+  init: config('*', 'value')((object, [value]) => (object === undefined ? value : object)),
 
-  updateIf: config('*', 'condition', 'spec', 'spec?')((
-    object,
-    [condition, spec, elseSpec = null],
-    context
-  ) => {
+  updateIf: config(
+    '*',
+    'condition',
+    'spec',
+    'spec?',
+  )((object, [condition, spec, elseSpec = null], context) => {
     const check = context.makeConditionPredicate(condition);
     if (!check(object)) {
       if (!elseSpec) {
@@ -24,19 +23,21 @@ const commands = {
     return context.update(object, spec, { allowUnset: true });
   }),
 
-  seq: config('*', 'spec...')((object, specs, context) => specs.reduce(
-    (o, spec) => context.update(o, spec, { allowUnset: true }),
-    object
-  )),
+  seq: config(
+    '*',
+    'spec...',
+  )((object, specs, context) =>
+    specs.reduce((o, spec) => context.update(o, spec, { allowUnset: true }), object),
+  ),
 
   toggle: config('boolean')((object) => !object),
 
-  merge: config('object?', 'merge:object', 'initial:object?')((
-    object,
-    [value, init],
-    context
-  ) => {
-    const initedObject = (object === undefined) ? init : object;
+  merge: config(
+    'object?',
+    'merge:object',
+    'initial:object?',
+  )((object, [value, init], context) => {
+    const initedObject = object === undefined ? init : object;
     return context.applyMerge(initedObject, Object.entries(value));
   }),
 

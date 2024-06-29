@@ -1,10 +1,4 @@
-import defaultExport, {
-  UNSET_TOKEN,
-  combine,
-  context,
-  invariant,
-  update,
-} from '../index.mjs';
+import defaultExport, { UNSET_TOKEN, combine, context, invariant, update } from '../index.mjs';
 import stringCommands from '../commands/string.js';
 
 function fail() {
@@ -30,12 +24,7 @@ if (!defaultExport) {
 }
 
 if (defaultExport !== context) {
-  console.error(
-    'expected default export to be context, but',
-    defaultExport,
-    '!=',
-    context
-  );
+  console.error('expected default export to be context, but', defaultExport, '!=', context);
   fail();
 }
 checkSame(update, 'update');

@@ -44,25 +44,17 @@ const rpn = (functionsObj, constants, context) => {
 
 const COMPILED_RPN = Symbol('compiled-rpn');
 
-const rpnCommand = config('primitive', 'operations:primitive...')((
-  object,
-  tokens,
-  context
-) => {
+const rpnCommand = config(
+  'primitive',
+  'operations:primitive...',
+)((object, tokens, context) => {
   let compiledRpn = context[COMPILED_RPN];
   if (!compiledRpn) {
-    compiledRpn = rpn(
-      context.rpnOperators,
-      context.rpnConstants,
-      context
-    );
+    compiledRpn = rpn(context.rpnOperators, context.rpnConstants, context);
     context[COMPILED_RPN] = compiledRpn;
   }
   const result = compiledRpn(tokens, { x: object });
-  context.invariant(
-    typeof object === typeof result,
-    'cannot change type of property'
-  );
+  context.invariant(typeof object === typeof result, 'cannot change type of property');
   return result;
 });
 

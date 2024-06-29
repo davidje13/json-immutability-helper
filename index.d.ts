@@ -1,7 +1,11 @@
 declare module 'json-immutability-helper' {
   const SHARED_UNSET_TOKEN: unique symbol;
 
-  type DirectiveFn = <T>(old: Readonly<T>, args: ReadonlyArray<unknown>, context: Readonly<Context>) => T | typeof SHARED_UNSET_TOKEN;
+  type DirectiveFn = <T>(
+    old: Readonly<T>,
+    args: ReadonlyArray<unknown>,
+    context: Readonly<Context>,
+  ) => T | typeof SHARED_UNSET_TOKEN;
   type ConditionFn = <T>(param: T) => (actual: T) => boolean;
   type EqualFn = (x: unknown, y: unknown) => boolean;
   type CopyFn = <T>(o: Readonly<T>) => T;
@@ -32,7 +36,7 @@ declare module 'json-immutability-helper' {
     greaterThan?: T;
     lessThan?: T;
     not?: T;
-    notNullish?: null,
+    notNullish?: null;
   }
 
   interface ConditionKeyValue<K, V> extends ConditionValue<V> {
@@ -45,67 +49,76 @@ declare module 'json-immutability-helper' {
 
   type Condition<T> = ConditionEntry<T> | ConditionEntry<T>[];
 
-  export type Spec<T> = (
-    T extends string ? StringSpec :
-      T extends boolean ? BooleanSpec :
-        T extends number ? NumberSpec :
-          T extends (ReadonlyArray<infer U>) ? ArraySpec<U> :
-            ObjectSpec<T>
-  ) |
-  ['=', T] | ['set', T] |
-  (T extends undefined ? ['unset'] : never) |
-  ['init', T] |
-  ['updateIf', Condition<T>, Spec<T>, Spec<T>?] |
-  ['seq', ...Spec<T>[]];
+  export type Spec<T> =
+    | (T extends string
+        ? StringSpec
+        : T extends boolean
+          ? BooleanSpec
+          : T extends number
+            ? NumberSpec
+            : T extends ReadonlyArray<infer U>
+              ? ArraySpec<U>
+              : ObjectSpec<T>)
+    | ['=', T]
+    | ['set', T]
+    | (T extends undefined ? ['unset'] : never)
+    | ['init', T]
+    | ['updateIf', Condition<T>, Spec<T>, Spec<T>?]
+    | ['seq', ...Spec<T>[]];
 
   type UnsettableSpec<T> = Spec<T> | ['unset'];
 
-  type StringSpec =
-    ['replaceAll', string, string] |
-    ['rpn', ...(number | string)[]];
+  type StringSpec = ['replaceAll', string, string] | ['rpn', ...(number | string)[]];
 
-  type BooleanSpec =
-    ['~'] | ['toggle'];
+  type BooleanSpec = ['~'] | ['toggle'];
 
   type NumberSpec =
-    ['+', number] | ['add', number] |
-    ['-', number] | ['subtract', number] |
-    ['rpn', ...(number | string)[]];
+    | ['+', number]
+    | ['add', number]
+    | ['-', number]
+    | ['subtract', number]
+    | ['rpn', ...(number | string)[]];
 
   type ArraySpec<T> =
-    ['push', ...T[]] |
-    ['unshift', ...T[]] |
-    ['splice', ...([number, number?] | [number, number, ...T[]])[]] |
-    ['insertBeforeFirstWhere', Condition<T>, ...T[]] |
-    ['insertAfterFirstWhere', Condition<T>, ...T[]] |
-    ['insertBeforeLastWhere', Condition<T>, ...T[]] |
-    ['insertAfterLastWhere', Condition<T>, ...T[]] |
-    ['updateAll', UnsettableSpec<T>] |
-    ['updateWhere', Condition<T>, UnsettableSpec<T>] |
-    ['updateFirstWhere', Condition<T>, UnsettableSpec<T>] |
-    ['updateLastWhere', Condition<T>, UnsettableSpec<T>] |
-    ['deleteWhere', Condition<T>] |
-    ['deleteFirstWhere', Condition<T>] |
-    ['deleteLastWhere', Condition<T>] |
-    { [index: number]: UnsettableSpec<T> };
+    | ['push', ...T[]]
+    | ['unshift', ...T[]]
+    | ['splice', ...([number, number?] | [number, number, ...T[]])[]]
+    | ['insertBeforeFirstWhere', Condition<T>, ...T[]]
+    | ['insertAfterFirstWhere', Condition<T>, ...T[]]
+    | ['insertBeforeLastWhere', Condition<T>, ...T[]]
+    | ['insertAfterLastWhere', Condition<T>, ...T[]]
+    | ['updateAll', UnsettableSpec<T>]
+    | ['updateWhere', Condition<T>, UnsettableSpec<T>]
+    | ['updateFirstWhere', Condition<T>, UnsettableSpec<T>]
+    | ['updateLastWhere', Condition<T>, UnsettableSpec<T>]
+    | ['deleteWhere', Condition<T>]
+    | ['deleteFirstWhere', Condition<T>]
+    | ['deleteLastWhere', Condition<T>]
+    | { [index: number]: UnsettableSpec<T> };
 
   type ObjectSpec<T> =
-    ['merge', Partial<Readonly<T>>, Readonly<T>?] |
-    { [K in keyof T]?: Spec<T[K]> };
+    | ['merge', Partial<Readonly<T>>, Readonly<T>?]
+    | { [K in keyof T]?: Spec<T[K]> };
 
   interface OptionsDisallowUnset {
     path?: string;
     allowUnset?: false;
   }
 
-  type OptionsAllowUnset = Omit<OptionsDisallowUnset, 'allowUnset'> | {
-    allowUnset: true;
-  }
+  type OptionsAllowUnset =
+    | Omit<OptionsDisallowUnset, 'allowUnset'>
+    | {
+        allowUnset: true;
+      };
 
   type CombineFn = <T>(specs: Spec<T>[]) => Spec<T>;
 
   function updateFn<T>(object: T, spec: Spec<T>, options?: OptionsDisallowUnset): T;
-  function updateFn<T>(object: T, spec: UnsettableSpec<T>, options: OptionsAllowUnset): T | typeof SHARED_UNSET_TOKEN;
+  function updateFn<T>(
+    object: T,
+    spec: UnsettableSpec<T>,
+    options: OptionsAllowUnset,
+  ): T | typeof SHARED_UNSET_TOKEN;
   type Update = typeof updateFn & {
     readonly context: Context;
     readonly combine: CombineFn;
@@ -125,10 +138,7 @@ declare module 'json-immutability-helper' {
 
     public makeConditionPredicate<T>(condition: Condition<T>[]): (v: T) => boolean;
 
-    public invariant(
-      condition: unknown,
-      message?: string | (() => string),
-    ): asserts condition;
+    public invariant(condition: unknown, message?: string | (() => string)): asserts condition;
   }
 
   export const context: Context;

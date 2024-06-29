@@ -1,7 +1,7 @@
 const config = require('./util/commandTypeCheck');
 
 function findLast(list, check) {
-  for (let i = list.length; (i--) > 0;) {
+  for (let i = list.length; i-- > 0; ) {
     if (check(list[i])) {
       return i;
     }
@@ -11,7 +11,7 @@ function findLast(list, check) {
 
 function findIndicesReversed(list, check) {
   const indices = [];
-  for (let i = list.length; (i--) > 0;) {
+  for (let i = list.length; i-- > 0; ) {
     if (check(list[i])) {
       indices.push(i);
     }
@@ -33,20 +33,25 @@ function updateAtIndex(context, [index, spec], original) {
 }
 
 const commands = {
-  push: config('array', 'value...')((object, values) => (
-    values.length ? Array.prototype.concat.call(object, values) : object
-  )),
+  push: config(
+    'array',
+    'value...',
+  )((object, values) => (values.length ? Array.prototype.concat.call(object, values) : object)),
 
-  unshift: config('array', 'value...')((object, values) => (
-    values.length ? Array.prototype.concat.call(values, object) : object
-  )),
+  unshift: config(
+    'array',
+    'value...',
+  )((object, values) => (values.length ? Array.prototype.concat.call(values, object) : object)),
 
-  splice: config('array', 'array...')((object, splices, context) => {
+  splice: config(
+    'array',
+    'array...',
+  )((object, splices, context) => {
     let updatedObject = null;
     splices.forEach((args) => {
       context.invariant(
         Array.isArray(args),
-        'expected splice parameter to be an array of arguments to splice()'
+        'expected splice parameter to be an array of arguments to splice()',
       );
       if (args.length && (args[1] !== 0 || args.length > 2)) {
         updatedObject = updatedObject || context.copy(object);
@@ -56,11 +61,11 @@ const commands = {
     return updatedObject || object;
   }),
 
-  insertBeforeFirstWhere: config('array', 'condition', 'value...')((
-    object,
-    [condition, ...items],
-    context
-  ) => {
+  insertBeforeFirstWhere: config(
+    'array',
+    'condition',
+    'value...',
+  )((object, [condition, ...items], context) => {
     const predicate = context.makeConditionPredicate(condition);
     let index = Array.prototype.findIndex.call(object, predicate);
     if (index === -1) {
@@ -69,11 +74,11 @@ const commands = {
     return insertAtIndex(context, [index, items], object);
   }),
 
-  insertAfterFirstWhere: config('array', 'condition', 'value...')((
-    object,
-    [condition, ...items],
-    context
-  ) => {
+  insertAfterFirstWhere: config(
+    'array',
+    'condition',
+    'value...',
+  )((object, [condition, ...items], context) => {
     const predicate = context.makeConditionPredicate(condition);
     let index = Array.prototype.findIndex.call(object, predicate);
     if (index === -1) {
@@ -82,11 +87,11 @@ const commands = {
     return insertAtIndex(context, [index + 1, items], object);
   }),
 
-  insertBeforeLastWhere: config('array', 'condition', 'value...')((
-    object,
-    [condition, ...items],
-    context
-  ) => {
+  insertBeforeLastWhere: config(
+    'array',
+    'condition',
+    'value...',
+  )((object, [condition, ...items], context) => {
     const predicate = context.makeConditionPredicate(condition);
     let index = findLast(object, predicate);
     if (index === -1) {
@@ -95,17 +100,20 @@ const commands = {
     return insertAtIndex(context, [index, items], object);
   }),
 
-  insertAfterLastWhere: config('array', 'condition', 'value...')((
-    object,
-    [condition, ...items],
-    context
-  ) => {
+  insertAfterLastWhere: config(
+    'array',
+    'condition',
+    'value...',
+  )((object, [condition, ...items], context) => {
     const predicate = context.makeConditionPredicate(condition);
     const index = findLast(object, predicate);
     return insertAtIndex(context, [index + 1, items], object);
   }),
 
-  updateAll: config('array', 'spec')((object, [spec], context) => {
+  updateAll: config(
+    'array',
+    'spec',
+  )((object, [spec], context) => {
     const combined = {};
     context.incLoopNesting(object.length, () => {
       for (let i = 0; i < object.length; i++) {
@@ -117,11 +125,11 @@ const commands = {
     return context.update(object, combined);
   }),
 
-  updateWhere: config('array', 'condition', 'spec')((
-    object,
-    [condition, spec],
-    context
-  ) => {
+  updateWhere: config(
+    'array',
+    'condition',
+    'spec',
+  )((object, [condition, spec], context) => {
     const combined = {};
     const predicate = context.makeConditionPredicate(condition);
     const indices = findIndicesReversed(object, predicate);
@@ -135,51 +143,48 @@ const commands = {
     return context.update(object, combined);
   }),
 
-  updateFirstWhere: config('array', 'condition', 'spec')((
-    object,
-    [condition, spec],
-    context
-  ) => {
+  updateFirstWhere: config(
+    'array',
+    'condition',
+    'spec',
+  )((object, [condition, spec], context) => {
     const predicate = context.makeConditionPredicate(condition);
     const index = Array.prototype.findIndex.call(object, predicate);
     return updateAtIndex(context, [index, spec], object);
   }),
 
-  updateLastWhere: config('array', 'condition', 'spec')((
-    object,
-    [condition, spec],
-    context
-  ) => {
+  updateLastWhere: config(
+    'array',
+    'condition',
+    'spec',
+  )((object, [condition, spec], context) => {
     const predicate = context.makeConditionPredicate(condition);
     const index = findLast(object, predicate);
     return updateAtIndex(context, [index, spec], object);
   }),
 
-  deleteWhere: config('array', 'condition')((
-    object,
-    [condition],
-    context
-  ) => {
+  deleteWhere: config(
+    'array',
+    'condition',
+  )((object, [condition], context) => {
     const predicate = context.makeConditionPredicate(condition);
     const indices = findIndicesReversed(object, predicate);
     return context.update(object, ['splice', ...indices.map((i) => [i, 1])]);
   }),
 
-  deleteFirstWhere: config('array', 'condition')((
-    object,
-    [condition],
-    context
-  ) => {
+  deleteFirstWhere: config(
+    'array',
+    'condition',
+  )((object, [condition], context) => {
     const predicate = context.makeConditionPredicate(condition);
     const index = Array.prototype.findIndex.call(object, predicate);
     return updateAtIndex(context, [index, ['unset']], object);
   }),
 
-  deleteLastWhere: config('array', 'condition')((
-    object,
-    [condition],
-    context
-  ) => {
+  deleteLastWhere: config(
+    'array',
+    'condition',
+  )((object, [condition], context) => {
     const predicate = context.makeConditionPredicate(condition);
     const index = findLast(object, predicate);
     return updateAtIndex(context, [index, ['unset']], object);

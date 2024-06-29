@@ -19,7 +19,8 @@
     "./commands/*": "./commands/*.js"
   },
   "scripts": {
-    "lint": "eslint --ext mjs,js .",
+    "format": "prettier --write .",
+    "lint": "prettier --check .",
     "test": "node spec/importCJS.js && node spec/importESM.mjs && lean-test",
     "posttest": "npm run lint"
   },
@@ -39,8 +40,7 @@
   },
   "homepage": "https://github.com/davidje13/json-immutability-helper#readme",
   "devDependencies": {
-    "eslint": "8.x",
-    "eslint-plugin-node": "11.x",
+    "prettier": "3.3.2",
     "lean-test": "2.x"
   }
 }

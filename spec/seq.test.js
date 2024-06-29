@@ -7,11 +7,7 @@ const initial = {
 
 describe('seq', () => {
   it('applies all specs', () => {
-    const updated = update(initial, [
-      'seq',
-      { foo: ['=', 'baz'] },
-      { seven: ['=', 8] },
-    ]);
+    const updated = update(initial, ['seq', { foo: ['=', 'baz'] }, { seven: ['=', 8] }]);
 
     expect(updated).not(same(initial));
     expect(updated).equals({ foo: 'baz', seven: 8 });

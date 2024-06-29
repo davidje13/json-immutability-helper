@@ -33,12 +33,7 @@ if (!defaultExport) {
 }
 
 if (defaultExport !== context) {
-  console.error(
-    'expected default export to be context, but',
-    defaultExport,
-    '!=',
-    context
-  );
+  console.error('expected default export to be context, but', defaultExport, '!=', context);
   fail();
 }
 if (namedDefaultExport !== context) {
@@ -46,7 +41,7 @@ if (namedDefaultExport !== context) {
     'expected named default export to be context, but',
     namedDefaultExport,
     '!=',
-    context
+    context,
   );
   fail();
 }

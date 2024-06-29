@@ -43,11 +43,7 @@ describe('updateIf', () => {
   });
 
   it('does nothing if condition is not matched and else is not given', () => {
-    const updated = update(initial, [
-      'updateIf',
-      { key: 'foo', equals: 'nope' },
-      matchSpec,
-    ]);
+    const updated = update(initial, ['updateIf', { key: 'foo', equals: 'nope' }, matchSpec]);
 
     expect(updated).same(initial);
   });

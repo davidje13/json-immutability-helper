@@ -2,8 +2,7 @@ const { update, UNSET_TOKEN } = require('../index');
 
 describe('set', () => {
   it('takes 1 argument', () => {
-    expect(() => update(1, ['set']))
-      .throws('/ set: expected [command, value]');
+    expect(() => update(1, ['set'])).throws('/ set: expected [command, value]');
   });
 
   it('replaces the value', () => {
@@ -22,7 +21,7 @@ describe('set', () => {
 
   it('sets indices in arrays', () => {
     const initial = ['a', 'b', 'c'];
-    const updated = update(initial, { '1': ['set', 'B'] });
+    const updated = update(initial, { 1: ['set', 'B'] });
 
     expect(updated).equals(['a', 'B', 'c']);
     expect(updated).not(same(initial));
@@ -30,32 +29,31 @@ describe('set', () => {
 
   it('rejects indices beyond the end of the array', () => {
     const initial = ['a', 'b', 'c'];
-    expect(() => update(initial, { '3': ['set', '1'] }))
-      .throws('cannot modify array property 3');
+    expect(() => update(initial, { 3: ['set', '1'] })).throws('cannot modify array property 3');
   });
 
   it('rejects negative indices', () => {
     const initial = ['a', 'b', 'c'];
-    expect(() => update(initial, { '-1': ['set', '1'] }))
-      .throws('cannot modify array property -1');
+    expect(() => update(initial, { '-1': ['set', '1'] })).throws('cannot modify array property -1');
   });
 
   it('rejects attempts to add properties to arrays', () => {
     const initial = ['a', 'b', 'c'];
-    expect(() => update(initial, { foo: ['set', '1'] }))
-      .throws('cannot modify array property foo');
+    expect(() => update(initial, { foo: ['set', '1'] })).throws('cannot modify array property foo');
   });
 
   it('rejects attempts to modify array length directly', () => {
     const initial = ['a', 'b', 'c'];
-    expect(() => update(initial, { length: ['set', 1] }))
-      .throws('cannot modify array property length');
+    expect(() => update(initial, { length: ['set', 1] })).throws(
+      'cannot modify array property length',
+    );
   });
 
   it('rejects attempts to modify non-objects', () => {
     const initial = 'a';
-    expect(() => update(initial, { foo: ['set', '1'] }))
-      .throws('target must be an object or array');
+    expect(() => update(initial, { foo: ['set', '1'] })).throws(
+      'target must be an object or array',
+    );
   });
 
   it('sets __proto__ as a literal value', () => {
@@ -76,8 +74,9 @@ describe('set', () => {
   });
 
   it('rejects attempts to navigate through non-existant properties', () => {
-    expect(() => update({ foo: '1' }, { foo: { bar: ['set', '1'] } }))
-      .throws('/foo: target must be an object or array');
+    expect(() => update({ foo: '1' }, { foo: { bar: ['set', '1'] } })).throws(
+      '/foo: target must be an object or array',
+    );
   });
 
   it('has alias =', () => {
@@ -106,7 +105,7 @@ describe('set undefined', () => {
 
   it('sets indices in arrays', () => {
     const initial = ['a', 'b', 'c'];
-    const updated = update(initial, { '1': ['set', undefined] });
+    const updated = update(initial, { 1: ['set', undefined] });
 
     expect(updated).equals(['a', undefined, 'c']);
     expect(updated).not(same(initial));
@@ -146,14 +145,16 @@ describe('set UNSET_TOKEN', () => {
 
   it('rejects attempts to remove properties from arrays', () => {
     const initial = ['a', 'b', 'c'];
-    expect(() => update(initial, { foo: ['set', UNSET_TOKEN] }))
-      .throws('cannot modify array property foo');
+    expect(() => update(initial, { foo: ['set', UNSET_TOKEN] })).throws(
+      'cannot modify array property foo',
+    );
   });
 
   it('rejects attempts to remove array length', () => {
     const initial = ['a', 'b', 'c'];
-    expect(() => update(initial, { length: ['set', UNSET_TOKEN] }))
-      .throws('cannot modify array property length');
+    expect(() => update(initial, { length: ['set', UNSET_TOKEN] })).throws(
+      'cannot modify array property length',
+    );
   });
 
   it('does nothing if a missing value is removed', () => {
@@ -178,8 +179,7 @@ describe('set UNSET_TOKEN', () => {
 
 describe('unset', () => {
   it('takes no arguments', () => {
-    expect(() => update(1, ['unset', 'nope']))
-      .throws('/ unset: expected [command]');
+    expect(() => update(1, ['unset', 'nope'])).throws('/ unset: expected [command]');
   });
 
   it('removes the property', () => {
@@ -238,8 +238,7 @@ describe('unset', () => {
 
 describe('init', () => {
   it('takes 1 argument', () => {
-    expect(() => update(1, ['init']))
-      .throws('/ init: expected [command, value]');
+    expect(() => update(1, ['init'])).throws('/ init: expected [command, value]');
   });
 
   it('initialises the value if undefined', () => {

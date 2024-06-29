@@ -2,11 +2,7 @@ const { update } = require('../index');
 
 describe('combine', () => {
   it('merges multiple non-conflicting specs', () => {
-    const spec = update.combine([
-      { foo: ['=', 1] },
-      { bar: ['=', 2] },
-      { baz: ['=', 3] },
-    ]);
+    const spec = update.combine([{ foo: ['=', 1] }, { bar: ['=', 2] }, { baz: ['=', 3] }]);
 
     expect(spec).equals({
       foo: ['=', 1],
@@ -16,37 +12,26 @@ describe('combine', () => {
   });
 
   it('merges multiple conflicting specs using seq', () => {
-    const spec = update.combine([
-      { foo: ['=', 1] },
-      { foo: ['=', 2] },
-    ]);
+    const spec = update.combine([{ foo: ['=', 1] }, { foo: ['=', 2] }]);
 
     expect(spec).equals({ foo: ['seq', ['=', 1], ['=', 2]] });
   });
 
   it('merges recursively', () => {
-    const spec = update.combine([
-      { foo: { bar: { baz: ['=', 3] } } },
-      { foo: { zig: ['=', 4] } },
-    ]);
+    const spec = update.combine([{ foo: { bar: { baz: ['=', 3] } } }, { foo: { zig: ['=', 4] } }]);
 
-    expect(spec).equals({ foo: {
-      bar: { baz: ['=', 3] },
-      zig: ['=', 4],
-    } });
+    expect(spec).equals({
+      foo: {
+        bar: { baz: ['=', 3] },
+        zig: ['=', 4],
+      },
+    });
   });
 
   it('merges at multiple levels', () => {
-    const spec = update.combine([
-      { foo: { bar: { baz: ['=', 3] } } },
-      { foo: ['=', 4] },
-    ]);
+    const spec = update.combine([{ foo: { bar: { baz: ['=', 3] } } }, { foo: ['=', 4] }]);
 
-    expect(spec).equals({ foo: [
-      'seq',
-      { bar: { baz: ['=', 3] } },
-      ['=', 4],
-    ] });
+    expect(spec).equals({ foo: ['seq', { bar: { baz: ['=', 3] } }, ['=', 4]] });
   });
 
   it('generates non-nested sequential operations', () => {
@@ -57,13 +42,7 @@ describe('combine', () => {
       { foo: ['=', 4] },
     ]);
 
-    expect(spec).equals({ foo: [
-      'seq',
-      ['=', 1],
-      ['=', 2],
-      ['=', 3],
-      ['=', 4],
-    ] });
+    expect(spec).equals({ foo: ['seq', ['=', 1], ['=', 2], ['=', 3], ['=', 4]] });
   });
 
   it('flattens sequential operations', () => {
@@ -72,12 +51,6 @@ describe('combine', () => {
       { foo: ['seq', ['=', 3], ['=', 4]] },
     ]);
 
-    expect(spec).equals({ foo: [
-      'seq',
-      ['=', 1],
-      ['=', 2],
-      ['=', 3],
-      ['=', 4],
-    ] });
+    expect(spec).equals({ foo: ['seq', ['=', 1], ['=', 2], ['=', 3], ['=', 4]] });
   });
 });

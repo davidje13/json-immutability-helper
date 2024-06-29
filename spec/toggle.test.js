@@ -2,13 +2,11 @@ const { update } = require('../index');
 
 describe('toggle', () => {
   it('operates on booleans', () => {
-    expect(() => update(0, ['toggle']))
-      .throws('/ toggle: expected target to be boolean');
+    expect(() => update(0, ['toggle'])).throws('/ toggle: expected target to be boolean');
   });
 
   it('takes no arguments', () => {
-    expect(() => update(true, ['toggle', 'nope']))
-      .throws('/ toggle: expected [command]');
+    expect(() => update(true, ['toggle', 'nope'])).throws('/ toggle: expected [command]');
   });
 
   it('inverts the value', () => {
@@ -17,8 +15,7 @@ describe('toggle', () => {
   });
 
   it('rejects operations on unset values', () => {
-    expect(() => update(undefined, ['toggle']))
-      .throws('expected target to be boolean');
+    expect(() => update(undefined, ['toggle'])).throws('expected target to be boolean');
   });
 
   it('has alias ~', () => {

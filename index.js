@@ -8,21 +8,20 @@ function invariant(condition, msgFn) {
   }
 }
 
-const safeGet = (o, key) => (
-  Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined
-);
+const safeGet = (o, key) => (Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined);
 
-const addProperty = (o, key, value) => Object.defineProperty(o, key, {
-  value,
-  configurable: true,
-  enumerable: true,
-  writable: true,
-});
+const addProperty = (o, key, value) =>
+  Object.defineProperty(o, key, {
+    value,
+    configurable: true,
+    enumerable: true,
+    writable: true,
+  });
 
 const isOp = Array.isArray;
 const isArrayIndex = (key, limit) => {
   const v = Number(key);
-  return (v >= 0 && v < limit && v.toFixed(0) === key);
+  return v >= 0 && v < limit && v.toFixed(0) === key;
 };
 
 function getSeqSteps(spec) {
@@ -53,11 +52,11 @@ function combineSpecs(spec1, spec2) {
 function conditionPartPredicate(condition, context) {
   invariant(
     typeof condition === 'object',
-    () => `expected spec of condition to be an object; got ${condition}`
+    () => `expected spec of condition to be an object; got ${condition}`,
   );
 
   const checks = Object.entries(condition)
-    .filter(([key]) => (key !== 'key'))
+    .filter(([key]) => key !== 'key')
     .map(([key, param]) => {
       const type = context.conditions.get(key);
       invariant(type, () => `unknown condition type: ${key}`);
@@ -79,7 +78,7 @@ function conditionPartPredicate(condition, context) {
 }
 
 function deleteIndices(arr, indices) {
-  indices.sort((a, b) => (a - b));
+  indices.sort((a, b) => a - b);
   let del = 1;
   for (let i = indices[0] + 1; i < arr.length; ++i) {
     if (i === indices[del]) {
@@ -110,13 +109,7 @@ class JsonContext {
       invariant,
     });
 
-    bindAll(this, [
-      'with',
-      'update',
-      'applyMerge',
-      'combine',
-      'makeConditionPredicate',
-    ]);
+    bindAll(this, ['with', 'update', 'applyMerge', 'combine', 'makeConditionPredicate']);
 
     Object.assign(this.update, {
       context: this,
@@ -136,18 +129,24 @@ class JsonContext {
       isEquals: this.isEquals,
       copy: this.copy,
     };
-    return new JsonContext(overrides.reduce((v, cur) => Object.assign(v, cur, {
-      commands: [...v.commands, ...Object.entries(cur.commands || {})],
-      conditions: [...v.conditions, ...Object.entries(cur.conditions || {})],
-      limits: Object.assign(v.limits, cur.limits),
-      rpnOperators: Object.assign(v.rpnOperators, cur.rpnOperators),
-      rpnConstants: Object.assign(v.rpnConstants, cur.rpnConstants),
-    }), base));
+    return new JsonContext(
+      overrides.reduce(
+        (v, cur) =>
+          Object.assign(v, cur, {
+            commands: [...v.commands, ...Object.entries(cur.commands || {})],
+            conditions: [...v.conditions, ...Object.entries(cur.conditions || {})],
+            limits: Object.assign(v.limits, cur.limits),
+            rpnOperators: Object.assign(v.rpnOperators, cur.rpnOperators),
+            rpnConstants: Object.assign(v.rpnConstants, cur.rpnConstants),
+          }),
+        base,
+      ),
+    );
   }
 
   /* eslint-disable-next-line max-statements */
   update(object, spec, { path = '', allowUnset = false } = {}) {
-    const initial = (object === UNSET_TOKEN) ? undefined : object;
+    const initial = object === UNSET_TOKEN ? undefined : object;
 
     if (isOp(spec)) {
       const [commandName, ...options] = spec;
@@ -166,21 +165,22 @@ class JsonContext {
 
     invariant(
       typeof object === 'object' && object !== null,
-      () => `/${path}: target must be an object or array`
+      () => `/${path}: target must be an object or array`,
     );
 
     invariant(
       typeof spec === 'object' && spec !== null,
-      () => `/${path}: spec must be an object or a command`
+      () => `/${path}: spec must be an object or a command`,
     );
 
     const nextPath = path ? `${path}/` : '';
-    const diffEntries = Object.entries(spec).map(
-      ([key, s]) => [key, this.update(safeGet(initial, key), s, {
+    const diffEntries = Object.entries(spec).map(([key, s]) => [
+      key,
+      this.update(safeGet(initial, key), s, {
         path: `${nextPath}${key}`,
         allowUnset: true,
-      })]
-    );
+      }),
+    ]);
     return this.applyMerge(initial, diffEntries, path);
   }
 
@@ -248,8 +248,8 @@ class JsonContext {
 
     invariant(
       this.nestDepth < this.limits.recursionDepth &&
-      this.nestBreadth < this.limits.recursionBreadth,
-      `too much recursion: ${this.nestDepth} deep, ~${this.nestBreadth} items`
+        this.nestBreadth < this.limits.recursionBreadth,
+      `too much recursion: ${this.nestDepth} deep, ~${this.nestBreadth} items`,
     );
 
     try {
@@ -271,16 +271,11 @@ const BASE_CONFIG = {
   },
   rpnOperators: {},
   rpnConstants: {},
-  isEquals: (x, y) => (x === y),
-  copy: (o) => (
-    Array.isArray(o) ? [...o] :
-      (typeof o === 'object' && o) ? Object.assign({}, o) :
-        o
-  ),
+  isEquals: (x, y) => x === y,
+  copy: (o) => (Array.isArray(o) ? [...o] : typeof o === 'object' && o ? Object.assign({}, o) : o),
 };
 
-const defaultContext = new JsonContext(BASE_CONFIG)
-  .with(basicCommands, basicConditions);
+const defaultContext = new JsonContext(BASE_CONFIG).with(basicCommands, basicConditions);
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

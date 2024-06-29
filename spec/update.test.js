@@ -14,13 +14,13 @@ describe('updateAll', () => {
 
 describe('updateWhere', () => {
   it('applies an update to all matching items in a list', () => {
-    const updated = update(initial, ['updateWhere', {equals: 9}, spec]);
+    const updated = update(initial, ['updateWhere', { equals: 9 }, spec]);
 
     expect(updated).equals([10, 2, 11, 2, -1]);
   });
 
   it('does nothing if no items match', () => {
-    const updated = update(initial, ['updateWhere', {equals: 1}, spec]);
+    const updated = update(initial, ['updateWhere', { equals: 1 }, spec]);
 
     expect(updated).same(initial);
   });
@@ -28,13 +28,13 @@ describe('updateWhere', () => {
 
 describe('updateFirstWhere', () => {
   it('applies an update to the first matching item in a list', () => {
-    const updated = update(initial, ['updateFirstWhere', {equals: 9}, spec]);
+    const updated = update(initial, ['updateFirstWhere', { equals: 9 }, spec]);
 
     expect(updated).equals([10, 2, 11, 9, -1]);
   });
 
   it('does nothing if no items match', () => {
-    const updated = update(initial, ['updateFirstWhere', {equals: 1}, spec]);
+    const updated = update(initial, ['updateFirstWhere', { equals: 1 }, spec]);
 
     expect(updated).same(initial);
   });
@@ -42,13 +42,13 @@ describe('updateFirstWhere', () => {
 
 describe('updateLastWhere', () => {
   it('applies an update to the last matching item in a list', () => {
-    const updated = update(initial, ['updateLastWhere', {equals: 9}, spec]);
+    const updated = update(initial, ['updateLastWhere', { equals: 9 }, spec]);
 
     expect(updated).equals([10, 9, 11, 2, -1]);
   });
 
   it('does nothing if no items match', () => {
-    const updated = update(initial, ['updateLastWhere', {equals: 1}, spec]);
+    const updated = update(initial, ['updateLastWhere', { equals: 1 }, spec]);
 
     expect(updated).same(initial);
   });

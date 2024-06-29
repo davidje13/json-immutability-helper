@@ -3,13 +3,11 @@ const { update } = require('../index');
 
 describe('add', () => {
   it('operates on numbers', () => {
-    expect(() => update('', ['add', 1]))
-      .throws('/ add: expected target to be number');
+    expect(() => update('', ['add', 1])).throws('/ add: expected target to be number');
   });
 
   it('takes an addend', () => {
-    expect(() => update(0, ['add']))
-      .throws('/ add: expected [command, number]');
+    expect(() => update(0, ['add'])).throws('/ add: expected [command, number]');
   });
 
   it('applies summation', () => {
@@ -27,13 +25,11 @@ describe('add', () => {
 
 describe('subtract', () => {
   it('operates on numbers', () => {
-    expect(() => update('', ['subtract', 1]))
-      .throws('/ subtract: expected target to be number');
+    expect(() => update('', ['subtract', 1])).throws('/ subtract: expected target to be number');
   });
 
   it('takes a subtrahend', () => {
-    expect(() => update(0, ['subtract']))
-      .throws('/ subtract: expected [command, number]');
+    expect(() => update(0, ['subtract'])).throws('/ subtract: expected [command, number]');
   });
 
   it('applies subtraction', () => {
@@ -53,18 +49,15 @@ describe('rpn', () => {
   const update2 = update.context.with(mathCommands).update;
 
   it('operates on primitives', () => {
-    expect(() => update2([], ['rpn']))
-      .throws('/ rpn: expected target to be primitive');
+    expect(() => update2([], ['rpn'])).throws('/ rpn: expected target to be primitive');
   });
 
   it('takes command tokens', () => {
-    expect(() => update2(0, ['rpn', []]))
-      .throws('/ rpn: expected [command, operations...]');
+    expect(() => update2(0, ['rpn', []])).throws('/ rpn: expected [command, operations...]');
   });
 
   it('rejects changes of type', () => {
-    expect(() => update2(7, ['rpn', '"abc"']))
-      .throws('cannot change type of property');
+    expect(() => update2(7, ['rpn', '"abc"'])).throws('cannot change type of property');
   });
 
   it('applies a calculation in reverse Polish notation', () => {
