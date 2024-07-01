@@ -47,7 +47,7 @@ declare module 'json-immutability-helper' {
 
   type ConditionEntry<T> = ConditionValue<T> | ConditionKey<T, keyof T>;
 
-  type Condition<T> = ConditionEntry<T> | ConditionEntry<T>[];
+  export type Condition<T> = ConditionEntry<T> | ConditionEntry<T>[];
 
   type If<T, True> = T extends true ? True : never;
 
@@ -85,9 +85,9 @@ declare module 'json-immutability-helper' {
     | ['insertBeforeLastWhere', Condition<T>, ...T[]]
     | ['insertAfterLastWhere', Condition<T>, ...T[]]
     | ['updateAll', Spec<T, true>]
-    | ['updateWhere', Condition<T>, Spec<T, true>]
-    | ['updateFirstWhere', Condition<T>, Spec<T, true>]
-    | ['updateLastWhere', Condition<T>, Spec<T, true>]
+    | ['updateWhere', Condition<T>, Spec<T, true>, T?]
+    | ['updateFirstWhere', Condition<T>, Spec<T, true>, T?]
+    | ['updateLastWhere', Condition<T>, Spec<T, true>, T?]
     | ['deleteWhere', Condition<T>]
     | ['deleteFirstWhere', Condition<T>]
     | ['deleteLastWhere', Condition<T>]
@@ -170,4 +170,142 @@ declare module 'json-immutability-helper/commands/string' {
   import type { Extension } from 'json-immutability-helper';
   const extension: Readonly<Extension>;
   export default extension;
+}
+
+declare module 'json-immutability-helper/helpers/scoped' {
+  import type { context, Spec, Condition } from 'json-immutability-helper';
+
+  type Context = typeof context;
+
+  type SubSpecOptions<T> = { initialisePath?: boolean; initialiseValue?: T };
+
+  type ArrayPath<T> = number | Condition<T>;
+  type UnknownPath = string | ArrayPath<unknown>;
+
+  type Reducer<T> = { state: T; dispatch: (s: Spec<T>) => void };
+
+  export function makeScopedSpec<T>(path: [], spec: Spec<T>, options?: SubSpecOptions<T>): Spec<T>;
+  export function getScopedState<T>(c: Context, state: T, path: [], defaultValue?: T): T;
+  export function makeScopedReducer<T>(
+    c: Context,
+    reducer: Reducer<T>,
+    path: [],
+    defaultValue?: T,
+  ): Reducer<T>;
+
+  export function makeScopedSpec<T>(
+    path: [ArrayPath<T>],
+    spec: Spec<T>,
+    options?: SubSpecOptions<T>,
+  ): Spec<T[]>;
+  export function getScopedState<T>(
+    c: Context,
+    state: T[],
+    path: [ArrayPath<T>],
+    defaultValue?: T,
+  ): T;
+  export function makeScopedReducer<T>(
+    c: Context,
+    reducer: Reducer<T[]>,
+    path: [ArrayPath<T>],
+    defaultValue?: T,
+  ): Reducer<T>;
+
+  export function makeScopedSpec<T, K extends keyof T>(
+    path: [K],
+    spec: Spec<T[K]>,
+    options?: SubSpecOptions<T>,
+  ): Spec<T>;
+  export function getScopedState<T, K extends keyof T>(
+    c: Context,
+    state: T,
+    path: [K],
+    defaultValue?: T[K],
+  ): T[K];
+  export function makeScopedReducer<T, K extends keyof T>(
+    c: Context,
+    reducer: Reducer<T>,
+    path: [K],
+    defaultValue?: T[K],
+  ): Reducer<T[K]>;
+
+  export function makeScopedSpec<T, U>(
+    path: UnknownPath[],
+    spec: Spec<U>,
+    options?: SubSpecOptions<U>,
+  ): Spec<T>;
+  export function getScopedState<T, U>(
+    c: Context,
+    state: T,
+    path: UnknownPath[],
+    defaultValue?: U,
+  ): U;
+  export function makeScopedReducer<T, U>(
+    c: Context,
+    reducer: Reducer<T>,
+    path: UnknownPath[],
+    defaultValue?: U,
+  ): Reducer<U>;
+}
+
+declare module 'json-immutability-helper/helpers/hooks' {
+  import type { context, Spec, Condition } from 'json-immutability-helper';
+
+  type ArrayPath<T> = number | Condition<T>;
+  type UnknownPath = string | ArrayPath<unknown>;
+
+  type Reducer<T, S> = [T, (s: S) => void];
+  type SpecReducer<T> = { state: T; dispatch: (s: Spec<T>) => void };
+  type State<T> = Reducer<T, T | ((o: T) => T)>;
+
+  type UseState = <T>(init: T | (() => T)) => State<T>;
+  type UseEvent = <Fn>(fn: Fn) => Fn;
+  type UseReducer = <T, S>(
+    reducer: (v: T, s: S) => T,
+    initialArg: T,
+    init?: (v: T) => T,
+  ) => Reducer<T, S>;
+  type UseEffect = (fn: () => void, deps: unknown[]) => void;
+  type UseRef = <T>(init: T) => { current: T };
+
+  type InputHooks = {
+    useState: UseState;
+    useReducer?: UseReducer;
+  } & (
+    | { useEvent: UseEvent }
+    | ({ useRef: UseRef } & ({ useLayoutEffect: UseEffect } | { useEffect: UseEffect }))
+  );
+
+  interface ScopedReducerOptions<T> {
+    initialisePath?: boolean;
+    initialiseValue?: T;
+  }
+
+  type UseScopedReducer =
+    | (<T>(next: SpecReducer<T>, path: [], options?: ScopedReducerOptions<T>) => SpecReducer<T>)
+    | (<T>(
+        next: SpecReducer<T[]>,
+        path: [ArrayPath<T>],
+        options?: ScopedReducerOptions<T>,
+      ) => SpecReducer<T>)
+    | (<T, K extends keyof T>(
+        next: SpecReducer<T>,
+        path: [K],
+        options?: ScopedReducerOptions<T[K]>,
+      ) => SpecReducer<T[K]>)
+    | (<T, U>(
+        next: SpecReducer<T>,
+        path: UnknownPath[],
+        options?: ScopedReducerOptions<U>,
+      ) => SpecReducer<U>);
+
+  export function makeHooks(
+    c: typeof context,
+    hooks: InputHooks,
+  ): {
+    useEvent: UseEvent;
+    useJSONReducer: <T>(initialArg: T, init?: (v: T) => T) => SpecReducer<T>;
+    useWrappedJSONReducer: <T>(next: State<T>) => SpecReducer<T>;
+    useScopedReducer: UseScopedReducer;
+  };
 }

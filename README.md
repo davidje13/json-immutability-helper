@@ -1,11 +1,15 @@
 # JSON Immutability Helper
 
-JSON-serialisable mutability helpers.
+JSON-serialisable mutability helpers for both client- and server-side
+code.
 
 Originally based on
 [`immutability-helper`](https://github.com/kolodny/immutability-helper),
 with list, string and mathematical commands added, but now uses an
 alternative syntax.
+
+This library includes helpers for integrating with React / preact
+apps using hooks, but can also be used indepenently.
 
 ## Install dependency
 
@@ -149,8 +153,7 @@ const updatedItems = update(items, [
   ['set', 5],
 ]);
 
-// The output is:
-const expectedItems = [1, 2, 5, 4];
+// updatedItems = [1, 2, 5, 4];
 ```
 
 `equals` checks for a specific value. Other conditions are available,
@@ -165,8 +168,7 @@ const updatedItems = update(items, [
   ['set', 5],
 ]);
 
-// The output is:
-const expectedItems = [1, 2, 5, 5];
+// updatedItems = [1, 2, 5, 5];
 ```
 
 Conditions can also be combined, for example to make a range:
@@ -180,8 +182,7 @@ const updatedItems = update(items, [
   ['set', 5],
 ]);
 
-// The output is:
-const expectedItems = [1, 5, 5, 4];
+// updatedItems = [1, 5, 5, 4];
 ```
 
 #### Working with objects
@@ -202,11 +203,10 @@ const updatedItems = update(items, [
   { myThing: ['set': 'updated this'] },
 ]);
 
-// The output is:
-const expectedItems = [
-  { myId: 3, myThing: 'updated this' }, // <-- this item has changed
-  { myId: 28, myThing: 'that' },
-];
+// updatedItems = [
+//   { myId: 3, myThing: 'updated this' }, // <-- this item has changed
+//   { myId: 28, myThing: 'that' },
+// ];
 ```
 
 Because this is a common use-case, a shorthand is available:
@@ -239,9 +239,10 @@ Conditions can check multiple properties by wrapping them in an array
 
 ## Condition reference
 
-- `equals`: checks for an exact match. Note that this uses `===`
-  matching, so `null` and `undefined` are distinct, and objects /
-  arrays will never compare equal (only test primitive types).
+- `equals`: checks for an exact match. Note that this uses
+  `Object.is` matching, so `null` and `undefined` are distinct,
+  and objects / arrays will never compare equal (only test
+  primitive types).
 - `not`: negated form of `equals`.
 - `greaterThan`: checks for strictly-greater-than.
 - `greaterThanOrEqual`: checks for greater-than-or-equal.
@@ -353,18 +354,24 @@ Use `.with(listCommands)` to enable these commands.
 - `['updateAll', spec]`
   applies the given `spec` to all items in the array individually.
 
-- `['updateWhere', condition, spec]`
+- `['updateWhere', condition, spec, elseInsert?]`
   applies the given `spec` to all items in the array which match the
-  `condition`. If no item matches, does nothing. Same as
+  `condition`. If no item matches and `elseInsert` is set, this
+  inserts a new item (at the end of the array) and applies the `spec`
+  to it. Without `elseInsert`, this is the same as
   `['updateAll', ['updateIf', condition, spec]]`.
 
 - `['updateFirstWhere', condition, spec]`
   applies the given `spec` to the first item in the array which
-  matches the `condition`. If no item matches, does nothing.
+  matches the `condition`. If no item matches and `elseInsert` is
+  set, this inserts a new item (at the end of the array) and applies
+  the `spec` to it.
 
 - `['updateLastWhere', condition, spec]`
   applies the given `spec` to the last item in the array which
-  matches the `condition`. If no item matches, does nothing.
+  matches the `condition`. If no item matches and `elseInsert` is
+  set, this inserts a new item (at the start of the array) and
+  applies the `spec` to it.
 
 - `['deleteWhere', condition]`
   deletes all items in the array which match the `condition`. If no
@@ -616,7 +623,7 @@ const myContext = defaultContext.with(/* extensions here */);
       recursionDepth: 10,
       recursionBreadth: 10000,
     },
-    isEquals: (x, y) => (x === y),
+    isEquals: Object.is,
     copy: (o) => myCopyFunction(o),
   }
   ```
@@ -703,3 +710,193 @@ const { update } = context.with(listCommands, mathCommands, stringCommands);
 Avoid calling `.with` inside functions or in loops. Ideally it should
 be called once, and the resulting `update` function can be called
 many times.
+
+## Helpers
+
+Some common helpers are also included:
+
+```javascript
+const { getScopedState, makeScopedSpec, makeScopedReducer } = require('json-immutability-helper/helpers/scoped');
+const { makeHooks } = require('json-immutability-helper/helpers/hooks');
+```
+
+### `getScopedState(context, state, path[, defaultValue])`
+
+```javascript
+const context = require('json-immutability-helper');
+const { getScopedState } = require('json-immutability-helper/helpers/scoped');
+
+const value = { foo: { bar: [{ baz: 7 }] } };
+const sub = getScopedState(context, value, ['foo', 'bar', 0, 'baz']);
+// sub = 7
+
+const value2 = { foo: [{ id: 1, bar: 'a' }, { id: 2, bar: 'b' }] };
+const sub2 = getScopedState(context, value, ['foo', { key: 'id', equals: 2 }]);
+// sub2 = { id: 2, bar: 'b' }
+```
+
+Navigates multiple layers of the object, returning the state at the
+requested path, or the default value / `undefined` if any part of the
+path could not be followed.
+
+The path elements can be:
+- `string`s (object lookup)
+- integer `number`s (array lookup)
+- `Condition`s (see above)
+
+Note that because state is immutable, this is a static copy of the
+_current_ state; it will not automatically update to reflect changes
+to the original state.
+
+### `makeScopedSpec(path, spec[, options])`
+
+```javascript
+const { makeScopedSpec } = require('json-immutability-helper/helpers/scoped');
+
+const subSpec = makeScopedSpec(['foo', 'bar', 0, 'baz'], ['=', 7]);
+// subSpec = { foo: { bar: { 0: { baz: ['=', 7] } } } }
+
+const subSpec2 = makeScopedSpec(['foo', { key: 'id', equals: 2 }, 'bar'], ['=', 7]);
+// subSpec2 = { foo: ['updateWhere', { key: 'id', equals: 2 }, { bar: ['=', 7] }] }
+```
+
+Wraps the given spec in a nested path. This is the spec equivalent to
+fetching a sub-state from a state using `getScopedState`.
+
+The path elements can be:
+- `string`s (object lookup)
+- integer `number`s (array lookup)
+- `Condition`s (see above)
+
+The available `options` are:
+
+- `initialisePath` (boolean, defaults to `false`): if `true`, any
+  missing path elements will be initialised automatically as either
+  empty objects or empty arrays (depending on the index type):
+
+  ```javascript
+  const subSpec = makeScopedSpec(['foo', 0], ['=', 7], { initialisePath: true });
+  // subSpec = ['seq', ['init', {}], { foo: ['seq', ['init', []], { 0: ['=', 7] }] }]
+  ```
+
+- `initialiseValue` (value, defaults to undefined): if set, the
+  innermost element will be initialised to this value if it is not
+  already set, before the spec is applied.
+
+  ```javascript
+  const subSpec = makeScopedSpec(['foo', 0], ['+', 1], { initialiseValue: 0 });
+  // subSpec = { foo: { 0: ['seq', ['init', 0], ['+', 1]] } }
+  ```
+
+### `makeScopedReducer(context, reducer, path[, options])`
+
+Returns a scoped reducer (an object containing `{ state, dispatch }`
+which delegates to the given reducer (also an object containing
+`{ state, dispatch }`). Uses `getScopedState` and `makeScopedSpec`
+internally.
+
+Note that because state is immutable, the returned state is a static
+copy of the _current_ state; it will not automatically update to
+reflect changes to the original state (nor will it update if the
+returned `dispatch` method is called).
+
+### `makeHooks(path, spec[, options])`
+
+```javascript
+const React = require('react');
+const context = require('json-immutability-helper');
+const { makeHooks } = require('json-immutability-helper/helpers/hooks');
+
+const { useJSONReducer, useWrappedJSONReducer, useScopedReducer } = makeHooks(context, React);
+```
+
+This is a convenience for making common React (or Preact) hooks from
+the context. The second argument should be an object which contains
+at least:
+
+- `useState`
+- `useRef`
+- `useLayoutEffect` or `useEffect`
+- optionally `useMemo`
+- optionally `useReducer`
+
+For `React`, the main React object covers this requirement. For
+`Preact`, you can use the `preact/hooks` extension.
+
+The returned hooks are:
+
+- `useJSONReducer(initialArg, init?)`: wraps React's `useReducer`,
+  with `context.update` as the reducer. Returns an object with
+  `{ state, dispatch }`.
+
+- `useWrappedJSONReducer(next)`: same as `useJSONReducer`, but
+  delegates storage to `next`, which should be a 2-element array:
+  `[state, setState]` (as returned from e.g. `useState`). Returns
+  an object with `{ state, dispatch }`.
+
+- `useScopedReducer(reducer, path, options?)`: returns a scoped
+  reducer, using `getScopedState` and `makeScopedSpec` internally.
+  The `reducer` parameter should be an object with
+  `{ state, dispatch }` (as returned by `useJSONReducer` /
+  `useWrappedJSONReducer`, or another `useScopedReducer`).
+
+The returned `dispatch` functions are always stable references.
+The returned objects are memoised, so only change when the state
+changes (unless `useMemo` was not provided).
+
+Note that `makeScopedReducer` and `useScopedReducer` have the same
+behaviour, but `useScopedReducer` is a better option in siturations
+where hooks can be used, as it will return a stable dispatch function
+and memoises the returned entity (helping to reduce unnecessary
+re-rendering).
+
+As a convenience, a user-space `useEvent` hook is also returned,
+because it is used internally. If you prefer, you can also pass in
+your own `useEvent` hook (removes the need for `useRef` and
+`useLayoutEffect` / `useEffect`).
+
+#### Example usage of hooks:
+
+```jsx
+const React = require('react');
+const context = require('json-immutability-helper');
+const { makeHooks } = require('json-immutability-helper/helpers/hooks');
+
+const { useJSONReducer, useScopedReducer } = makeHooks(context, React);
+
+const App = () => {
+  const scope = useJSONReducer({ items: [] });
+
+  return <MyList scope={scope} />
+};
+
+const MyList = ({ scope }) => {
+  const localScope = useScopedReducer(scope, ['items']);
+  const add = () => localScope.dispatch(['push', { id: crypto.randomUUID(), label: '' }]);
+
+  return (
+    <ul>
+      {localScope.state.map((item) => (
+        <li key={item.id}>
+          <MyItem scope={localScope} id={item.id} />
+        </li>
+      ))}
+      <li><button type="button" onClick={add}>Add</button></li>
+    </ul>
+  );
+};
+
+const MyItem = ({ scope, id }) => {
+  const localScope = useScopedReducer(scope, [['id', id]]);
+
+  return (
+    <>
+      <input
+        type="text" value={localScope.state.label}
+        onChange={(e) => localScope.dispatch({ label: ['=', e.currentTarget.value] })}
+      />
+      <button onClick={() => localScope.dispatch(['unset'])}>Remove</button>
+    </>
+  );
+};
+```

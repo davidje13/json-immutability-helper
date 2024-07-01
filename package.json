@@ -7,7 +7,8 @@
     "index.mjs",
     "index.d.ts",
     "commands",
-    "conditions"
+    "conditions",
+    "helpers"
   ],
   "main": "index.js",
   "types": "index.d.ts",
@@ -16,7 +17,8 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
-    "./commands/*": "./commands/*.js"
+    "./commands/*": "./commands/*.js",
+    "./helpers/*": "./helpers/*.js"
   },
   "scripts": {
     "format": "prettier --write .",

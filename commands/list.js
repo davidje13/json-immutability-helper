@@ -36,12 +36,12 @@ const commands = {
   push: config(
     'array',
     'value...',
-  )((object, values) => (values.length ? Array.prototype.concat.call(object, values) : object)),
+  )((object, values) => (values.length ? [...object, ...values] : object)),
 
   unshift: config(
     'array',
     'value...',
-  )((object, values) => (values.length ? Array.prototype.concat.call(values, object) : object)),
+  )((object, values) => (values.length ? [...values, ...object] : object)),
 
   splice: config(
     'array',
@@ -119,7 +119,7 @@ const commands = {
       for (let i = 0; i < object.length; i++) {
         const originalItem = object[i];
         const newItem = context.update(originalItem, spec, { allowUnset: true });
-        if (newItem !== originalItem) {
+        if (!Object.is(newItem, originalItem)) {
           combined[i] = ['=', newItem];
         }
       }
@@ -131,15 +131,20 @@ const commands = {
     'array',
     'condition',
     'spec',
-  )((object, [condition, spec], context) => {
+    'elseInit:value?',
+  )((object, [condition, spec, elseInit], context) => {
     const combined = {};
     const predicate = context.makeConditionPredicate(condition);
-    const indices = findIndicesReversed(object, predicate);
+    let indices = findIndicesReversed(object, predicate);
+    if (!indices.length && elseInit !== undefined) {
+      indices = [object.length];
+      object = [...object, elseInit];
+    }
     context.incLoopNesting(indices.length, () => {
       indices.forEach((index) => {
         const originalItem = object[index];
         const newItem = context.update(originalItem, spec, { allowUnset: true });
-        if (newItem !== originalItem) {
+        if (!Object.is(newItem, originalItem)) {
           combined[index] = ['=', newItem];
         }
       });
@@ -151,9 +156,14 @@ const commands = {
     'array',
     'condition',
     'spec',
-  )((object, [condition, spec], context) => {
+    'elseInit:value?',
+  )((object, [condition, spec, elseInit], context) => {
     const predicate = context.makeConditionPredicate(condition);
-    const index = Array.prototype.findIndex.call(object, predicate);
+    let index = Array.prototype.findIndex.call(object, predicate);
+    if (index === -1 && elseInit !== undefined) {
+      index = object.length;
+      object = [...object, elseInit];
+    }
     return updateAtIndex(context, [index, spec], object);
   }),
 
@@ -161,9 +171,14 @@ const commands = {
     'array',
     'condition',
     'spec',
-  )((object, [condition, spec], context) => {
+    'elseInit:value?',
+  )((object, [condition, spec, elseInit], context) => {
     const predicate = context.makeConditionPredicate(condition);
-    const index = findLast(object, predicate);
+    let index = findLast(object, predicate);
+    if (index === -1 && elseInit !== undefined) {
+      index = 0;
+      object = [elseInit, ...object];
+    }
     return updateAtIndex(context, [index, spec], object);
   }),
 

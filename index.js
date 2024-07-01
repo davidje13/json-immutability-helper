@@ -52,19 +52,19 @@ function combineSpecs(spec1, spec2) {
 function conditionPartPredicate(condition, context) {
   invariant(
     typeof condition === 'object',
-    () => `expected spec of condition to be an object; got ${condition}`,
+    `expected spec of condition to be an object; got ${condition}`,
   );
 
   const checks = Object.entries(condition)
     .filter(([key]) => key !== 'key')
     .map(([key, param]) => {
       const type = context.conditions.get(key);
-      invariant(type, () => `unknown condition type: ${key}`);
+      invariant(type, `unknown condition type: ${key}`);
       return type(param);
     });
 
   if (condition.key === undefined) {
-    invariant(checks.length > 0, () => 'invalid condition');
+    invariant(checks.length > 0, 'invalid condition');
     return (o) => checks.every((c) => c(o));
   }
 
@@ -165,12 +165,12 @@ class JsonContext {
 
     invariant(
       typeof object === 'object' && object !== null,
-      () => `/${path}: target must be an object or array`,
+      `/${path}: target must be an object or array`,
     );
 
     invariant(
       typeof spec === 'object' && spec !== null,
-      () => `/${path}: spec must be an object or a command`,
+      `/${path}: spec must be an object or a command`,
     );
 
     const nextPath = path ? `${path}/` : '';
@@ -196,7 +196,7 @@ class JsonContext {
       const newExist = newValue !== UNSET_TOKEN;
       const oldExist = Object.prototype.hasOwnProperty.call(initial, key);
 
-      if (newExist !== oldExist || (newExist && initial[key] !== newValue)) {
+      if (newExist !== oldExist || (newExist && !this.isEquals(initial[key], newValue))) {
         updated = updated || this.copy(initial);
         if (newExist) {
           if (!oldExist && initial[key] !== undefined) {
@@ -271,7 +271,7 @@ const BASE_CONFIG = {
   },
   rpnOperators: {},
   rpnConstants: {},
-  isEquals: (x, y) => x === y,
+  isEquals: Object.is,
   copy: (o) => (Array.isArray(o) ? [...o] : typeof o === 'object' && o ? Object.assign({}, o) : o),
 };
 
