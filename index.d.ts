@@ -256,15 +256,20 @@ declare module 'json-immutability-helper/helpers/hooks' {
 
   type Reducer<T, S> = [T, (s: S) => void];
   type SpecReducer<T> = { state: T; dispatch: (s: Spec<T>) => void };
-  type State<T> = Reducer<T, T | ((o: T) => T)>;
+  type State<T> = [T, (value: T | ((prevState: T) => T)) => void];
 
-  type UseState = <T>(init: T | (() => T)) => State<T>;
+  type UseState = <T>(initialValue: T | (() => T)) => State<T>;
   type UseEvent = <Fn>(fn: Fn) => Fn;
-  type UseReducer = <T, S>(
+  type UseReducer = (<T, S, I>(
     reducer: (v: T, s: S) => T,
-    initialArg: T,
-    init?: (v: T) => T,
-  ) => Reducer<T, S>;
+    initializerArg: I,
+    initializer: (v: I) => T,
+  ) => Reducer<T, S>) &
+    (<T, S>(
+      reducer: (v: T, s: S) => T,
+      initializerArg: T,
+      initializer?: undefined,
+    ) => Reducer<T, S>);
   type UseEffect = (fn: () => void, deps: unknown[]) => void;
   type UseRef = <T>(init: T) => { current: T };
 
@@ -281,30 +286,36 @@ declare module 'json-immutability-helper/helpers/hooks' {
     initialiseValue?: T;
   }
 
-  type UseScopedReducer =
-    | (<T>(next: SpecReducer<T>, path: [], options?: ScopedReducerOptions<T>) => SpecReducer<T>)
-    | (<T>(
-        next: SpecReducer<T[]>,
-        path: [ArrayPath<T>],
-        options?: ScopedReducerOptions<T>,
-      ) => SpecReducer<T>)
-    | (<T, K extends keyof T>(
-        next: SpecReducer<T>,
-        path: [K],
-        options?: ScopedReducerOptions<T[K]>,
-      ) => SpecReducer<T[K]>)
-    | (<T, U>(
-        next: SpecReducer<T>,
-        path: UnknownPath[],
-        options?: ScopedReducerOptions<U>,
-      ) => SpecReducer<U>);
+  type UseJSONReducer = (<T, I>(initializerArg: I, initializer: (v: I) => T) => SpecReducer<T>) &
+    (<T>(initializerArg: T, initializer?: undefined) => SpecReducer<T>);
+
+  type UseScopedReducer = (<T>(
+    next: SpecReducer<T>,
+    path: [],
+    options?: ScopedReducerOptions<T>,
+  ) => SpecReducer<T>) &
+    (<T>(
+      next: SpecReducer<T[]>,
+      path: [ArrayPath<T>],
+      options?: ScopedReducerOptions<T>,
+    ) => SpecReducer<T>) &
+    (<T, K extends keyof T>(
+      next: SpecReducer<T>,
+      path: [K],
+      options?: ScopedReducerOptions<T[K]>,
+    ) => SpecReducer<T[K]>) &
+    (<T, U>(
+      next: SpecReducer<T>,
+      path: UnknownPath[],
+      options?: ScopedReducerOptions<U>,
+    ) => SpecReducer<U>);
 
   export function makeHooks(
     c: typeof context,
     hooks: InputHooks,
   ): {
     useEvent: UseEvent;
-    useJSONReducer: <T>(initialArg: T, init?: (v: T) => T) => SpecReducer<T>;
+    useJSONReducer: UseJSONReducer;
     useWrappedJSONReducer: <T>(next: State<T>) => SpecReducer<T>;
     useScopedReducer: UseScopedReducer;
   };

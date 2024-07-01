@@ -12,10 +12,9 @@ function getScopedState(context, state, path, defaultValue = undefined) {
         return defaultValue;
       }
       state = state[index];
+    } else if (!Object.prototype.hasOwnProperty.call(state, item)) {
+      return defaultValue;
     } else {
-      if (!Object.prototype.hasOwnProperty.call(state, item)) {
-        return defaultValue;
-      }
       state = state[item];
     }
   }

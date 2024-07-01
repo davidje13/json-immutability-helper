@@ -1,4 +1,6 @@
-import { update, UNSET_TOKEN } from 'json-immutability-helper';
+import context, { update, UNSET_TOKEN } from 'json-immutability-helper';
+import { makeHooks } from 'json-immutability-helper/helpers/hooks';
+import React, { useState } from 'react';
 
 // assertion helper
 type Equals<A, B> =
@@ -64,3 +66,27 @@ assertType(update(['foo'] as string[], ['updateWhere', { equals: 'foo' }, ['=', 
 update(['foo'] as string[], { 0: ['=', 7] }); // incorrect type
 // @ts-expect-error
 update(['foo'] as string[], ['updateWhere', { equals: 7 }, ['=', 'baz']]); // incorrect conditional type
+
+const { useJSONReducer, useWrappedJSONReducer, useScopedReducer } = makeHooks(context, React);
+
+const reducer = useJSONReducer({ foo: 'bar', baz: 1 });
+assertType(reducer.state)<{ foo: string, baz: number }>();
+reducer.dispatch(['=', { foo: 'baz', baz: 2 }]);
+
+// @ts-expect-error
+reducer.dispatch(['=', 7]); // incorrect type
+
+const scopedReducer1 = useScopedReducer(reducer, ['foo']);
+assertType(scopedReducer1.state)<string>();
+
+const scopedReducer2 = useScopedReducer(reducer, ['baz']);
+assertType(scopedReducer2.state)<number>();
+
+assertType(useScopedReducer(reducer, ['nope']).state)<unknown>(); // TODO: ideally would restrict this but it is difficult to be sure when working with complex paths
+
+const wrappedReducer = useWrappedJSONReducer(useState(10));
+assertType(wrappedReducer.state)<number>();
+wrappedReducer.dispatch(['=', 1]);
+
+// @ts-expect-error
+wrappedReducer.dispatch(['=', 'nope']); // incorrect type
