@@ -50,7 +50,7 @@ function makeHooks(
     useScopedReducer(
       { state, dispatch },
       path,
-      { initialisePath = false, initialiseValue = undefined } = {},
+      { initialiseValue = undefined, initialisePath = initialiseValue !== undefined } = {},
     ) {
       const subState = getScopedState(context, state, path, initialiseValue);
       const subDispatch = useEvent((spec) =>

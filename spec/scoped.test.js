@@ -101,7 +101,7 @@ describe('scoped', () => {
     });
 
     it('initialises the value if requested', () => {
-      const spec = makeScopedSpec(['foo'], ['=', 1], { initialiseValue: 0 });
+      const spec = makeScopedSpec(['foo'], ['=', 1], { initialiseValue: 0, initialisePath: false });
 
       expect(spec).equals({ foo: ['seq', ['init', 0], ['=', 1]] });
     });
@@ -125,6 +125,7 @@ describe('scoped', () => {
       const reducer = makeBasicReducer({});
       const subReducer = makeScopedReducer(context, reducer, ['foo'], {
         initialiseValue: { id: 1 },
+        initialisePath: false,
       });
 
       expect(subReducer.state).equals({ id: 1 });

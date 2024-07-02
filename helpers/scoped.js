@@ -21,7 +21,11 @@ function getScopedState(context, state, path, defaultValue = undefined) {
   return state;
 }
 
-function makeScopedSpec(path, spec, { initialisePath = false, initialiseValue = undefined } = {}) {
+function makeScopedSpec(
+  path,
+  spec,
+  { initialiseValue = undefined, initialisePath = initialiseValue !== undefined } = {},
+) {
   if (initialiseValue !== undefined) {
     spec = ['seq', ['init', initialiseValue], spec];
   }

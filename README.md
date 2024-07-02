@@ -770,9 +770,10 @@ The path elements can be:
 
 The available `options` are:
 
-- `initialisePath` (boolean, defaults to `false`): if `true`, any
-  missing path elements will be initialised automatically as either
-  empty objects or empty arrays (depending on the index type):
+- `initialisePath` (boolean, defaults to `true` if `initialiseValue`
+  is set, else `false`): if `true`, any missing path elements will be
+  initialised automatically as either empty objects or empty arrays
+  (depending on the index type):
 
   ```javascript
   const subSpec = makeScopedSpec(['foo', 0], ['=', 7], { initialisePath: true });
@@ -800,7 +801,23 @@ copy of the _current_ state; it will not automatically update to
 reflect changes to the original state (nor will it update if the
 returned `dispatch` method is called).
 
-### `makeHooks(path, spec[, options])`
+The available `options` are:
+
+- `initialisePath` (boolean, defaults to `true` if `initialiseValue`
+  is set, else `false`): if `true`, the dispatch will automatically
+  initialise any missing path elements as either empty objects or
+  empty arrays (depending on the index type):
+
+- `initialiseValue` (value, defaults to undefined): returned if the
+  value at the given path is not set. Also applied as an `init` value
+  when dispatching changes.
+
+  ```javascript
+  const sub = makeScopedReducer(context, reducer, ['foo'], { initialiseValue: [] });
+  sub.dispatch(['push', 1]); // safe even if foo was not already set, because it will be initialised to [] first
+  ```
+
+### `makeHooks(path, spec)`
 
 ```javascript
 const React = require('react');
@@ -839,6 +856,8 @@ The returned hooks are:
   The `reducer` parameter should be an object with
   `{ state, dispatch }` (as returned by `useJSONReducer` /
   `useWrappedJSONReducer`, or another `useScopedReducer`).
+
+  The available options are the same as for `makeScopedReducer`.
 
 The returned `dispatch` functions are always stable references.
 The returned objects are memoised, so only change when the state

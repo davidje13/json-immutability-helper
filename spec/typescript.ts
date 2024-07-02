@@ -70,7 +70,7 @@ update(['foo'] as string[], ['updateWhere', { equals: 7 }, ['=', 'baz']]); // in
 const { useJSONReducer, useWrappedJSONReducer, useScopedReducer } = makeHooks(context, React);
 
 const reducer = useJSONReducer({ foo: 'bar', baz: 1 });
-assertType(reducer.state)<{ foo: string, baz: number }>();
+assertType(reducer.state)<{ foo: string; baz: number }>();
 reducer.dispatch(['=', { foo: 'baz', baz: 2 }]);
 
 // @ts-expect-error
