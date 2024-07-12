@@ -22,6 +22,43 @@ describe('push', () => {
   });
 });
 
+describe('addUnique', () => {
+  it('operates on arrays', () => {
+    expect(() => update({}, ['addUnique'])).throws('/ addUnique: expected target to be array');
+  });
+
+  it('appends values if they are not already in the list', () => {
+    const updated = update(initial, ['addUnique', 'a', 'd']);
+
+    expect(updated).equals(['a', 'b', 'c', 'd']);
+    expect(updated).not(same(initial));
+  });
+
+  it('ignores duplicates in the inserted values', () => {
+    const updated = update(initial, ['addUnique', 'd', 'd']);
+
+    expect(updated).equals(['a', 'b', 'c', 'd']);
+  });
+
+  it('preserves duplicates in the original list', () => {
+    const updated = update(['a', 'a'], ['addUnique', 'b']);
+
+    expect(updated).equals(['a', 'a', 'b']);
+  });
+
+  it('does nothing if there are no new values to add', () => {
+    const updated = update(initial, ['addUnique', 'a']);
+
+    expect(updated).same(initial);
+  });
+
+  it('does not allow adding non-primitive values', () => {
+    expect(() => update(initial, ['addUnique', {}])).throws(
+      '/ addUnique: cannot add non-primitives',
+    );
+  });
+});
+
 describe('unshift', () => {
   it('operates on arrays', () => {
     expect(() => update({}, ['unshift'])).throws('/ unshift: expected target to be array');

@@ -67,6 +67,13 @@ update(['foo'] as string[], { 0: ['=', 7] }); // incorrect type
 // @ts-expect-error
 update(['foo'] as string[], ['updateWhere', { equals: 7 }, ['=', 'baz']]); // incorrect conditional type
 
+assertType(update(['foo'] as string[], ['addUnique', 'bar']))<string[]>();
+
+// @ts-expect-error
+update([{ id: 1 }], ['addUnique', { id: 1 }]); // cannot addUnique with objects
+
+// hook helpers
+
 const { useJSONReducer, useWrappedJSONReducer, useScopedReducer } = makeHooks(context, React);
 
 const reducer = useJSONReducer({ foo: 'bar', baz: 1 });

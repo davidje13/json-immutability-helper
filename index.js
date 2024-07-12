@@ -60,7 +60,7 @@ function conditionPartPredicate(condition, context) {
     .map(([key, param]) => {
       const type = context.conditions.get(key);
       invariant(type, `unknown condition type: ${key}`);
-      return type(param);
+      return type(param, context);
     });
 
   if (condition.key === undefined) {
@@ -246,13 +246,13 @@ class JsonContext {
     ++this.nestDepth;
     this.nestBreadth *= iterations;
 
-    invariant(
-      this.nestDepth < this.limits.recursionDepth &&
-        this.nestBreadth < this.limits.recursionBreadth,
-      `too much recursion: ${this.nestDepth} deep, ~${this.nestBreadth} items`,
-    );
-
     try {
+      invariant(
+        this.nestDepth < this.limits.recursionDepth &&
+          this.nestBreadth < this.limits.recursionBreadth,
+        `too much recursion: ${this.nestDepth} deep, ~${this.nestBreadth} items`,
+      );
+
       return fn();
     } finally {
       --this.nestDepth;

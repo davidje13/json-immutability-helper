@@ -284,7 +284,7 @@ const modifiedUpdate = update.with({
   if undefined, sets the value to the literal value given.
   Otherwise leaves the value unchanged.
 
-- `['updateIf', condition, spec, elseSpec?]`
+- `['updateIf', condition, spec, elseSpec?]` alias `['if', ...]`
   applies the given `spec` if the `condition` matches, otherwise
   applies the `elseSpec` (if provided) or does nothing.
 

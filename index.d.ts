@@ -19,6 +19,8 @@ declare module 'json-immutability-helper' {
   type RpnValue = number | string;
   type RpnOperator = [number, number, (...args: RpnValue[]) => RpnValue];
 
+  type Primitive = undefined | boolean | number | bigint | string | null;
+
   export interface Extension {
     commands?: Record<string, DirectiveFn>;
     conditions?: Record<string, ConditionFn>;
@@ -37,6 +39,8 @@ declare module 'json-immutability-helper' {
     lessThan?: T;
     not?: T;
     notNullish?: null;
+    contains?: T extends ReadonlyArray<infer V> ? Condition<V> : never;
+    notContains?: T extends ReadonlyArray<infer V> ? Condition<V> : never;
   }
 
   interface ConditionKeyValue<K, V> extends ConditionValue<V> {
@@ -48,6 +52,10 @@ declare module 'json-immutability-helper' {
   type ConditionEntry<T> = ConditionValue<T> | ConditionKey<T, keyof T>;
 
   export type Condition<T> = ConditionEntry<T> | ConditionEntry<T>[];
+
+  type Locator<T, R> = [R, Condition<T>] | R;
+  export type SingleLocator<T> = Locator<T, 'first' | 'last' | number>;
+  export type MultiLocator<T> = Locator<T, 'first' | 'last' | 'all' | number>;
 
   type If<T, True> = T extends true ? True : never;
 
@@ -63,7 +71,7 @@ declare module 'json-immutability-helper' {
               : ObjectSpec<T>)
     | ['=' | 'set', T | If<Unsettable, typeof SHARED_UNSET_TOKEN>]
     | ['init', T]
-    | ['updateIf', Condition<T>, Spec<T, Unsettable>, Spec<T, Unsettable>?]
+    | ['if' | 'updateIf', Condition<T>, Spec<T, Unsettable>, Spec<T, Unsettable>?]
     | ['seq', ...Spec<T, Unsettable>[]]
     | If<Unsettable, ['unset']>;
 
@@ -79,12 +87,18 @@ declare module 'json-immutability-helper' {
   type ArraySpec<T> =
     | ['push', ...T[]]
     | ['unshift', ...T[]]
+    | (T extends Primitive ? ['addUnique', ...T[]] : never)
     | ['splice', ...([number, number?] | [number, number, ...T[]])[]]
+    | ['insert', 'before' | 'after', MultiLocator<T>, ...T[]]
+    | ['update', MultiLocator<T>, Spec<T, true>, T?]
+    | ['delete', MultiLocator<T>]
+    | ['swap', SingleLocator<T>, SingleLocator<T>]
+    | ['move', MultiLocator<T>, 'before' | 'after', SingleLocator<T>]
     | ['insertBeforeFirstWhere', Condition<T>, ...T[]]
     | ['insertAfterFirstWhere', Condition<T>, ...T[]]
     | ['insertBeforeLastWhere', Condition<T>, ...T[]]
     | ['insertAfterLastWhere', Condition<T>, ...T[]]
-    | ['updateAll', Spec<T, true>]
+    | ['every' | 'updateAll', Spec<T, true>]
     | ['updateWhere', Condition<T>, Spec<T, true>, T?]
     | ['updateFirstWhere', Condition<T>, Spec<T, true>, T?]
     | ['updateLastWhere', Condition<T>, Spec<T, true>, T?]

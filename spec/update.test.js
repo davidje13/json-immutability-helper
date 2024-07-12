@@ -3,6 +3,61 @@ const { update } = require('../index').with(listCommands);
 
 const initial = [10, 9, 11, 9, -1];
 
+describe('update', () => {
+  it('operates on arrays', () => {
+    expect(() => update(0, ['update', ['first', { equals: 9 }], ['=', 2]])).throws(
+      '/ update: expected target to be array',
+    );
+  });
+
+  it(
+    'updates items which match the locator',
+    ({ input, expected }) => expect(update(initial, input)).equals(expected),
+    {
+      parameters: [
+        { input: ['update', ['first', { equals: 9 }], ['=', 2]], expected: [10, 2, 11, 9, -1] },
+        { input: ['update', ['first', { equals: 1 }], ['=', 2]], expected: [10, 9, 11, 9, -1] },
+        { input: ['update', ['last', { equals: 9 }], ['=', 2]], expected: [10, 9, 11, 2, -1] },
+        { input: ['update', ['last', { equals: 1 }], ['=', 2]], expected: [10, 9, 11, 9, -1] },
+        { input: ['update', ['all', { equals: 9 }], ['=', 2]], expected: [10, 2, 11, 2, -1] },
+        { input: ['update', ['all', { equals: 1 }], ['=', 2]], expected: [10, 9, 11, 9, -1] },
+
+        // unset
+        {
+          input: ['update', ['first', { equals: 9 }], ['unset']],
+          expected: [10, 11, 9, -1],
+        },
+        {
+          input: ['update', ['all', { equals: 9 }], ['unset']],
+          expected: [10, 11, -1],
+        },
+        {
+          input: ['update', ['first', { equals: 9 }], ['=', undefined]],
+          expected: [10, undefined, 11, 9, -1],
+        },
+        {
+          input: ['update', ['all', { equals: 9 }], ['=', undefined]],
+          expected: [10, undefined, 11, undefined, -1],
+        },
+
+        // upsert
+        {
+          input: ['update', ['first', { equals: 9 }], ['=', 2], 0],
+          expected: [10, 2, 11, 9, -1],
+        },
+        {
+          input: ['update', ['first', { equals: 1 }], ['=', 2], 0],
+          expected: [10, 9, 11, 9, -1, 2],
+        },
+        {
+          input: ['update', ['last', { equals: 1 }], ['=', 2], 0],
+          expected: [10, 9, 11, 9, -1, 2],
+        },
+      ],
+    },
+  );
+});
+
 describe('updateAll', () => {
   it('applies an update to all items in a list', () => {
     const updated = update(initial, ['updateAll', ['=', 2]]);

@@ -47,6 +47,7 @@ const commands = {
 };
 
 // Aliases
+commands.if = commands.updateIf;
 commands['='] = commands.set;
 commands['+'] = commands.add;
 commands['-'] = commands.subtract;

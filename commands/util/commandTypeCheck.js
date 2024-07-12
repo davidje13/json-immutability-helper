@@ -1,3 +1,5 @@
+const ENUM_REGEX = /^enum\[(.+)\]$/;
+
 function typeChecker(type) {
   switch (type) {
     case '*':
@@ -7,14 +9,33 @@ function typeChecker(type) {
       return Array.isArray;
     case 'condition':
       return (o) => typeof o === 'object';
+    case 'single-locator':
+      return isLocator(['first', 'last']);
+    case 'multi-locator':
+      return isLocator(['first', 'last', 'all']);
     case 'spec':
       return (o) => typeof o === 'object';
     case 'primitive':
       return (o) => ['number', 'string'].includes(typeof o);
     default:
+      const e = ENUM_REGEX.exec(type);
+      if (e) {
+        const values = e[1].split(',');
+        return (o) => typeof o === 'string' && values.includes(o);
+      }
       return (o) => typeof o === type;
   }
 }
+
+const isLocator = (types) => (o) => {
+  if (Array.isArray(o)) {
+    if (o.length !== 2 || typeof o[1] !== 'object') {
+      return false;
+    }
+    o = o[0];
+  }
+  return (typeof o === 'number' && Math.round(o) === o) || types.includes(o);
+};
 
 function parseType(type) {
   let [name, str] = type.split(':');
