@@ -2,3 +2,4 @@
 xcuserdata/
 
 node_modules/
+*.tgz

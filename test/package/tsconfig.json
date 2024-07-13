@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "lib": ["es2022"],
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "noEmit": true
+  },
+  "include": ["./typescript.ts"]
+}

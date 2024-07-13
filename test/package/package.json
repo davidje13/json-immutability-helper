@@ -1,0 +1,12 @@
+{
+  "name": "json-immutability-helper-package-test",
+  "private": true,
+  "scripts": {
+    "test": "node commonjs.js && node es6modules.mjs && tsc --project tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/react": "18.x",
+    "json-immutability-helper": "file:json-immutability-helper.tgz",
+    "typescript": "5.5.x"
+  }
+}

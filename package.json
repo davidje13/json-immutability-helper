@@ -1,30 +1,35 @@
 {
   "name": "json-immutability-helper",
   "version": "3.0.1",
-  "description": "json-serialisable mutability helpers, built on immutability-helper",
+  "description": "json-serialisable general-purpose reducer",
   "files": [
-    "index.js",
-    "index.mjs",
+    "build/**/*",
     "index.d.ts",
-    "commands",
-    "conditions",
-    "helpers"
+    "!**/.DS_Store"
   ],
-  "main": "index.js",
+  "main": "build/index.js",
+  "module": "build/index.mjs",
   "types": "index.d.ts",
   "exports": {
     ".": {
-      "import": "./index.mjs",
-      "require": "./index.js"
+      "import": "./build/index.mjs",
+      "require": "./build/index.js",
+      "types": "./index.d.ts"
     },
-    "./commands/*": "./commands/*.js",
-    "./helpers/*": "./helpers/*.js"
+    "./commands/*": {
+      "import": "./build/commands/*.mjs",
+      "require": "./build/commands/*.js",
+      "types": "./index.d.ts"
+    },
+    "./helpers/*": {
+      "import": "./build/helpers/*.mjs",
+      "require": "./build/helpers/*.js",
+      "types": "./index.d.ts"
+    }
   },
   "scripts": {
     "format": "prettier --write .",
-    "lint": "prettier --check .",
-    "test": "node spec/importCJS.js && node spec/importESM.mjs && tsc && lean-test",
-    "posttest": "npm run lint"
+    "test": "lean-test test --parallel-suites && ( rm -r build/* || true ) && rollup --config rollup.config.mjs && test/run-package.sh && prettier --check ."
   },
   "sideEffects": false,
   "repository": {
@@ -33,7 +38,8 @@
   },
   "keywords": [
     "immutability",
-    "json"
+    "json",
+    "reducer"
   ],
   "author": "David Evans",
   "license": "MIT",
@@ -42,9 +48,9 @@
   },
   "homepage": "https://github.com/davidje13/json-immutability-helper#readme",
   "devDependencies": {
-    "@types/react": "18.x",
+    "@rollup/plugin-terser": "0.4.x",
     "lean-test": "2.x",
     "prettier": "3.3.2",
-    "typescript": "5.5.x"
+    "rollup": "4.x"
   }
 }
