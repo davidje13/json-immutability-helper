@@ -38,7 +38,10 @@ const commands = {
     'initial:object?',
   )((object, [value, init], context) => {
     const initedObject = object === undefined ? init : object;
-    return context.applyMerge(initedObject, Object.entries(value));
+    return context.applyMerge(
+      initedObject,
+      Object.entries(value).filter(([, v]) => v !== undefined),
+    );
   }),
 
   add: config('number', 'number')((object, [value]) => object + value),

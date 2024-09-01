@@ -74,6 +74,13 @@ describe('merge', () => {
     expect(updated).same(initial);
   });
 
+  it('ignores values which are set to undefined', () => {
+    const updated = update(initial, ['merge', { foo: undefined, abc: undefined }]);
+
+    expect(updated).equals({ foo: '1', bar: '2' });
+    expect(updated).same(initial);
+  });
+
   it('removes values if set to UNSET_TOKEN', () => {
     const updated = update(initial, ['merge', { bar: update.UNSET_TOKEN }]);
 

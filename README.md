@@ -308,9 +308,11 @@ const modifiedUpdate = update.with({
 
 - `['merge', object, initial?]`
   Merges the keys of object into the current target. Similar to
-  calling `Object.assign`. If `initial` is provided and the target
-  value is undefined, it will be assigned the value of `initial`
-  before merging
+  calling `Object.assign`. Note that any values set to `undefined`
+  will be skipped (to avoid behaviour differences after a JSON
+  round-trip). If `initial` is provided and the target value is
+  undefined, it will be assigned the value of `initial` before
+  merging
   (equivalent to `['seq', ['init', initial], ['merge', object]]`).
 
 ### Boolean
