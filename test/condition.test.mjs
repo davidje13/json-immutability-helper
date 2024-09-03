@@ -105,6 +105,7 @@ describe('nested access', () => {
     expect(matches({ nope: ['=', 'bar'] })).equals(false);
     expect(matches({ nope: ['=', null] })).equals(false);
     expect(matches({ nope: ['=', undefined] })).equals(true);
+    expect(matches({ nope: ['~=', null] })).equals(true);
   });
 
   it('does not match __proto__', () => {
