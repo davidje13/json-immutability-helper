@@ -6,7 +6,10 @@ declare module 'json-immutability-helper' {
     args: ReadonlyArray<unknown>,
     context: Readonly<Context>,
   ) => T | typeof SHARED_UNSET_TOKEN;
-  type ConditionFn = <T>(param: T) => (actual: T) => boolean;
+  type ConditionFn = (
+    args: ReadonlyArray<unknown>,
+    context: Readonly<Context>,
+  ) => (actual: unknown) => boolean;
   type EqualFn = (x: unknown, y: unknown) => boolean;
   type CopyFn = <T>(o: Readonly<T>) => T;
 
@@ -31,27 +34,23 @@ declare module 'json-immutability-helper' {
     copy?: CopyFn;
   }
 
-  interface ConditionValue<T> {
-    equals?: T;
-    greaterThanOrEqual?: T;
-    lessThanOrEqual?: T;
-    greaterThan?: T;
-    lessThan?: T;
-    not?: T;
-    notNullish?: null;
-    contains?: T extends ReadonlyArray<infer V> ? Condition<V> : never;
-    notContains?: T extends ReadonlyArray<infer V> ? Condition<V> : never;
-  }
+  export type Condition<T> =
+    | (T extends Primitive
+        ? ['=' | '!=' | '~=' | '!~=', ...T[]]
+        : T extends ReadonlyArray<infer U>
+          ? ArrayCondition<U>
+          : ObjectCondition<T>)
+    | (T extends number ? ['>' | '>=' | '<' | '<=', number] : never)
+    | ['and' | 'or', ...Condition<T>[]]
+    | ['not', Condition<T>]
+    | ['exists'];
 
-  interface ConditionKeyValue<K, V> extends ConditionValue<V> {
-    key: K;
-  }
+  type ArrayCondition<T> =
+    | ['length', Condition<number>]
+    | ['some' | 'every' | 'none', Condition<T>]
+    | { [index: number]: Condition<T> };
 
-  type ConditionKey<T, K extends keyof T> = ConditionKeyValue<K, T[K]> | [K, T[K]];
-
-  type ConditionEntry<T> = ConditionValue<T> | ConditionKey<T, keyof T>;
-
-  export type Condition<T> = ConditionEntry<T> | ConditionEntry<T>[];
+  type ObjectCondition<T> = { [K in keyof T]?: Condition<T[K]> };
 
   type Locator<T, R> = [R, Condition<T>] | R;
   export type SingleLocator<T> = Locator<T, 'first' | 'last' | number>;
@@ -69,20 +68,17 @@ declare module 'json-immutability-helper' {
             : T extends ReadonlyArray<infer U>
               ? ArraySpec<U>
               : ObjectSpec<T>)
-    | ['=' | 'set', T | If<Unsettable, typeof SHARED_UNSET_TOKEN>]
+    | ['=', T | If<Unsettable, typeof SHARED_UNSET_TOKEN>]
     | ['init', T]
-    | ['if' | 'updateIf', Condition<T>, Spec<T, Unsettable>, Spec<T, Unsettable>?]
+    | ['if', Condition<T>, Spec<T, Unsettable>, Spec<T, Unsettable>?]
     | ['seq', ...Spec<T, Unsettable>[]]
     | If<Unsettable, ['unset']>;
 
   type StringSpec = ['replaceAll', string, string] | ['rpn', ...(number | string)[]];
 
-  type BooleanSpec = ['~'] | ['toggle'];
+  type BooleanSpec = ['~'];
 
-  type NumberSpec =
-    | ['+' | 'add', number]
-    | ['-' | 'subtract', number]
-    | ['rpn', ...(number | string)[]];
+  type NumberSpec = ['+', number] | ['-', number] | ['rpn', ...(number | string)[]];
 
   type ArraySpec<T> =
     | ['push', ...T[]]
@@ -94,17 +90,6 @@ declare module 'json-immutability-helper' {
     | ['delete', MultiLocator<T>]
     | ['swap', SingleLocator<T>, SingleLocator<T>]
     | ['move', MultiLocator<T>, 'before' | 'after', SingleLocator<T>]
-    | ['insertBeforeFirstWhere', Condition<T>, ...T[]]
-    | ['insertAfterFirstWhere', Condition<T>, ...T[]]
-    | ['insertBeforeLastWhere', Condition<T>, ...T[]]
-    | ['insertAfterLastWhere', Condition<T>, ...T[]]
-    | ['every' | 'updateAll', Spec<T, true>]
-    | ['updateWhere', Condition<T>, Spec<T, true>, T?]
-    | ['updateFirstWhere', Condition<T>, Spec<T, true>, T?]
-    | ['updateLastWhere', Condition<T>, Spec<T, true>, T?]
-    | ['deleteWhere', Condition<T>]
-    | ['deleteFirstWhere', Condition<T>]
-    | ['deleteLastWhere', Condition<T>]
     | { [index: number]: Spec<T, true> };
 
   type ObjectSpec<T> =

@@ -5,7 +5,6 @@ function isInt(x) {
   return Math.round(x) === x;
 }
 
-/* eslint-disable quote-props */
 const rpnOperators = {
   String: [
     1,
@@ -72,7 +71,6 @@ const rpnOperators = {
   slice: [2, 3, (str, from, to) => String(str).slice(from, to)],
   substr: [3, 3, (str, from, length) => String(str).substr(from, length)],
 };
-/* eslint-enable quote-props */
 
 const commands = {
   replaceAll: config(

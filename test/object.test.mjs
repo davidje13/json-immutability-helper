@@ -62,7 +62,6 @@ describe('merge', () => {
     const spec = JSON.parse('["merge", { "__proto__": { "foo": 1 } }]');
     const updated = update({}, spec);
 
-    /* eslint-disable-next-line no-proto */
     expect(updated.__proto__.foo).equals(1);
     expect(updated.foo).isUndefined();
   });

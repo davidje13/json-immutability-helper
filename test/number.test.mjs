@@ -3,20 +3,14 @@ import { update } from '../src/index.mjs';
 
 describe('add', () => {
   it('operates on numbers', () => {
-    expect(() => update('', ['add', 1])).throws('/ add: expected target to be number');
+    expect(() => update('', ['+', 1])).throws('/ +: expected target to be number');
   });
 
   it('takes an addend', () => {
-    expect(() => update(0, ['add'])).throws('/ add: expected [command, number]');
+    expect(() => update(0, ['+'])).throws('/ +: expected [command, number]');
   });
 
   it('applies summation', () => {
-    const updated = update(8, ['add', 2]);
-
-    expect(updated).equals(10);
-  });
-
-  it('has alias +', () => {
     const updated = update(8, ['+', 2]);
 
     expect(updated).equals(10);
@@ -25,20 +19,14 @@ describe('add', () => {
 
 describe('subtract', () => {
   it('operates on numbers', () => {
-    expect(() => update('', ['subtract', 1])).throws('/ subtract: expected target to be number');
+    expect(() => update('', ['-', 1])).throws('/ -: expected target to be number');
   });
 
   it('takes a subtrahend', () => {
-    expect(() => update(0, ['subtract'])).throws('/ subtract: expected [command, number]');
+    expect(() => update(0, ['-'])).throws('/ -: expected [command, number]');
   });
 
   it('applies subtraction', () => {
-    const updated = update(8, ['subtract', 2]);
-
-    expect(updated).equals(6);
-  });
-
-  it('has alias -', () => {
     const updated = update(8, ['-', 2]);
 
     expect(updated).equals(6);

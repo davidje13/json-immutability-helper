@@ -50,7 +50,7 @@ const { update } = require('json-immutability-helper');
 
 const initialState = { foo: 3 };
 
-const updatedState = update(initialState, { foo: ['add', 1] });
+const updatedState = update(initialState, { foo: ['+', 1] });
 // updatedState = { foo: 4 }
 // initialState is unchanged
 ```
@@ -65,9 +65,9 @@ const initialState = { foo: { bar: { baz: 1 } } };
 const updatedState = update(initialState, {
   foo: {
     bar: {
-      baz: ['set', 7],
+      baz: ['=', 7],
     },
-    extra: ['set', 1]
+    extra: ['=', 1]
   },
 });
 // updatedState = { foo: { bar: { baz: 7 }, extra: 1 } }
@@ -83,7 +83,7 @@ const initialState = { foo: [2, 8] };
 
 const updatedState = update(initialState, {
   foo: {
-    0: ['set', 5],
+    0: ['=', 5],
   },
 });
 // updatedState = { foo: [5, 8] }
@@ -93,7 +93,7 @@ const updatedState = update(initialState, {
 const spec = `
 {
   "foo": {
-    "0": ["set", 5]
+    "0": ["=", 5]
   }
 }
 `;
@@ -112,12 +112,12 @@ const initialState = {
   ],
 };
 
-// Change the property 'myThing' of the item with myId=3
+// Change the property 'myThing' of the first item with myId=3
 const updatedState = update(initialState, {
   items: [
-    'updateWhere',
-    ['myId', 3],
-    { myThing: ['set', 'updated this'] },
+    'update',
+    ['first', ['myId', 3]],
+    { myThing: ['=', 'updated this'] },
   ],
 });
 
@@ -126,142 +126,129 @@ const updatedState = update(initialState, {
 const spec = `
 {
   "items": [
-    "updateWhere",
-    ["myId", 3],
-    { "myThing": ["set", "updated this"] }
+    "update",
+    ["first": ["myId", 3]],
+    { "myThing": ["=", "updated this"] }
   ]
 }
 `;
 const updatedJsonState = update(initialState, JSON.parse(spec));
 ```
 
+## Locators
+
+The main concepts introduced in this project are conditions and
+locators. Several commands use conditions to decide which items to
+update, such as `if`, `update`, `delete`, `insert`, and `move`,
+among others.
+
+Locators match items in a list. The available locators are:
+
+- `'all'` - matches all items in a list
+- `'first'` - matches the first item in a list
+- `'last'` - matches the last item in a list
+- `['all', <condition>]` - matches all items which meet the condition
+- `['first', <condition>]` - matches the first item which meets the
+  condition
+- `['last', <condition>]` - matches the last item which meets the
+  condition
+
+`first` and `last` are "single" locators (they match a maximum of 1
+item and can be used as both `single-locator` and `multi-locator`s).
+`all` is a "multi" locator (matching an unlimited number of items
+and can only be used as a `multi-locator`).
+
+```javascript
+const items = [1, 2, 3, 4];
+
+const updatedItems = update(items, [
+  'update',
+  'last',
+  ['=', 5],
+]);
+
+// updatedItems = [1, 2, 3, 5];
+```
+
 ## Conditions
 
-The main concept introduced in this project is conditions. Several
-commands use conditions to decide which items to update, such as
-`updateIf`, `updateWhere` and `deleteFirstWhere`, among others.
-
-### Examples
+Conditions have a similar structure to specs; object hierarchies
+define property access, and arrays define the conditions themselves:
 
 ```javascript
-const items = [1, 2, 3, 4];
-
-// Set items to 5 using the condition {equals: 3}
-const updatedItems = update(items, [
-  'updateWhere',
-  { equals: 3 },
-  ['set', 5],
-]);
-
-// updatedItems = [1, 2, 5, 4];
-```
-
-`equals` checks for a specific value. Other conditions are available,
-for example:
-
-```javascript
-const items = [1, 2, 3, 4];
+const items = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
 
 const updatedItems = update(items, [
-  'updateWhere',
-  { greaterThanOrEqual: 3 },
-  ['set', 5],
+  'delete',
+  ['first', { id: ['=', 3] }],
 ]);
 
-// updatedItems = [1, 2, 5, 5];
+// updatedItems = [{ id: 1 }, { id: 2 }, { id: 4 }];
 ```
 
-Conditions can also be combined, for example to make a range:
+### Generic conditions
 
-```javascript
-const items = [1, 2, 3, 4];
+- `['=', <expected>]` matches if the value equals `expected` (if
+  multiple values are provided, this checks if the value matches any
+  of them). Note that this uses `Object.is` matching, so `null` and
+  `undefined` are distinct, and objects / arrays will never compare
+  equal (only test primitive types).
+- `['!=', <expected>]` matches if the value does not equal `expected`
+  (if multiple values are provided, this checks if the value does not
+  match any of them)
+- `['~=', <expected>]` matches if the value loosely equals `expected`
+  (if multiple values are provided, this checks if the value matches
+  any of them)
+- `['!~=', <expected>]` matches if the value does not loosely equal
+  `expected` (if multiple values are provided, this checks if the
+  value does not match any of them)
+- `['>', <threshold>]` matches if the value is strictly greater than
+  `threshold`
+- `['>=', <threshold>]` matches if the value is greater than or equal
+  to `threshold`
+- `['<', <threshold>]` matches if the value is strictly less than
+  `threshold`
+- `['<=', <threshold>]` matches if the value is less than or equal to
+  `threshold`
+- `['exists']` matches if the value is set to any value (is not
+  `undefined`)
+- `['and', <condition1>, <condition2>, ...]` matches if all of the
+  sub-conditions match
+- `['or', <condition1>, <condition2>, ...]` matches if any of the
+  sub-conditions match
+- `['not', <condition>]` negates the sub-condition
 
-const updatedItems = update(items, [
-  'updateWhere',
-  { greaterThan: 1, lessThan: 4 },
-  ['set', 5],
-]);
+### List conditions
 
-// updatedItems = [1, 5, 5, 4];
-```
+Use `.with(listCommands)` to enable these conditions.
 
-#### Working with objects
+- `['some', <condition>]` matches if any item in the list matches the
+  sub-condition
+- `['every', <condition>]` matches if every item in the list matches
+  the sub-condition
+- `['none', <condition>]` matches if no items in the list match the
+  sub-condition (equivalent to `['not', ['some', <condition>]]`)
+- `['length', <condition>]` checks the length of the list using the
+  given condition
 
-A common use-case is working with lists of objects. In this
-situation, you can provide a `key` to test a particular property of
-the object:
-
-```javascript
-const items = [
-  { myId: 3, myThing: 'this' },
-  { myId: 28, myThing: 'that' },
-];
-
-const updatedItems = update(items, [
-  'updateWhere',
-  { key: 'myId', equals: 3 },
-  { myThing: ['set': 'updated this'] },
-]);
-
-// updatedItems = [
-//   { myId: 3, myThing: 'updated this' }, // <-- this item has changed
-//   { myId: 28, myThing: 'that' },
-// ];
-```
-
-Because this is a common use-case, a shorthand is available:
-
-```javascript
-['myProperty', myValue]
-
-// Same as:
-{key: 'myProperty', equals: myValue}
-```
-
-In both cases, this will look at the value of `myProperty` in the
-current object, and check if it is equal to `myValue`.
-
-Conditions can check multiple properties by wrapping them in an array
-(these only match if all conditions are met):
-
-```javascript
-[
-  {key: 'myProperty', greaterThanOrEqual: 2},
-  {key: 'myOtherProperty', equals: 'something'},
-]
-
-// or, using the shorthand:
-[
-  {key: 'myProperty', greaterThanOrEqual: 2},
-  ['myOtherProperty', 'something'],
-]
-```
-
-## Condition reference
-
-- `equals`: checks for an exact match. Note that this uses
-  `Object.is` matching, so `null` and `undefined` are distinct,
-  and objects / arrays will never compare equal (only test
-  primitive types).
-- `not`: negated form of `equals`.
-- `greaterThan`: checks for strictly-greater-than.
-- `greaterThanOrEqual`: checks for greater-than-or-equal.
-- `lessThan`: checks for strictly-less-than.
-- `lessThanOrEqual`: checks for less-than-or-equal.
-- `notNullish`: this checks for `null` or `undefined`.
-  This is the default if a key is provided but no checks.
+### Extending
 
 You can add new conditions with:
 
 ```javascript
 const modifiedUpdate = update.with({
   conditions: {
-    conditionName: (parameter) => (actualValue) => {
-      // parameter is the value assigned to the condition
+    // example: >
+    myGreaterThan: (parameters, context) => (actualValue) => {
       // actualValue is the value of the object being tested
 
-      // example: greaterThan
-      return actualValue > parameter;
+      return actualValue > parameters[0];
+    },
+
+    // example: and
+    myAnd: (parameters, context) => (actualValue) => {
+      const predicates = parameters.map((c) => context.makeConditionPredicate(c));
+      return (v) => predicates.every((p) => p(v));
     },
   },
 });
@@ -271,7 +258,7 @@ const modifiedUpdate = update.with({
 
 ### Generic
 
-- `['set', value]` alias `['=', value]`
+- `['=', value]`
   sets the value to the literal value given.
 
 - `['unset']`
@@ -284,7 +271,7 @@ const modifiedUpdate = update.with({
   if undefined, sets the value to the literal value given.
   Otherwise leaves the value unchanged.
 
-- `['updateIf', condition, spec, elseSpec?]` alias `['if', ...]`
+- `['if', condition, spec, elseSpec?]`
   applies the given `spec` if the `condition` matches, otherwise
   applies the `elseSpec` (if provided) or does nothing.
 
@@ -296,8 +283,8 @@ const modifiedUpdate = update.with({
   // Computes (value + 2 - 10)
   const updated = update(state, [
     'seq',
-    ['add', 2],
-    ['subtract', 10],
+    ['+', 2],
+    ['-', 10],
   ]);
   ```
 
@@ -317,7 +304,7 @@ const modifiedUpdate = update.with({
 
 ### Boolean
 
-- `['toggle']` alias `['~']`
+- `['~']`
   toggles the current value
   (`true` &rarr; `false`; `false` &rarr; `true`).
 
@@ -331,64 +318,49 @@ Use `.with(listCommands)` to enable these commands.
 - `['unshift', items...]`
   inserts one or more items at the start of the array.
 
+- `['addUnique', items...]`
+  inserts one or more items at the end of the array if they are not
+  already present in the array. Note that this only works with
+  primitive values (strings / numbers / booleans). For more complex
+  objects, consider defining your own condition:
+
+  ```javascript
+  [
+    'if',
+    ['none', { id: ['=', newID] }],
+    ['push', { id: newID, etc }],
+  ]
+  ```
+
 - `['splice', arguments...]`
   invokes `splice` on the array repeatedly. Each argument should
   be an array of parameters to send the `splice` function;
   `[offset, length, items...]`. Note that offset can be negative
   to count from the end of the array.
 
-- `['insertBeforeFirstWhere', condition, items...]`
-  inserts one or more items before the first item which matches the
-  `condition` (or at the end of the array if no items match).
+- `['insert', 'before' | 'after', multi-locator, items...]`
+  inserts one or more items before or after the item identified by
+  the `locator` (or at the start / end of the array if no items
+  match, depending on the locator type).
 
-- `['insertAfterFirstWhere', condition, items...]`
-  inserts one or more items after the first item which matches the
-  `condition` (or at the end of the array if no items match).
-
-- `['insertBeforeLastWhere', condition, items...]`
-  inserts one or more items before the last item which matches the
-  `condition` (or at the start of the array if no items match).
-
-- `['insertAfterLastWhere', condition, items...]`
-  inserts one or more items after the last item which matches the
-  `condition` (or at the start of the array if no items match).
-
-- `['updateAll', spec]`
-  applies the given `spec` to all items in the array individually.
-
-- `['updateWhere', condition, spec, elseInsert?]`
-  applies the given `spec` to all items in the array which match the
-  `condition`. If no item matches and `elseInsert` is set, this
+- `['update', multi-locator, spec, elseInsert?]`
+  applies the given `spec` to items in the array which match the
+  `locator`. If no item matches and `elseInsert` is set, this
   inserts a new item (at the end of the array) and applies the `spec`
-  to it. Without `elseInsert`, this is the same as
-  `['updateAll', ['updateIf', condition, spec]]`.
+  to it.
 
-- `['updateFirstWhere', condition, spec]`
-  applies the given `spec` to the first item in the array which
-  matches the `condition`. If no item matches and `elseInsert` is
-  set, this inserts a new item (at the end of the array) and applies
-  the `spec` to it.
+- `['delete', multi-locator]`
+  deletes items in the array which match the `locator`. If no items
+  match, does nothing.
 
-- `['updateLastWhere', condition, spec]`
-  applies the given `spec` to the last item in the array which
-  matches the `condition`. If no item matches and `elseInsert` is
-  set, this inserts a new item (at the start of the array) and
-  applies the `spec` to it.
+- `['swap', single-locator, single-locator]`
+  swaps the positions of the two items matching the given locators.
+  If either locator does not find a match, does nothing.
 
-- `['deleteWhere', condition]`
-  deletes all items in the array which match the `condition`. If no
-  items match, does nothing. Same as
-  `['updateWhere', condition, ['unset']]`.
-
-- `['deleteFirstWhere', condition]`
-  deletes the first item in the array which match the `condition`. If
-  no item matches, does nothing. Same as
-  `['updateFirstWhere', condition, ['unset']]`.
-
-- `['deleteLastWhere', condition]`
-  deletes the last item in the array which match the `condition`. If
-  no item matches, does nothing. Same as
-  `['updateLastWhere', condition, ['unset']]`.
+- `['move', multi-locator, 'before' | 'after', single-locator]`
+  moves all the items matching the multi-locator before or after the
+  item matching the single locator (preserving their original order).
+  If either locator does not find a match, does nothing.
 
 ### String
 
@@ -404,11 +376,11 @@ Use `.with(stringCommands)` to enable these commands.
 
 ### Number
 
-- `['add', value]` alias `['+', value]`
+- `['+', value]`
   adds the given `value` to the current value. This is available in
   the default command set and does not need an extension.
 
-- `['subtract', value]` alias `['-', value]`
+- `['-', value]`
   subtracts the given `value` from the current value. This is
   available in the default command set and does not need an
   extension.
@@ -617,7 +589,7 @@ const myContext = defaultContext.with(/* extensions here */);
       /* etc. */
     },
     conditions: {
-      myCondition: (param) => (actual) => boolean,
+      myCondition: (params, context) => (actual) => boolean,
       /* etc. */
     },
     limits: {
@@ -733,7 +705,7 @@ const sub = getScopedState(context, value, ['foo', 'bar', 0, 'baz']);
 // sub = 7
 
 const value2 = { foo: [{ id: 1, bar: 'a' }, { id: 2, bar: 'b' }] };
-const sub2 = getScopedState(context, value, ['foo', { key: 'id', equals: 2 }]);
+const sub2 = getScopedState(context, value, ['foo', { id: ['=', 2] }]);
 // sub2 = { id: 2, bar: 'b' }
 ```
 
@@ -758,8 +730,8 @@ const { makeScopedSpec } = require('json-immutability-helper/helpers/scoped');
 const subSpec = makeScopedSpec(['foo', 'bar', 0, 'baz'], ['=', 7]);
 // subSpec = { foo: { bar: { 0: { baz: ['=', 7] } } } }
 
-const subSpec2 = makeScopedSpec(['foo', { key: 'id', equals: 2 }, 'bar'], ['=', 7]);
-// subSpec2 = { foo: ['updateWhere', { key: 'id', equals: 2 }, { bar: ['=', 7] }] }
+const subSpec2 = makeScopedSpec(['foo', { id: ['=', 2] }, 'bar'], ['=', 7]);
+// subSpec2 = { foo: ['update', ['all', { id: ['=', 2] }], { bar: ['=', 7] }] }
 ```
 
 Wraps the given spec in a nested path. This is the spec equivalent to

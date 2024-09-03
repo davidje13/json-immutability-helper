@@ -15,7 +15,7 @@ describe('seq', () => {
 
   it('applies specs sequentially to the current property', () => {
     const updated = update(initial, {
-      seven: ['seq', ['add', 5], ['subtract', 2]],
+      seven: ['seq', ['+', 5], ['-', 2]],
     });
 
     expect(updated).equals({ foo: 'bar', seven: 10 });

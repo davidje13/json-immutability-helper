@@ -1,12 +1,37 @@
 const conditions = {
-  equals: (c) => (v) => v === c,
-  not: (c) => (v) => v !== c,
-  greaterThan: (c) => (v) => v > c,
-  lessThan: (c) => (v) => v < c,
-  greaterThanOrEqual: (c) => (v) => v >= c,
-  lessThanOrEqual: (c) => (v) => v <= c,
-  /* eslint-disable-next-line no-eq-null,eqeqeq */ // Intentional nullish check
-  notNullish: () => (v) => v != null,
+  and: (subConditions, context) => {
+    const predicates = subConditions.map((c) => context.makeConditionPredicate(c));
+    return (v) => predicates.every((p) => p(v));
+  },
+  or: (subConditions, context) => {
+    const predicates = subConditions.map((c) => context.makeConditionPredicate(c));
+    return (v) => predicates.some((p) => p(v));
+  },
+  not: ([subCondition], context) => {
+    const predicate = context.makeConditionPredicate(subCondition);
+    return (v) => !predicate(v);
+  },
+  exists: () => (v) => v !== undefined,
+  '=': (options) => (v) => options.includes(v),
+  '!=': (options) => (v) => !options.includes(v),
+  '~=': (options) => (v) => options.some((o) => o == v),
+  '!~=': (options) => (v) => !options.some((o) => o == v),
+  '>':
+    ([threshold]) =>
+    (v) =>
+      v > threshold,
+  '>=':
+    ([threshold]) =>
+    (v) =>
+      v >= threshold,
+  '<':
+    ([threshold]) =>
+    (v) =>
+      v < threshold,
+  '<=':
+    ([threshold]) =>
+    (v) =>
+      v <= threshold,
 };
 
 export default { conditions };

@@ -49,34 +49,6 @@ function combineSpecs(spec1, spec2) {
   return result;
 }
 
-function conditionPartPredicate(condition, context) {
-  invariant(
-    typeof condition === 'object',
-    `expected spec of condition to be an object; got ${condition}`,
-  );
-
-  const checks = Object.entries(condition)
-    .filter(([key]) => key !== 'key')
-    .map(([key, param]) => {
-      const type = context.conditions.get(key);
-      invariant(type, `unknown condition type: ${key}`);
-      return type(param, context);
-    });
-
-  if (condition.key === undefined) {
-    invariant(checks.length > 0, 'invalid condition');
-    return (o) => checks.every((c) => c(o));
-  }
-
-  if (!checks.length) {
-    checks.push(basicConditions.conditions.notNullish());
-  }
-  return (o) => {
-    const v = safeGet(o, condition.key);
-    return checks.every((c) => c(v));
-  };
-}
-
 function deleteIndices(arr, indices) {
   indices.sort((a, b) => a - b);
   let del = 1;
@@ -144,7 +116,6 @@ class JsonContext {
     );
   }
 
-  /* eslint-disable-next-line max-statements */
   update(object, spec, { path = '', allowUnset = false } = {}) {
     const initial = object === UNSET_TOKEN ? undefined : object;
 
@@ -223,18 +194,20 @@ class JsonContext {
   }
 
   makeConditionPredicate(cond) {
-    if (!Array.isArray(cond)) {
-      return conditionPartPredicate(cond, this);
+    invariant(typeof cond === 'object' && cond, 'invalid condition');
+
+    if (Array.isArray(cond)) {
+      const [key, ...options] = cond;
+      const type = this.conditions.get(key);
+      invariant(type, `unknown condition type: ${key}`);
+      return type(options, this);
     }
 
-    invariant(cond.length > 0, 'update(): empty condition.');
-
-    if (typeof cond[0] === 'string' && cond.length === 2) {
-      return conditionPartPredicate({ key: cond[0], equals: cond[1] }, this);
-    }
-
-    const parts = cond.map((x) => conditionPartPredicate(x, this));
-    return (o) => parts.every((part) => part(o));
+    const predicates = Object.entries(cond).map(([key, subCond]) => {
+      const predicate = this.makeConditionPredicate(subCond);
+      return (o) => predicate(typeof o === 'object' && o ? safeGet(o, key) : undefined);
+    });
+    return (o) => predicates.every((p) => p(o));
   }
 
   incLoopNesting(iterations, fn) {

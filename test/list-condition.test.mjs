@@ -3,39 +3,63 @@ import context from '../src/index.mjs';
 const listContext = context.with(listCommands);
 
 function matches(condition, state) {
-  const updatedState = listContext.update(state, ['updateIf', condition, ['set', 'match']]);
+  const updatedState = listContext.update(state, ['if', condition, ['=', 'match']]);
   return updatedState === 'match';
 }
 
-describe('contains', () => {
+describe('length', () => {
   it('matches', () => {
-    expect(matches({ contains: { equals: 'abc' } }, ['abc', 'def'])).equals(true);
-  });
-
-  it('allows recursive shorthand', () => {
-    expect(matches({ contains: ['foo', 'bar'] }, [{ foo: 'bar' }])).equals(true);
-    expect(matches({ contains: ['foo', 'bar'] }, [{ foo: 'nope' }])).equals(false);
+    expect(matches(['length', ['=', 2]], ['def', 'ghi'])).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({ contains: { equals: 'nope' } }, ['abc', 'def'])).equals(false);
+    expect(matches(['length', ['=', 2]], ['abc'])).equals(false);
   });
 
   it('does not match non-arrays', () => {
-    expect(matches({ contains: { equals: 'nope' } }, 'nope')).equals(false);
+    expect(matches(['length', ['=', 3]], 'def')).equals(false);
+    expect(matches(['length', ['=', 0]], 0)).equals(false);
   });
 });
 
-describe('notContains', () => {
+describe('some', () => {
   it('matches', () => {
-    expect(matches({ notContains: { equals: 'nope' } }, ['abc', 'def'])).equals(true);
+    expect(matches(['some', ['=', 'abc']], ['abc', 'def'])).equals(true);
   });
 
   it('does not match', () => {
-    expect(matches({ notContains: { equals: 'abc' } }, ['abc', 'def'])).equals(false);
+    expect(matches(['some', ['=', 'nope']], ['abc', 'def'])).equals(false);
   });
 
-  it('matches non-arrays', () => {
-    expect(matches({ notContains: { equals: 'nope' } }, 'nope')).equals(true);
+  it('does not match non-arrays', () => {
+    expect(matches(['some', ['=', 'abc']], 'abc')).equals(false);
+  });
+});
+
+describe('every', () => {
+  it('matches', () => {
+    expect(matches(['every', ['=', 'abc']], ['abc', 'abc'])).equals(true);
+  });
+
+  it('does not match', () => {
+    expect(matches(['every', ['=', 'abc']], ['abc', 'nope'])).equals(false);
+  });
+
+  it('does not match non-arrays', () => {
+    expect(matches(['every', ['=', 'abc']], 'abc')).equals(false);
+  });
+});
+
+describe('none', () => {
+  it('matches', () => {
+    expect(matches(['none', ['=', 'abc']], ['def', 'ghi'])).equals(true);
+  });
+
+  it('does not match', () => {
+    expect(matches(['none', ['=', 'abc']], ['abc', 'def'])).equals(false);
+  });
+
+  it('does not match non-arrays', () => {
+    expect(matches(['none', ['=', 'abc']], 'def')).equals(false);
   });
 });

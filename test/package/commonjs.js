@@ -50,7 +50,7 @@ checkSame(combine, 'combine');
 checkSame(invariant, 'invariant');
 checkSame(UNSET_TOKEN, 'UNSET_TOKEN');
 
-const result1 = update(0, ['set', 1]);
+const result1 = update(0, ['=', 1]);
 if (result1 !== 1) {
   console.error('Invoking update() failed');
   fail();

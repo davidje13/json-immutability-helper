@@ -35,9 +35,9 @@ export function makeScopedSpec(
     if (typeof part === 'object' && part) {
       init = [];
       if (initialisePath) {
-        spec = ['updateWhere', part, spec, makeObjectMatchingCondition(part)];
+        spec = ['update', 'all', part, spec, makeObjectMatchingCondition(part)];
       } else {
-        spec = ['updateWhere', part, spec];
+        spec = ['update', 'all', part, spec];
       }
     } else if (typeof part === 'number') {
       init = [];
@@ -57,32 +57,14 @@ export function makeScopedSpec(
 
 function makeObjectMatchingCondition(cond) {
   if (!Array.isArray(cond)) {
-    return objectMatchingPart(cond).value;
+    return Object.fromEntries(
+      Object.entries(cond).map(([k, v]) => [k, makeObjectMatchingCondition(v)]),
+    );
   }
-  if (cond.length === 2 && typeof cond[0] === 'string') {
-    return { [cond[0]]: cond[1] };
+  if (cond.length !== 2 || cond[0] !== '=') {
+    throw new Error('condition too complex');
   }
-  if (cond.length === 1) {
-    return objectMatchingPart(cond[0]).value;
-  }
-  const o = {};
-  for (const c of cond) {
-    const p = objectMatchingPart(c);
-    if (p.keyed) {
-      Object.assign(o, p.value);
-    } else {
-      return undefined; // condition is too complex for us
-    }
-  }
-  return o;
-}
-
-function objectMatchingPart(c) {
-  if (typeof c !== 'object' || !c || !Object.prototype.hasOwnProperty.call(c, 'equals')) {
-    return undefined; // cannot make unambiguous objects which match an inequality
-  }
-  const keyed = Object.prototype.hasOwnProperty.call(c, 'key');
-  return { keyed, value: keyed ? { [c.key]: c.equals } : c.equals };
+  return cond[1];
 }
 
 export function makeScopedReducer(

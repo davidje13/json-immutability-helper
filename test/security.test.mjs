@@ -30,7 +30,7 @@ function command(value) {
   if (value === UNSET_TOKEN) {
     return ['unset'];
   } else {
-    return ['set', value];
+    return ['=', value];
   }
 }
 
@@ -45,28 +45,19 @@ const PROTOTYPE_ATTACKS = [
   },
   {
     name: 'set __proto__',
-    attack: (key, v) => `{"__proto__":["set",${json({ [key]: v })}]}`,
+    attack: (key, v) => `{"__proto__":["=",${json({ [key]: v })}]}`,
   },
   {
     name: 'set outside __proto__',
-    attack: (key, v) => `["set",{"__proto__":${json({ [key]: v })}}]`,
+    attack: (key, v) => `["=",{"__proto__":${json({ [key]: v })}}]`,
   },
   {
     name: 'set constructor.prototype',
-    attack: (key, v) =>
-      json({
-        constructor: ['set', { prototype: { [key]: v } }],
-      }),
+    attack: (key, v) => json({ constructor: ['=', { prototype: { [key]: v } }] }),
   },
   {
     name: 'set outside constructor.prototype',
-    attack: (key, v) =>
-      json([
-        'set',
-        {
-          constructor: { prototype: { [key]: v } },
-        },
-      ]),
+    attack: (key, v) => json(['=', { constructor: { prototype: { [key]: v } } }]),
   },
   {
     name: 'merge as regular property',
@@ -82,7 +73,6 @@ const PROTOTYPE_ATTACKS = [
   },
 ];
 
-/* eslint-disable no-proto */
 describe('global prototype pollution protection', () => {
   const { update } = context;
 
@@ -202,13 +192,12 @@ describe('local prototype pollution protection', () => {
     });
   });
 });
-/* eslint-enable no-proto */
 
 describe('condition code injection attacks', () => {
   const { update } = context;
 
   it('does not execute arbitrary functions', () => {
-    expect(() => update({}, ['updateIf', { hasOwnProperty: 1 }, ['unset']])).throws(
+    expect(() => update({}, ['if', ['hasOwnProperty', 1], ['unset']])).throws(
       'unknown condition type: hasOwnProperty',
     );
   });
@@ -309,36 +298,40 @@ describe('"billion laughs" protection', () => {
     expect(tm1 - tm0).toBeLessThan(50);
   });
 
-  it('updateAll prevents recursive growth', () => {
+  it('update prevents recursive growth', () => {
     const tm0 = Date.now();
-    /* eslint-disable array-bracket-newline, comma-spacing */
+    const blanks = [[], [], [], [], [], [], [], [], [], []];
     expect(() =>
       update(
         [],
         [
           'seq',
-          ['push', [], [], [], [], [], [], [], [], [], []],
+          ['push', ...blanks],
           [
-            'updateAll',
+            'update',
+            'all',
             [
               'seq',
-              ['push', [], [], [], [], [], [], [], [], [], []],
+              ['push', ...blanks],
               [
-                'updateAll',
+                'update',
+                'all',
                 [
                   'seq',
-                  ['push', [], [], [], [], [], [], [], [], [], []],
+                  ['push', ...blanks],
                   [
-                    'updateAll',
+                    'update',
+                    'all',
                     [
                       'seq',
-                      ['push', [], [], [], [], [], [], [], [], [], []],
+                      ['push', ...blanks],
                       [
-                        'updateAll',
+                        'update',
+                        'all',
                         [
                           'seq',
-                          ['push', [], [], [], [], [], [], [], [], [], []],
-                          ['updateAll', ['seq', ['push', [], [], [], [], [], [], [], [], [], []]]],
+                          ['push', ...blanks],
+                          ['update', 'all', ['seq', ['push', ...blanks]]],
                         ],
                       ],
                     ],
@@ -350,33 +343,34 @@ describe('"billion laughs" protection', () => {
         ],
       ),
     ).throws('too much recursion');
-    /* eslint-enable array-bracket-newline, comma-spacing */
     const tm1 = Date.now();
     expect(tm1 - tm0).toBeLessThan(50);
   });
 
-  it('updateAll/replaceAll combination', () => {
+  it('update/replaceAll combination', () => {
     const tm0 = Date.now();
-    /* eslint-disable array-bracket-newline, comma-spacing */
+    const blanks = [[], [], [], [], [], [], [], [], [], []];
     expect(() =>
       update(
         [],
         [
           'seq',
-          ['push', [], [], [], [], [], [], [], [], [], []],
+          ['push', ...blanks],
           [
-            'updateAll',
+            'update',
+            'all',
             [
               'seq',
-              ['push', [], [], [], [], [], [], [], [], [], []],
+              ['push', ...blanks],
               [
-                'updateAll',
+                'update',
+                'all',
                 [
                   'seq',
                   ['push', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
-                  ['updateAll', ['replaceAll', '.', '..........']],
-                  ['updateAll', ['replaceAll', '.', '..........']],
-                  ['updateAll', ['replaceAll', '.', '..........']],
+                  ['update', 'all', ['replaceAll', '.', '..........']],
+                  ['update', 'all', ['replaceAll', '.', '..........']],
+                  ['update', 'all', ['replaceAll', '.', '..........']],
                 ],
               ],
             ],
@@ -384,7 +378,6 @@ describe('"billion laughs" protection', () => {
         ],
       ),
     ).throws('too much recursion');
-    /* eslint-enable array-bracket-newline, comma-spacing */
     const tm1 = Date.now();
     expect(tm1 - tm0).toBeLessThan(50);
   });

@@ -143,38 +143,6 @@ const commands = {
     );
   }),
 
-  insertBeforeFirstWhere: config(
-    'array',
-    'condition',
-    'value...',
-  )((object, [condition, ...items], context) =>
-    context.update(object, ['insert', 'before', ['first', condition], ...items]),
-  ),
-
-  insertAfterFirstWhere: config(
-    'array',
-    'condition',
-    'value...',
-  )((object, [condition, ...items], context) =>
-    context.update(object, ['insert', 'after', ['first', condition], ...items]),
-  ),
-
-  insertBeforeLastWhere: config(
-    'array',
-    'condition',
-    'value...',
-  )((object, [condition, ...items], context) =>
-    context.update(object, ['insert', 'before', ['last', condition], ...items]),
-  ),
-
-  insertAfterLastWhere: config(
-    'array',
-    'condition',
-    'value...',
-  )((object, [condition, ...items], context) =>
-    context.update(object, ['insert', 'after', ['last', condition], ...items]),
-  ),
-
   update: config(
     'array',
     'multi-locator',
@@ -204,38 +172,6 @@ const commands = {
     return context.update(object, combined);
   }),
 
-  updateAll: config(
-    'array',
-    'spec',
-  )((object, [spec], context) => context.update(object, ['update', 'all', spec])),
-
-  updateWhere: config(
-    'array',
-    'condition',
-    'spec',
-    'elseInit:value?',
-  )((object, [condition, spec, elseInit], context) =>
-    context.update(object, ['update', ['all', condition], spec, elseInit]),
-  ),
-
-  updateFirstWhere: config(
-    'array',
-    'condition',
-    'spec',
-    'elseInit:value?',
-  )((object, [condition, spec, elseInit], context) =>
-    context.update(object, ['update', ['first', condition], spec, elseInit]),
-  ),
-
-  updateLastWhere: config(
-    'array',
-    'condition',
-    'spec',
-    'elseInit:value?',
-  )((object, [condition, spec, elseInit], context) =>
-    context.update(object, ['update', ['last', condition], spec, elseInit]),
-  ),
-
   delete: config(
     'array',
     'multi-locator',
@@ -243,21 +179,6 @@ const commands = {
     const { _indices: indices } = findIndicesReversed(object, locator, context);
     return context.update(object, ['splice', ...indices.map((i) => [i, 1])]);
   }),
-
-  deleteWhere: config(
-    'array',
-    'condition',
-  )((object, [condition], context) => context.update(object, ['delete', ['all', condition]])),
-
-  deleteFirstWhere: config(
-    'array',
-    'condition',
-  )((object, [condition], context) => context.update(object, ['delete', ['first', condition]])),
-
-  deleteLastWhere: config(
-    'array',
-    'condition',
-  )((object, [condition], context) => context.update(object, ['delete', ['last', condition]])),
 
   swap: config(
     'array',
@@ -316,16 +237,23 @@ const commands = {
     return isSameList(context, object, updatedObject) ? object : updatedObject;
   }),
 };
-commands.every = commands.updateAll;
 
 const conditions = {
-  contains: (subCondition, context) => {
+  length: ([subCondition], context) => {
+    const predicate = context.makeConditionPredicate(subCondition);
+    return (v) => Array.isArray(v) && predicate(v.length);
+  },
+  some: ([subCondition], context) => {
     const predicate = context.makeConditionPredicate(subCondition);
     return (v) => Array.isArray(v) && Array.prototype.some.call(v, predicate);
   },
-  notContains: (subCondition, context) => {
+  every: ([subCondition], context) => {
     const predicate = context.makeConditionPredicate(subCondition);
-    return (v) => !Array.isArray(v) || !Array.prototype.some.call(v, predicate);
+    return (v) => Array.isArray(v) && Array.prototype.every.call(v, predicate);
+  },
+  none: ([subCondition], context) => {
+    const predicate = context.makeConditionPredicate(subCondition);
+    return (v) => Array.isArray(v) && !Array.prototype.some.call(v, predicate);
   },
 };
 

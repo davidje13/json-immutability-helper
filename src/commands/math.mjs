@@ -2,7 +2,6 @@ import { rpnCommand } from './util/rpn.mjs';
 
 const inf = Number.POSITIVE_INFINITY;
 
-/* eslint-disable quote-props, no-bitwise */
 const rpnOperators = {
   Number: [1, 1, (v) => Number.parseFloat(v)],
   '+': [2, inf, (...v) => v.reduce((a, b) => a + Number(b), 0)],
@@ -23,7 +22,6 @@ const rpnOperators = {
   bitxor: [2, 2, (a, b) => a ^ b],
   bitneg: [1, 1, (a) => ~a],
 };
-/* eslint-enable quote-props, no-bitwise */
 
 [
   'abs',

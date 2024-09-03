@@ -17,33 +17,23 @@ const initial = {
 const matchSpec = { seven: ['=', 'matched'] };
 const elseSpec = { seven: ['=', 'not matched'] };
 
-describe('updateIf', () => {
+describe('if', () => {
   it('applies the given spec if condition is matched', () => {
-    const updated = update(initial, [
-      'updateIf',
-      { key: 'foo', equals: 'bar' },
-      matchSpec,
-      elseSpec,
-    ]);
+    const updated = update(initial, ['if', { foo: ['=', 'bar'] }, matchSpec, elseSpec]);
 
     expect(updated).not(same(initial));
     expect(updated.seven).equals('matched');
   });
 
   it('applies an optional else spec if condition is not matched', () => {
-    const updated = update(initial, [
-      'updateIf',
-      { key: 'foo', equals: 'nope' },
-      matchSpec,
-      elseSpec,
-    ]);
+    const updated = update(initial, ['if', { foo: ['=', 'nope'] }, matchSpec, elseSpec]);
 
     expect(updated).not(same(initial));
     expect(updated.seven).equals('not matched');
   });
 
   it('does nothing if condition is not matched and else is not given', () => {
-    const updated = update(initial, ['updateIf', { key: 'foo', equals: 'nope' }, matchSpec]);
+    const updated = update(initial, ['if', { foo: ['=', 'nope'] }, matchSpec]);
 
     expect(updated).same(initial);
   });

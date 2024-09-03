@@ -20,12 +20,12 @@ assertType(update(7, ['unset'], { allowUnset: true }))<number | typeof UNSET_TOK
 
 assertType(update(7, ['+', 1]))<number>();
 assertType(update(7, ['-', 1]))<number>();
-assertType(update(7, ['seq', ['add', 1], ['subtract', 1]]))<number>();
+assertType(update(7, ['seq', ['+', 1], ['-', 1]]))<number>();
 
 // @ts-expect-error
 update(7, ['=', 'nope']); // incorrect type
 // @ts-expect-error
-update(7, ['seq', ['add', 'nope'], ['subtract', 1]]); // nested incorrect type
+update(7, ['seq', ['+', 'nope'], ['-', 1]]); // nested incorrect type
 
 // properties in objects
 
@@ -60,14 +60,14 @@ update({ foo: 'bar' } as ObjOptional, { foo: ['=', 1] }); // incorrect type
 
 assertType(update(['foo'] as string[], { 0: ['=', 'baz'] }))<string[]>();
 assertType(update(['foo'] as string[], { 0: ['unset'] }))<string[]>();
-assertType(update(['foo'] as string[], ['updateWhere', { equals: 'foo' }, ['=', 'baz']]))<
+assertType(update(['foo'] as string[], ['update', ['all', ['=', 'foo']], ['=', 'baz']]))<
   string[]
 >();
 
 // @ts-expect-error
 update(['foo'] as string[], { 0: ['=', 7] }); // incorrect type
 // @ts-expect-error
-update(['foo'] as string[], ['updateWhere', { equals: 7 }, ['=', 'baz']]); // incorrect conditional type
+update(['foo'] as string[], ['update', ['all', ['=', 7]], ['=', 'baz']]); // incorrect conditional type
 
 assertType(update(['foo'] as string[], ['addUnique', 'bar']))<string[]>();
 

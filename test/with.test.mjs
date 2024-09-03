@@ -26,7 +26,7 @@ describe('with', () => {
     });
     const context2 = defaultContext.with();
 
-    const spec = ['updateIf', { scopedMultiple: 3 }, ['=', 1]];
+    const spec = ['if', ['scopedMultiple', 3], ['=', 1]];
     expect(() => context1.update(9, spec)).resolves();
     expect(() => context2.update(9, spec)).throws();
   });
@@ -38,7 +38,7 @@ describe('with', () => {
       },
     });
 
-    const spec = ['updateIf', { scopedMultiple: 3 }, ['=', 1]];
+    const spec = ['if', ['scopedMultiple', 3], ['=', 1]];
     expect(() => context.update(9, spec)).resolves();
     expect(() => defaultContext.update(9, spec)).throws();
   });

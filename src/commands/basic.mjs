@@ -1,13 +1,13 @@
 import config from './util/commandTypeCheck.mjs';
 
 const commands = {
-  set: config('*', 'value')((object, [value]) => value),
+  '=': config('*', 'value')((object, [value]) => value),
 
   unset: config('*')((object, options, context) => context.UNSET_TOKEN),
 
   init: config('*', 'value')((object, [value]) => (object === undefined ? value : object)),
 
-  updateIf: config(
+  if: config(
     '*',
     'condition',
     'spec',
@@ -30,7 +30,7 @@ const commands = {
     specs.reduce((o, spec) => context.update(o, spec, { allowUnset: true }), object),
   ),
 
-  toggle: config('boolean')((object) => !object),
+  '~': config('boolean')((object) => !object),
 
   merge: config(
     'object?',
@@ -44,16 +44,9 @@ const commands = {
     );
   }),
 
-  add: config('number', 'number')((object, [value]) => object + value),
+  '+': config('number', 'number')((object, [value]) => object + value),
 
-  subtract: config('number', 'number')((object, [value]) => object - value),
+  '-': config('number', 'number')((object, [value]) => object - value),
 };
-
-// Aliases
-commands.if = commands.updateIf;
-commands['='] = commands.set;
-commands['+'] = commands.add;
-commands['-'] = commands.subtract;
-commands['~'] = commands.toggle;
 
 export default { commands };

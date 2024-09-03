@@ -22,7 +22,7 @@ describe('scoped', () => {
           { id: 1, baz: 1 },
           { id: 2, baz: 2 },
         ],
-        [['id', 2]],
+        [{ id: ['=', 2] }],
       );
 
       expect(subState).equals({ id: 2, baz: 2 });
@@ -45,7 +45,11 @@ describe('scoped', () => {
     });
 
     it('returns undefined if any array lookup matches nothing', () => {
-      const subState = getScopedState(context, { foo: [{ baz: 1 }] }, ['foo', ['baz', 2], 'baz']);
+      const subState = getScopedState(context, { foo: [{ baz: 1 }] }, [
+        'foo',
+        { baz: ['=', 2] },
+        'baz',
+      ]);
 
       expect(subState).isUndefined();
     });
@@ -77,13 +81,15 @@ describe('scoped', () => {
     });
 
     it('converts array lookups', () => {
-      const spec = makeScopedSpec([['id', 10]], ['=', 1]);
+      const spec = makeScopedSpec([{ id: ['=', 10] }], ['=', 1]);
 
-      expect(spec).equals(['updateWhere', ['id', 10], ['=', 1]]);
+      expect(spec).equals(['update', 'all', { id: ['=', 10] }, ['=', 1]]);
     });
 
     it('initialises path elements if requested', () => {
-      const spec = makeScopedSpec(['foo', 0, ['id', 10]], ['=', 1], { initialisePath: true });
+      const spec = makeScopedSpec(['foo', 0, { id: ['=', 10] }], ['=', 1], {
+        initialisePath: true,
+      });
 
       expect(spec).equals([
         'seq',
@@ -93,7 +99,7 @@ describe('scoped', () => {
             'seq',
             ['init', []],
             {
-              0: ['seq', ['init', []], ['updateWhere', ['id', 10], ['=', 1], { id: 10 }]],
+              0: ['seq', ['init', []], ['update', 'all', { id: ['=', 10] }, ['=', 1], { id: 10 }]],
             },
           ],
         },
