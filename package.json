@@ -1,6 +1,6 @@
 {
   "name": "json-immutability-helper",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "json-serialisable general-purpose reducer",
   "files": [
     "build/**/*",
