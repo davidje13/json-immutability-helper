@@ -21,7 +21,7 @@ export const rpn = (functionsObj, constants, context) => {
 
   return (tokens, values) => {
     const stack = [];
-    const vars = Object.assign({}, constants, values);
+    const vars = { ...constants, ...values };
     tokens.forEach((token) => {
       if (typeof token === 'number') {
         stack.push(token);

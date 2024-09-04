@@ -53,4 +53,16 @@ describe('combine', () => {
 
     expect(spec).equals({ foo: ['seq', ['=', 1], ['=', 2], ['=', 3], ['=', 4]] });
   });
+
+  it('preserves individual actions', () => {
+    expect(update.combine([['=', 2]])).equals(['=', 2]);
+
+    expect(update.combine([{ foo: ['=', 2] }])).equals({ foo: ['=', 2] });
+  });
+
+  it('generates empty specs if given no meaningful input', () => {
+    expect(update.combine([])).equals({});
+
+    expect(update.combine([{}, {}])).equals({});
+  });
 });

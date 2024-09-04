@@ -36,7 +36,7 @@ function combineSpecs(spec1, spec2) {
     return ['seq', ...getSeqSteps(spec1), ...getSeqSteps(spec2)];
   }
 
-  const result = Object.assign({}, spec1);
+  const result = { ...spec1 };
   Object.entries(spec2).forEach(([key, value2]) => {
     if (Object.prototype.hasOwnProperty.call(result, key)) {
       result[key] = combineSpecs(result[key], value2);
@@ -95,9 +95,9 @@ class JsonContext {
     const base = {
       commands: [...this.commands.entries()],
       conditions: [...this.conditions.entries()],
-      limits: Object.assign({}, this.limits),
-      rpnOperators: Object.assign({}, this.rpnOperators),
-      rpnConstants: Object.assign({}, this.rpnConstants),
+      limits: { ...this.limits },
+      rpnOperators: { ...this.rpnOperators },
+      rpnConstants: { ...this.rpnConstants },
       isEquals: this.isEquals,
       copy: this.copy,
     };
@@ -190,7 +190,7 @@ class JsonContext {
 
   combine(specs, no) {
     invariant(!no, 'combine(): must provide a single (list) parameter.');
-    return specs.reduce(combineSpecs, {});
+    return specs.length > 0 ? specs.reduce(combineSpecs) : {};
   }
 
   makeConditionPredicate(cond) {
@@ -245,7 +245,7 @@ const BASE_CONFIG = {
   rpnOperators: {},
   rpnConstants: {},
   isEquals: Object.is,
-  copy: (o) => (Array.isArray(o) ? [...o] : typeof o === 'object' && o ? Object.assign({}, o) : o),
+  copy: (o) => (Array.isArray(o) ? [...o] : typeof o === 'object' && o ? { ...o } : o),
 };
 
 export const context = new JsonContext(BASE_CONFIG).with(basicCommands, basicConditions);

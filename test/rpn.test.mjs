@@ -3,8 +3,8 @@ import mathCommands from '../src/commands/math.mjs';
 import stringCommands from '../src/commands/string.mjs';
 
 const calc = rpn(
-  Object.assign({}, mathCommands.rpnOperators, stringCommands.rpnOperators),
-  Object.assign({}, mathCommands.rpnConstants, stringCommands.rpnConstants),
+  { ...mathCommands.rpnOperators, ...stringCommands.rpnOperators },
+  { ...mathCommands.rpnConstants, ...stringCommands.rpnConstants },
   { limits: { stringLength: 1000 } },
 );
 
