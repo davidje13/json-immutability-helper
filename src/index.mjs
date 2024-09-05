@@ -33,7 +33,14 @@ function getSeqSteps(spec) {
 
 function combineSpecs(spec1, spec2) {
   if (isOp(spec1) || isOp(spec2)) {
-    return ['seq', ...getSeqSteps(spec1), ...getSeqSteps(spec2)];
+    const a = getSeqSteps(spec1);
+    const b = getSeqSteps(spec2);
+    if (a.length && b.length && a.length + b.length > 2) {
+      const aa = a.pop();
+      const bb = b.shift();
+      return ['seq', ...a, ...getSeqSteps(combineSpecs(aa, bb)), ...b];
+    }
+    return ['seq', ...a, ...b];
   }
 
   const result = { ...spec1 };

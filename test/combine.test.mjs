@@ -60,6 +60,12 @@ describe('combine', () => {
     expect(update.combine([{ foo: ['=', 2] }])).equals({ foo: ['=', 2] });
   });
 
+  it('combines specs between sequences', () => {
+    const spec = update.combine([['seq', ['=', {}], { foo: ['=', 1] }], { bar: ['=', 2] }]);
+
+    expect(spec).equals(['seq', ['=', {}], { foo: ['=', 1], bar: ['=', 2] }]);
+  });
+
   it('generates empty specs if given no meaningful input', () => {
     expect(update.combine([])).equals({});
 
