@@ -139,11 +139,12 @@ declare module 'json-immutability-helper' {
 
     public with(...extensions: Extension[]): Context;
 
-    public makeConditionPredicate<T>(condition: Condition<T>[]): (v: T) => boolean;
+    public makeConditionPredicate<T>(condition: Condition<T>): (v: T) => boolean;
 
     public invariant(condition: unknown, message?: string | (() => string)): asserts condition;
   }
 
+  export type { Context };
   export const context: Context;
   export const update: typeof context.update;
   export const combine: typeof context.combine;

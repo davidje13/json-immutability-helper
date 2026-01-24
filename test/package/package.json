@@ -7,6 +7,6 @@
   "devDependencies": {
     "@types/react": "18.x",
     "json-immutability-helper": "file:json-immutability-helper.tgz",
-    "typescript": "5.5.x"
+    "typescript": "5.9.x"
   }
 }

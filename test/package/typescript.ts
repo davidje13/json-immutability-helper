@@ -1,4 +1,7 @@
-import context, { update, UNSET_TOKEN } from 'json-immutability-helper';
+import context, { update, UNSET_TOKEN, type Context } from 'json-immutability-helper';
+import listCommands from 'json-immutability-helper/commands/list';
+import mathCommands from 'json-immutability-helper/commands/math';
+import stringCommands from 'json-immutability-helper/commands/string';
 import { makeHooks } from 'json-immutability-helper/helpers/hooks';
 import React, { useState } from 'react';
 
@@ -74,6 +77,13 @@ assertType(update(['foo'] as string[], ['addUnique', 'bar']))<string[]>();
 // @ts-expect-error
 update([{ id: 1 }], ['addUnique', { id: 1 }]); // cannot addUnique with objects
 
+// conditions
+
+assertType(context.makeConditionPredicate(['=', 1]))<(value: 1) => boolean>();
+assertType(context.makeConditionPredicate({ a: ['=', 1], b: ['=', 2] }))<
+  (value: { a: 1; b: 2 }) => boolean
+>();
+
 // hook helpers
 
 const { useJSONReducer, useWrappedJSONReducer, useScopedReducer } = makeHooks(context, React);
@@ -99,3 +109,13 @@ wrappedReducer.dispatch(['=', 1]);
 
 // @ts-expect-error
 wrappedReducer.dispatch(['=', 'nope']); // incorrect type
+
+// extensions
+
+assertType(context)<Context>();
+assertType(context.with(listCommands))<Context>();
+assertType(context.with(mathCommands))<Context>();
+assertType(context.with(stringCommands))<Context>();
+
+// @ts-expect-error
+context.with(0);
