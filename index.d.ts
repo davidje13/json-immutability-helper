@@ -104,6 +104,8 @@ declare module 'json-immutability-helper' {
     specs: Spec<T, Unsettable>[],
   ) => Spec<T, Unsettable>;
 
+  type IsNoOpFn = (specs: Spec<unknown>) => boolean;
+
   function updateFn<T>(
     object: T,
     spec: Spec<T, false>,
@@ -125,6 +127,7 @@ declare module 'json-immutability-helper' {
   type Update = typeof updateFn & {
     readonly context: Context;
     readonly combine: CombineFn;
+    readonly isNoOp: IsNoOpFn;
     readonly UNSET_TOKEN: typeof SHARED_UNSET_TOKEN;
     readonly with: (...extensions: Extension[]) => Update;
   };
@@ -134,6 +137,7 @@ declare module 'json-immutability-helper' {
     public readonly copy: CopyFn;
     public readonly update: Update;
     public readonly combine: CombineFn;
+    public readonly isNoOp: IsNoOpFn;
     public readonly limits: Readonly<Limits>;
     public readonly UNSET_TOKEN: typeof SHARED_UNSET_TOKEN;
 
@@ -148,6 +152,7 @@ declare module 'json-immutability-helper' {
   export const context: Context;
   export const update: typeof context.update;
   export const combine: typeof context.combine;
+  export const isNoOp: typeof context.isNoOp;
   export const invariant: typeof context.invariant;
   export const UNSET_TOKEN: typeof context.UNSET_TOKEN;
 

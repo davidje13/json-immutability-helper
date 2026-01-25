@@ -93,6 +93,7 @@ class JsonContext {
     Object.assign(this.update, {
       context: this,
       combine: this.combine,
+      isNoOp: this.isNoOp,
       UNSET_TOKEN: this.UNSET_TOKEN,
       with: (...extensions) => this.with(...extensions).update,
     });
@@ -200,6 +201,21 @@ class JsonContext {
     return specs.length > 0 ? specs.reduce(combineSpecs) : {};
   }
 
+  isNoOp(spec) {
+    if (!spec || typeof spec !== 'object') {
+      return false;
+    }
+    if (isOp(spec)) {
+      return spec[0] === 'seq' && spec.length === 1;
+    }
+    for (const key in spec) {
+      if (Object.prototype.hasOwnProperty.call(spec, key)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   makeConditionPredicate(cond) {
     invariant(typeof cond === 'object' && cond, 'invalid condition');
 
@@ -257,5 +273,6 @@ const BASE_CONFIG = {
 
 export const context = new JsonContext(BASE_CONFIG).with(basicCommands, basicConditions);
 export const combine = context.combine;
+export const isNoOp = context.isNoOp;
 export const update = context.update;
 export default context;
