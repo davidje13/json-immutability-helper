@@ -48,7 +48,7 @@
   },
   "homepage": "https://github.com/davidje13/json-immutability-helper#readme",
   "devDependencies": {
-    "@rollup/plugin-terser": "0.4.x",
+    "@rollup/plugin-terser": "1.x",
     "lean-test": "2.x",
     "prettier": "3.8.1",
     "rollup": "4.x"
