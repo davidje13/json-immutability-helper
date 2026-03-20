@@ -80,11 +80,13 @@ declare module 'json-immutability-helper' {
 
   type NumberSpec = ['+', number] | ['-', number] | ['rpn', ...(number | string)[]];
 
+  type SpliceStep<T> = [number, number?] | [number, number, ...T[]];
+
   type ArraySpec<T> =
     | ['push', ...T[]]
     | ['unshift', ...T[]]
     | (T extends Primitive ? ['addUnique', ...T[]] : never)
-    | ['splice', ...([number, number?] | [number, number, ...T[]])[]]
+    | ['splice', ...SpliceStep<T>[]]
     | ['insert', 'before' | 'after', MultiLocator<T>, ...T[]]
     | ['update', MultiLocator<T>, Spec<T, true>, T?]
     | ['delete', MultiLocator<T>]
@@ -155,6 +157,8 @@ declare module 'json-immutability-helper' {
   export const isNoOp: typeof context.isNoOp;
   export const invariant: typeof context.invariant;
   export const UNSET_TOKEN: typeof context.UNSET_TOKEN;
+
+  export function simplifySplice<T>(stages: SpliceStep<T>[]): SpliceStep<T>[];
 
   export default context;
 }

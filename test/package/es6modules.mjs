@@ -4,6 +4,7 @@ import defaultExport, {
   context,
   invariant,
   update,
+  simplifySplice,
 } from 'json-immutability-helper';
 import stringCommands from 'json-immutability-helper/commands/string';
 
@@ -37,6 +38,10 @@ checkSame(update, 'update');
 checkSame(combine, 'combine');
 checkSame(invariant, 'invariant');
 checkSame(UNSET_TOKEN, 'UNSET_TOKEN');
+if (typeof simplifySplice !== 'function') {
+  console.error('expected simplifySplice');
+  fail();
+}
 
 const result1 = update(0, ['=', 1]);
 if (result1 !== 1) {

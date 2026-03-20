@@ -7,6 +7,7 @@ const {
   context,
   invariant,
   update,
+  simplifySplice,
   default: namedDefaultExport,
 } = defaultExport;
 
@@ -49,6 +50,10 @@ checkSame(update, 'update');
 checkSame(combine, 'combine');
 checkSame(invariant, 'invariant');
 checkSame(UNSET_TOKEN, 'UNSET_TOKEN');
+if (typeof simplifySplice !== 'function') {
+  console.error('expected simplifySplice');
+  fail();
+}
 
 const result1 = update(0, ['=', 1]);
 if (result1 !== 1) {

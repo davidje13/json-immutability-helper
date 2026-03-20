@@ -66,6 +66,24 @@ describe('combine', () => {
     expect(spec).equals(['seq', ['=', {}], { foo: ['=', 1], bar: ['=', 2] }]);
   });
 
+  it('combines splice operations', () => {
+    const spec = update.combine([
+      ['splice', [1, 1, 'A']],
+      ['splice', [-2, 0, 'B']],
+    ]);
+
+    expect(spec).equals(['splice', [1, 1, 'A'], [-2, 0, 'B']]);
+  });
+
+  it('optimises combined splice operations', () => {
+    const spec = update.combine([
+      ['splice', [1, 1, 'A', 'B']],
+      ['splice', [2, 1, 'C']],
+    ]);
+
+    expect(spec).equals(['splice', [1, 1, 'A', 'C']]);
+  });
+
   it('generates empty specs if given no meaningful input', () => {
     expect(update.combine([])).equals({});
 

@@ -1,4 +1,9 @@
-import context, { update, UNSET_TOKEN, type Context } from 'json-immutability-helper';
+import context, {
+  update,
+  UNSET_TOKEN,
+  type Context,
+  simplifySplice,
+} from 'json-immutability-helper';
 import listCommands from 'json-immutability-helper/commands/list';
 import mathCommands from 'json-immutability-helper/commands/math';
 import stringCommands from 'json-immutability-helper/commands/string';
@@ -24,6 +29,18 @@ assertType(update(7, ['unset'], { allowUnset: true }))<number | typeof UNSET_TOK
 assertType(update(7, ['+', 1]))<number>();
 assertType(update(7, ['-', 1]))<number>();
 assertType(update(7, ['seq', ['+', 1], ['-', 1]]))<number>();
+assertType(
+  update(
+    ['A'],
+    [
+      'splice',
+      ...simplifySplice([
+        [0, 1],
+        [0, 0, 'B'],
+      ]),
+    ],
+  ),
+)<string[]>();
 
 // @ts-expect-error
 update(7, ['=', 'nope']); // incorrect type

@@ -690,9 +690,26 @@ many times.
 Some common helpers are also included:
 
 ```javascript
+const { simplifySplice } = require('json-immutability-helper');
 const { getScopedState, makeScopedSpec, makeScopedReducer } = require('json-immutability-helper/helpers/scoped');
 const { makeHooks } = require('json-immutability-helper/helpers/hooks');
 ```
+
+### `simplifySplice(spliceList)`
+
+```javascript
+const mySpec = [
+  'splice',
+  ...simplifySplice([
+    [0, 1, 'A', 'b', 'C'],
+    [1, 1, 'B'],
+  ]),
+];
+// mySpec = ['splice', [0, 1, 'A', 'B', 'C']]
+```
+
+Simplifies an ordered sequence of splice operations. This is used
+internally by `combine` if multiple `'splice'` operations are merged.
 
 ### `getScopedState(context, state, path[, defaultValue])`
 

@@ -31,8 +31,78 @@ function getSeqSteps(spec) {
   return [spec];
 }
 
+function mergeSplice(first, second) {
+  const offset = second[0] - first[0];
+  const posOffset = Math.max(offset, 0);
+  const del = Math.max(Math.min(second[1] + offset, first.length - 2) - posOffset, 0);
+  const r = [...first];
+  r.splice(2 + posOffset, del, ...second.slice(2));
+  r[0] = second[0] - posOffset;
+  r[1] += second[1] - del;
+  return r;
+}
+
+function findFirstIndexBin(l, pred, p1 = 0, p2 = l.length) {
+  while (p2 > p1) {
+    const p = (p1 + p2) >>> 1;
+    if (pred(l[p])) {
+      p2 = p;
+    } else {
+      p1 = p + 1;
+    }
+  }
+  return p2;
+}
+
+export function simplifySplice(stages) {
+  let neg = false;
+  let begin = 0;
+  const ranges = [];
+  for (const stage of stages) {
+    if (stage.length > 2 || stage[1]) {
+      const pos = stage[0];
+      const curNeg = pos < 0;
+      if (curNeg !== neg) {
+        begin = ranges.length;
+        neg = curNeg;
+      }
+      const p1 = findFirstIndexBin(ranges, (r) => pos <= r[0] + r.length - 2, begin);
+      if (p1 === ranges.length) {
+        ranges.push(stage);
+      } else {
+        const end = pos + stage[1];
+        const p2 = findFirstIndexBin(ranges, (r) => r[0] > end, p1);
+        const shift = stage.length - 2 - stage[1];
+        if (shift) {
+          for (let i = p2; i < ranges.length; ++i) {
+            ranges[i][0] += shift;
+          }
+        }
+        if (p2 === p1) {
+          ranges.splice(p1, 0, stage);
+        } else {
+          const r1 = ranges[p1];
+          let merged = mergeSplice(r1, stage);
+          for (let i = p1 + 1; i < p2; ++i) {
+            merged = mergeSplice(merged, ranges[i]);
+          }
+          if (merged.length > 2 || merged[1]) {
+            ranges.splice(p1, p2 - p1, merged);
+          } else {
+            ranges.splice(p1, p2 - p1);
+          }
+        }
+      }
+    }
+  }
+  return ranges;
+}
+
 function combineSpecs(spec1, spec2) {
   if (isOp(spec1) || isOp(spec2)) {
+    if (isOp(spec1) && spec1[0] === 'splice' && isOp(spec2) && spec2[0] === 'splice') {
+      return ['splice', ...simplifySplice([...spec1.slice(1), ...spec2.slice(1)])];
+    }
     const a = getSeqSteps(spec1);
     const b = getSeqSteps(spec2);
     if (a.length && b.length && a.length + b.length > 2) {
