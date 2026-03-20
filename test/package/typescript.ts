@@ -3,6 +3,8 @@ import context, {
   UNSET_TOKEN,
   type Context,
   simplifySplice,
+  type SpliceSpec,
+  type SpliceStep,
 } from 'json-immutability-helper';
 import listCommands from 'json-immutability-helper/commands/list';
 import mathCommands from 'json-immutability-helper/commands/math';
@@ -41,6 +43,18 @@ assertType(
     ],
   ),
 )<string[]>();
+
+assertType(
+  simplifySplice(
+    [
+      [0, 1],
+      [0, 0, 'B'],
+    ],
+    [[3, 3, 'foo']],
+  ),
+)<SpliceStep<string>[]>();
+
+assertType(simplifySplice(['splice', [0, 1]], [[0, 0, 'B']]))<SpliceSpec<string>>();
 
 // @ts-expect-error
 update(7, ['=', 'nope']); // incorrect type

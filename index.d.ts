@@ -80,13 +80,14 @@ declare module 'json-immutability-helper' {
 
   type NumberSpec = ['+', number] | ['-', number] | ['rpn', ...(number | string)[]];
 
-  type SpliceStep<T> = [number, number?] | [number, number, ...T[]];
+  export type SpliceStep<T> = [number, number?] | [number, number, ...T[]];
+  export type SpliceSpec<T> = ['splice', ...SpliceStep<T>[]];
 
   type ArraySpec<T> =
     | ['push', ...T[]]
     | ['unshift', ...T[]]
     | (T extends Primitive ? ['addUnique', ...T[]] : never)
-    | ['splice', ...SpliceStep<T>[]]
+    | SpliceSpec<T>
     | ['insert', 'before' | 'after', MultiLocator<T>, ...T[]]
     | ['update', MultiLocator<T>, Spec<T, true>, T?]
     | ['delete', MultiLocator<T>]
@@ -158,7 +159,12 @@ declare module 'json-immutability-helper' {
   export const invariant: typeof context.invariant;
   export const UNSET_TOKEN: typeof context.UNSET_TOKEN;
 
-  export function simplifySplice<T>(stages: SpliceStep<T>[]): SpliceStep<T>[];
+  export function simplifySplice<T>(...stages: SpliceStep<T>[][]): SpliceStep<T>[];
+  export function simplifySplice<T>(stages: SpliceSpec<T>[]): SpliceSpec<T>;
+  export function simplifySplice<T>(
+    stage1: SpliceSpec<T>,
+    ...stages: (SpliceSpec<T> | SpliceStep<T>[])[]
+  ): SpliceSpec<T>;
 
   export default context;
 }

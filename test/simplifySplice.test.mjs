@@ -10,6 +10,41 @@ describe('simplifySplice', () => {
     expect(steps).equals([[1, 2]]);
   });
 
+  it('combines multiple arguments', () => {
+    const steps = simplifySplice(
+      [
+        [0, 1],
+        [2, 1],
+      ],
+      [[4, 1]],
+    );
+    expect(steps).equals([
+      [0, 1],
+      [2, 1],
+      [4, 1],
+    ]);
+  });
+
+  it('preserves operation ID of first argument if given', () => {
+    const steps = simplifySplice(['splice', [0, 1], [2, 1]], [[4, 1]]);
+    expect(steps).equals(['splice', [0, 1], [2, 1], [4, 1]]);
+  });
+
+  it('ignores operation ID of subsequent arguments', () => {
+    const steps = simplifySplice(
+      [
+        [0, 1],
+        [2, 1],
+      ],
+      ['splice', [4, 1]],
+    );
+    expect(steps).equals([
+      [0, 1],
+      [2, 1],
+      [4, 1],
+    ]);
+  });
+
   it('merges consecutive deletion steps', () => {
     const steps = simplifySplice([
       [1, 2],

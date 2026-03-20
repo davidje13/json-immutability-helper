@@ -43,6 +43,12 @@ function mergeSplice(first, second) {
 }
 
 function findFirstIndexBin(l, pred, p1 = 0, p2 = l.length) {
+  if (p2 > p1 && !pred(l[p2 - 1])) {
+    // optimisation: if simplifySplice list is already ordered, traverse it in O(n) instead of O(n log(n))
+    return p2;
+  } else {
+    --p2;
+  }
   while (p2 > p1) {
     const p = (p1 + p2) >>> 1;
     if (pred(l[p])) {
@@ -51,45 +57,51 @@ function findFirstIndexBin(l, pred, p1 = 0, p2 = l.length) {
       p1 = p + 1;
     }
   }
-  return p2;
+  return p1;
 }
 
-export function simplifySplice(stages) {
+export function simplifySplice(...stages) {
   let neg = false;
   let begin = 0;
   const ranges = [];
-  for (const stage of stages) {
-    if (stage.length > 2 || stage[1]) {
-      const pos = stage[0];
-      const curNeg = pos < 0;
-      if (curNeg !== neg) {
-        begin = ranges.length;
-        neg = curNeg;
-      }
-      const p1 = findFirstIndexBin(ranges, (r) => pos <= r[0] + r.length - 2, begin);
-      if (p1 === ranges.length) {
-        ranges.push(stage);
-      } else {
-        const end = pos + stage[1];
-        const p2 = findFirstIndexBin(ranges, (r) => r[0] > end, p1);
-        const shift = stage.length - 2 - stage[1];
-        if (shift) {
-          for (let i = p2; i < ranges.length; ++i) {
-            ranges[i][0] += shift;
-          }
+  if (typeof stages[0]?.[0] === 'string') {
+    ranges.push(stages[0][0]);
+    begin = 1;
+  }
+  for (const l of stages) {
+    for (const stage of l) {
+      if (typeof stage !== 'string' && (stage.length > 2 || stage[1])) {
+        const pos = stage[0];
+        const curNeg = pos < 0;
+        if (curNeg !== neg) {
+          begin = ranges.length;
+          neg = curNeg;
         }
-        if (p2 === p1) {
-          ranges.splice(p1, 0, stage);
+        const p1 = findFirstIndexBin(ranges, (r) => pos <= r[0] + r.length - 2, begin);
+        if (p1 === ranges.length) {
+          ranges.push(stage);
         } else {
-          const r1 = ranges[p1];
-          let merged = mergeSplice(r1, stage);
-          for (let i = p1 + 1; i < p2; ++i) {
-            merged = mergeSplice(merged, ranges[i]);
+          const end = pos + stage[1];
+          const p2 = findFirstIndexBin(ranges, (r) => r[0] > end, p1);
+          const shift = stage.length - 2 - stage[1];
+          if (shift) {
+            for (let i = p2; i < ranges.length; ++i) {
+              ranges[i][0] += shift;
+            }
           }
-          if (merged.length > 2 || merged[1]) {
-            ranges.splice(p1, p2 - p1, merged);
+          if (p2 === p1) {
+            ranges.splice(p1, 0, stage);
           } else {
-            ranges.splice(p1, p2 - p1);
+            const r1 = ranges[p1];
+            let merged = mergeSplice(r1, stage);
+            for (let i = p1 + 1; i < p2; ++i) {
+              merged = mergeSplice(merged, ranges[i]);
+            }
+            if (merged.length > 2 || merged[1]) {
+              ranges.splice(p1, p2 - p1, merged);
+            } else {
+              ranges.splice(p1, p2 - p1);
+            }
           }
         }
       }
@@ -101,7 +113,7 @@ export function simplifySplice(stages) {
 function combineSpecs(spec1, spec2) {
   if (isOp(spec1) || isOp(spec2)) {
     if (isOp(spec1) && spec1[0] === 'splice' && isOp(spec2) && spec2[0] === 'splice') {
-      return ['splice', ...simplifySplice([...spec1.slice(1), ...spec2.slice(1)])];
+      return simplifySplice(spec1, spec2);
     }
     const a = getSeqSteps(spec1);
     const b = getSeqSteps(spec2);
