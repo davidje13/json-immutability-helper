@@ -31,15 +31,13 @@ function getSeqSteps(spec) {
   return [spec];
 }
 
-function mergeSplice(first, second) {
-  const offset = second[0] - first[0];
+function mergeSplice(firstInOut, second, shiftSecond) {
+  const offset = second[0] + shiftSecond - firstInOut[0];
   const posOffset = Math.max(offset, 0);
-  const del = Math.max(Math.min(second[1] + offset, first.length - 2) - posOffset, 0);
-  const r = [...first];
-  r.splice(2 + posOffset, del, ...second.slice(2));
-  r[0] = second[0] - posOffset;
-  r[1] += second[1] - del;
-  return r;
+  const del = Math.max(Math.min(second[1] + offset, firstInOut.length - 2) - posOffset, 0);
+  firstInOut.splice(2 + posOffset, del, ...second.slice(2));
+  firstInOut[0] = Math.min(firstInOut[0], second[0]);
+  firstInOut[1] += second[1] - del;
 }
 
 function findFirstIndexBin(l, pred, p1 = 0, p2 = l.length) {
@@ -68,6 +66,7 @@ export function simplifySplice(...stages) {
     ranges.push(stages[0][0]);
     begin = 1;
   }
+  const needsCopy = new Set();
   for (const l of stages) {
     for (const stage of l) {
       if (typeof stage !== 'string' && (stage.length > 2 || stage[1])) {
@@ -79,6 +78,7 @@ export function simplifySplice(...stages) {
         }
         const p1 = findFirstIndexBin(ranges, (r) => pos <= r[0] + r.length - 2, begin);
         if (p1 === ranges.length) {
+          needsCopy.add(stage);
           ranges.push(stage);
         } else {
           const end = pos + stage[1];
@@ -86,16 +86,23 @@ export function simplifySplice(...stages) {
           const shift = stage.length - 2 - stage[1];
           if (shift) {
             for (let i = p2; i < ranges.length; ++i) {
-              ranges[i][0] += shift;
+              let r = ranges[i];
+              if (needsCopy.has(r)) {
+                ranges[i] = r = [...r];
+              }
+              r[0] += shift;
             }
           }
           if (p2 === p1) {
             ranges.splice(p1, 0, stage);
           } else {
-            const r1 = ranges[p1];
-            let merged = mergeSplice(r1, stage);
+            let merged = ranges[p1];
+            if (needsCopy.has(merged)) {
+              merged = [...merged];
+            }
+            mergeSplice(merged, stage, 0);
             for (let i = p1 + 1; i < p2; ++i) {
-              merged = mergeSplice(merged, ranges[i]);
+              mergeSplice(merged, ranges[i], shift);
             }
             if (merged.length > 2 || merged[1]) {
               ranges.splice(p1, p2 - p1, merged);

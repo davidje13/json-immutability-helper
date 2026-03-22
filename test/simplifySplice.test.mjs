@@ -111,6 +111,24 @@ describe('simplifySplice', () => {
     expect(steps).equals([[1, 1, 'C']]);
   });
 
+  it('maintains untouched replacement parts', () => {
+    const steps = simplifySplice([
+      [1, 1, 'A', 'B', 'C'],
+      [1, 1, 'D', 'E'],
+      [1, 1, 'F'],
+    ]);
+    expect(steps).equals([[1, 1, 'F', 'E', 'B', 'C']]);
+  });
+
+  it('merges multiple touching replacement steps', () => {
+    const steps = simplifySplice([
+      [0, 1, 'A'],
+      [2, 1, 'Z'],
+      [1, 1, 'B', 'C', 'D'],
+    ]);
+    expect(steps).equals([[0, 3, 'A', 'B', 'C', 'D', 'Z']]);
+  });
+
   it('merges deletion followed by addition', () => {
     const steps = simplifySplice([
       [1, 1],
@@ -135,6 +153,18 @@ describe('simplifySplice', () => {
       [2, 4, 'E', 'F'],
     ]);
     expect(steps).equals([[1, 3, 'C', 'E', 'F']]);
+  });
+
+  it('does not modify the input', () => {
+    const source = [
+      [1, 0, 'A', 'B'],
+      [1, 1, 'C'],
+      [2, 1, 'D'],
+      [2, 4, 'E', 'F'],
+    ];
+    const input = source.map((v) => [...v]);
+    simplifySplice(input);
+    expect(input).equals(source);
   });
 
   it('merges interrupted consecutive deletion steps and repositions later ranges', () => {
