@@ -1,4 +1,4 @@
-import { simplifySplice } from '../src/index.mjs';
+import { simplifySplice } from '../src/combine.mjs';
 
 describe('simplifySplice', () => {
   it('removes no-op steps', () => {
