@@ -637,6 +637,11 @@ const myContext = defaultContext.with(/* extensions here */);
   Note that the specs must be provided in an array, not as variadic
   parameters.
 
+- `.isNoOp(spec)`
+  returns `true` if the spec does nothing (e.g. `{}` or `['seq']`).
+  This can be used as an optimisation to avoid updating
+  unnecessarily.
+
 - `.makeConditionPredicate(condition)`
   generates a predicate for the provided condition. This should be
   used by custom commands when filtering based on a provided
@@ -691,6 +696,7 @@ Some common helpers are also included:
 
 ```javascript
 const { simplifySplice } = require('json-immutability-helper');
+const { specFromDiff } = require('json-immutability-helper/helper/diff');
 const { getScopedState, makeScopedSpec, makeScopedReducer } = require('json-immutability-helper/helpers/scoped');
 const { makeHooks } = require('json-immutability-helper/helpers/hooks');
 ```
@@ -710,6 +716,39 @@ const mySpec = [
 
 Simplifies an ordered sequence of splice operations. This is used
 internally by `combine` if multiple `'splice'` operations are merged.
+
+### `specFromDiff(previous, updated[, options])`
+
+```javascript
+const mySpec = specFromDiff({ foo: 1, bar: 2 }, { foo: 1, bar: 3 });
+// mySpec = ['seq', ['init', {}], { bar: ['=', 3] }]
+
+const mySpec2 = specFromDiff(
+  { things: [{ id: 'a', v: 1 }, { id: 'b', v: 2 }] },
+  { things: [{ id: 'a', v: 1.1 }, { id: 'c', v: 3 }] },
+  { arrayKey: 'id' },
+);
+// mySpec2 = [
+//   'seq',
+//   ['init', {}],
+//   {
+//     things: [
+//       'seq',
+//       ['init', []],
+//       ['update', ['first', { id: ['=', 'a']}], { v: ['=', 1.1] }, { id: 'a', v: 1 }],
+//       ['delete', ['first', { id: ['=', 'b']}]],
+//       ['update', ['first', { id: ['=', 'c']}], { id: ['=', 'c'], v: ['=', 3] }, {}],
+//     ],
+//   },
+// ]
+```
+
+Generates a spec which converts an object from `previous` to
+`updated` without touching unchanged values.
+
+To support partial updates, you can set the `ignoreOmittedProperties`
+and `ignoreOmittedArrayItems` options (values set to `undefined` will
+still be `unset`, but omitted values will be left unchanged).
 
 ### `getScopedState(context, state, path[, defaultValue])`
 

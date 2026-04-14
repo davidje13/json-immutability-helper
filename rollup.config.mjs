@@ -4,6 +4,7 @@ const sources = {
   'commands/list': 'src/commands/list.mjs',
   'commands/math': 'src/commands/math.mjs',
   'commands/string': 'src/commands/string.mjs',
+  'helpers/diff': 'src/helpers/diff.mjs',
   'helpers/hooks': 'src/helpers/hooks.mjs',
   'helpers/scoped': 'src/helpers/scoped.mjs',
 };

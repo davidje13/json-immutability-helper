@@ -335,3 +335,31 @@ declare module 'json-immutability-helper/helpers/hooks' {
     useScopedReducer: UseScopedReducer;
   };
 }
+
+declare module 'json-immutability-helper/helpers/hooks' {
+  import type { Spec } from 'json-immutability-helper';
+
+  interface DiffOptions {
+    arrayKey?: string | undefined;
+    ignoreOmittedProperties?: boolean | undefined;
+    ignoreOmittedArrayItems?: boolean | undefined;
+  }
+
+  type RecursivePartial<T> = T extends (infer O)[]
+    ? RecursivePartial<O>[]
+    : T extends object
+      ? { [P in keyof T]?: RecursivePartial<T[P]> }
+      : T;
+
+  export function specFromDiff<T>(
+    existing: T,
+    updated: T,
+    options?: DiffOptions,
+  ): Spec<T, T extends undefined ? true : false>;
+
+  export function specFromDiff<T>(
+    existing: T,
+    updated: RecursivePartial<T>,
+    options?: DiffOptions & { ignoreOmittedProperties: true },
+  ): Spec<T, T extends undefined ? true : false>;
+}
