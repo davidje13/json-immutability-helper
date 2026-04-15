@@ -26,6 +26,10 @@ describe('update', () => {
         { input: ['update', ['all', ['=', 1]], ['=', 2]], expected: [10, 9, 11, 9, -1] },
         { input: ['update', 'all', ['=', 2]], expected: [2, 2, 2, 2, 2] },
 
+        { input: ['update', ['one', ['=', 10]], ['=', 2]], expected: [2, 9, 11, 9, -1] },
+        { input: ['update', ['one', ['=', 11]], ['=', 2]], expected: [10, 9, 2, 9, -1] },
+        { input: ['update', ['one', ['=', 1]], ['=', 2]], expected: [10, 9, 11, 9, -1] },
+
         // unset
         {
           input: ['update', ['first', ['=', 9]], ['unset']],
@@ -72,4 +76,10 @@ describe('update', () => {
       ],
     },
   );
+
+  it('throws if "one" matches multiple items', () => {
+    expect(() => update(initial, ['update', ['one', ['=', 9]], ['=', 2]])).throws(
+      '/ update: multiple items match locator',
+    );
+  });
 });

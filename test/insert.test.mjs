@@ -23,6 +23,22 @@ describe('insert', () => {
     {
       parameters: [
         {
+          input: ['insert', 'before', ['one', ['=', 11]], 'item-1', 'item-2'],
+          expected: [10, 9, 'item-1', 'item-2', 11, 9, -1],
+        },
+        {
+          input: ['insert', 'before', ['one', ['=', 1]], 'item-1', 'item-2'],
+          expected: [10, 9, 11, 9, -1, 'item-1', 'item-2'],
+        },
+        {
+          input: ['insert', 'after', ['one', ['=', 11]], 'item-1', 'item-2'],
+          expected: [10, 9, 11, 'item-1', 'item-2', 9, -1],
+        },
+        {
+          input: ['insert', 'after', ['one', ['=', 1]], 'item-1', 'item-2'],
+          expected: [10, 9, 11, 9, -1, 'item-1', 'item-2'],
+        },
+        {
           input: ['insert', 'before', ['first', ['=', 9]], 'item-1', 'item-2'],
           expected: [10, 'item-1', 'item-2', 9, 11, 9, -1],
         },
@@ -70,6 +86,7 @@ describe('insert', () => {
           input: ['insert', 'after', ['all', ['=', 1]], 'item-1', 'item-2'],
           expected: [10, 9, 11, 9, -1],
         },
+
         {
           input: ['insert', 'after', ['all', ['>', 2]], 'a'],
           expected: [10, 'a', 9, 'a', 11, 'a', 9, 'a', -1],
@@ -85,4 +102,10 @@ describe('insert', () => {
       ],
     },
   );
+
+  it('throws if "one" matches multiple items', () => {
+    expect(() => update(initial, ['insert', 'after', ['one', ['=', 9]], 2])).throws(
+      '/ insert: multiple items match locator',
+    );
+  });
 });

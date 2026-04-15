@@ -4,6 +4,17 @@ import { simplifySplice } from './util/simplifySplice.mjs';
 function interpretOrdinal(ordinal) {
   if (ordinal === 'all') {
     return { _rev: true, _pred: () => 1, _insert: 0 };
+  } else if (ordinal === 'one') {
+    return {
+      _rev: false,
+      _pred: (n) => {
+        if (n) {
+          throw new Error('multiple items match locator');
+        }
+        return 1;
+      },
+      _insert: 1,
+    };
   } else if (ordinal === 'first') {
     ordinal = 0;
   } else if (ordinal === 'last') {

@@ -26,6 +26,8 @@ describe('delete', () => {
         { input: ['delete', ['last', ['=', 1]]], expected: [10, 9, 11, 9, -1] },
         { input: ['delete', ['all', ['=', 9]]], expected: [10, 11, -1] },
         { input: ['delete', ['all', ['=', 1]]], expected: [10, 9, 11, 9, -1] },
+        { input: ['delete', ['one', ['=', 10]]], expected: [9, 11, 9, -1] },
+        { input: ['delete', ['one', ['=', 11]]], expected: [10, 9, 9, -1] },
       ],
     },
   );
@@ -41,4 +43,10 @@ describe('delete', () => {
       ],
     },
   );
+
+  it('throws if "one" matches multiple items', () => {
+    expect(() => update(initial, ['delete', ['one', ['=', 9]]])).throws(
+      '/ delete: multiple items match locator',
+    );
+  });
 });

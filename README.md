@@ -152,9 +152,12 @@ Locators match items in a list. The available locators are:
   condition
 - `['last', <condition>]` - matches the last item which meets the
   condition
+- `['one', <condition>]` - matches one item which meets the
+  condition, throwing if more than one item matches
 
-`first` and `last` are "single" locators (they match a maximum of 1
-item and can be used as both `single-locator` and `multi-locator`s).
+`first`, `last`, and `one` are "single" locators (they match a
+maximum of 1 item and can be used as both `single-locator` and
+`multi-locator`s).
 `all` is a "multi" locator (matching an unlimited number of items
 and can only be used as a `multi-locator`).
 

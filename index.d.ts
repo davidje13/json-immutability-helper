@@ -56,8 +56,8 @@ declare module 'json-immutability-helper' {
   type ObjectCondition<T> = { [K in keyof T]?: Condition<T[K]> };
 
   type Locator<T, R> = [R, Condition<T>] | R;
-  export type SingleLocator<T> = Locator<T, 'first' | 'last' | number>;
-  export type MultiLocator<T> = Locator<T, 'first' | 'last' | 'all' | number>;
+  export type SingleLocator<T> = Locator<T, 'one' | 'first' | 'last' | number>;
+  export type MultiLocator<T> = Locator<T, 'one' | 'first' | 'last' | 'all' | number>;
 
   type If<T, True> = T extends true ? True : never;
 

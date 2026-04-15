@@ -10,9 +10,9 @@ function typeChecker(type) {
     case 'condition':
       return (o) => typeof o === 'object';
     case 'single-locator':
-      return isLocator(['first', 'last']);
+      return isLocator(['one', 'first', 'last']);
     case 'multi-locator':
-      return isLocator(['first', 'last', 'all']);
+      return isLocator(['one', 'first', 'last', 'all']);
     case 'spec':
       return (o) => typeof o === 'object';
     case 'primitive':
