@@ -151,15 +151,10 @@ const commands = {
     'elseInit:value?',
   )((object, [locator, spec, elseInit], context) => {
     const combined = {};
-    const { _indices: indices, insertStart } = findIndicesReversed(object, locator, context);
+    const { _indices: indices } = findIndicesReversed(object, locator, context);
     if (!indices.length && elseInit !== undefined) {
-      if (insertStart) {
-        indices.push(0);
-        object = [elseInit, ...object];
-      } else {
-        indices.push(object.length);
-        object = [...object, elseInit];
-      }
+      indices.push(object.length);
+      object = [...object, elseInit];
     }
     context.incLoopNesting(indices.length, () => {
       indices.forEach((index) => {

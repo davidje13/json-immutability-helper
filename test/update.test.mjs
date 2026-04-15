@@ -54,11 +54,19 @@ describe('update', () => {
           expected: [10, 2, 11, 9, -1],
         },
         {
+          input: ['update', ['all', ['=', 9]], ['=', 2], 0],
+          expected: [10, 2, 11, 2, -1],
+        },
+        {
           input: ['update', ['first', ['=', 1]], ['=', 2], 0],
           expected: [10, 9, 11, 9, -1, 2],
         },
         {
           input: ['update', ['last', ['=', 1]], ['=', 2], 0],
+          expected: [10, 9, 11, 9, -1, 2],
+        },
+        {
+          input: ['update', ['all', ['=', 1]], ['=', 2], 0],
           expected: [10, 9, 11, 9, -1, 2],
         },
       ],
