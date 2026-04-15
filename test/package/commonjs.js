@@ -1,5 +1,6 @@
 const defaultExport = require('json-immutability-helper');
 const stringCommands = require('json-immutability-helper/commands/string');
+const list = require('json-immutability-helper/commands/list');
 
 const {
   UNSET_TOKEN,
@@ -7,7 +8,6 @@ const {
   context,
   invariant,
   update,
-  simplifySplice,
   default: namedDefaultExport,
 } = defaultExport;
 
@@ -50,8 +50,8 @@ checkSame(update, 'update');
 checkSame(combine, 'combine');
 checkSame(invariant, 'invariant');
 checkSame(UNSET_TOKEN, 'UNSET_TOKEN');
-if (typeof simplifySplice !== 'function') {
-  console.error('expected simplifySplice');
+if (typeof list.simplifySplice !== 'function') {
+  console.error('expected list.simplifySplice');
   fail();
 }
 

@@ -10,6 +10,7 @@ declare module 'json-immutability-helper' {
     args: ReadonlyArray<unknown>,
     context: Readonly<Context>,
   ) => (actual: unknown) => boolean;
+  type OptimisationFn<T> = (spec1: Spec<T>, spec2: Spec<T>) => Spec<T> | null;
   type EqualFn = (x: unknown, y: unknown) => boolean;
   type CopyFn = <T>(o: Readonly<T>) => T;
 
@@ -27,6 +28,8 @@ declare module 'json-immutability-helper' {
   export interface Extension {
     commands?: Record<string, DirectiveFn>;
     conditions?: Record<string, ConditionFn>;
+    optimisations?: Record<string, OptimisationFn<any>>;
+    optimiseSequence?: <T>(sequence: Spec<T>[], context: Readonly<Context>) => Spec<T>[];
     rpnOperators?: Record<string, RpnOperator>;
     rpnConstants?: Record<string, RpnValue>;
     limits?: Partial<Limits>;
@@ -80,14 +83,13 @@ declare module 'json-immutability-helper' {
 
   type NumberSpec = ['+', number] | ['-', number] | ['rpn', ...(number | string)[]];
 
-  export type SpliceStep<T> = [number, number?] | [number, number, ...T[]];
-  export type SpliceSpec<T> = ['splice', ...SpliceStep<T>[]];
+  type SpliceStep<T> = [number, number?] | [number, number, ...T[]];
 
   type ArraySpec<T> =
     | ['push', ...T[]]
     | ['unshift', ...T[]]
     | (T extends Primitive ? ['addUnique', ...T[]] : never)
-    | SpliceSpec<T>
+    | ['splice', ...SpliceStep<T>[]]
     | ['insert', 'before' | 'after', MultiLocator<T>, ...T[]]
     | ['update', MultiLocator<T>, Spec<T, true>, T?]
     | ['delete', MultiLocator<T>]
@@ -159,19 +161,23 @@ declare module 'json-immutability-helper' {
   export const invariant: typeof context.invariant;
   export const UNSET_TOKEN: typeof context.UNSET_TOKEN;
 
-  export function simplifySplice<T>(...stages: SpliceStep<T>[][]): SpliceStep<T>[];
-  export function simplifySplice<T>(stages: SpliceSpec<T>[]): SpliceSpec<T>;
-  export function simplifySplice<T>(
-    stage1: SpliceSpec<T>,
-    ...stages: (SpliceSpec<T> | SpliceStep<T>[])[]
-  ): SpliceSpec<T>;
-
   export default context;
 }
 
 declare module 'json-immutability-helper/commands/list' {
   import type { Extension } from 'json-immutability-helper';
-  const extension: Readonly<Extension>;
+
+  export type SpliceStep<T> = [number, number?] | [number, number, ...T[]];
+  export type SpliceSpec<T> = ['splice', ...SpliceStep<T>[]];
+
+  function simplifySplice<T>(...stages: SpliceStep<T>[][]): SpliceStep<T>[];
+  function simplifySplice<T>(stages: SpliceSpec<T>[]): SpliceSpec<T>;
+  function simplifySplice<T>(
+    stage1: SpliceSpec<T>,
+    ...stages: (SpliceSpec<T> | SpliceStep<T>[])[]
+  ): SpliceSpec<T>;
+
+  const extension: Readonly<Extension> & { simplifySplice: typeof simplifySplice };
   export default extension;
 }
 

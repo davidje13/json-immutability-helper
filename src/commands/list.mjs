@@ -1,4 +1,5 @@
 import config from './util/commandTypeCheck.mjs';
+import { simplifySplice } from './util/simplifySplice.mjs';
 
 function interpretOrdinal(ordinal) {
   if (ordinal === 'all') {
@@ -257,4 +258,11 @@ const conditions = {
   },
 };
 
-export default { commands, conditions };
+const optimisations = {
+  push: (spec1, spec2) => ['push', ...spec1.slice(1), ...spec2.slice(1)],
+  unshift: (spec1, spec2) => ['unshift', ...spec2.slice(1), ...spec1.slice(1)],
+  addUnique: (spec1, spec2) => ['addUnique', ...new Set([...spec1.slice(1), ...spec2.slice(1)])],
+  splice: simplifySplice,
+};
+
+export default { commands, conditions, optimisations, simplifySplice };

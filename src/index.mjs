@@ -1,7 +1,14 @@
 import basicCommands from './commands/basic.mjs';
 import basicConditions from './conditions/basic.mjs';
-import { combineSpecs, simplifySplice } from './combine.mjs';
-import { addProperty, invariant, isArrayIndex, isOp, safeGet } from './util.mjs';
+import { combineSpecs } from './combine.mjs';
+import { addProperty, isArrayIndex, isOp, safeGet } from './util.mjs';
+
+export function invariant(condition, msgFn) {
+  if (!condition) {
+    const msg = typeof msgFn === 'function' ? msgFn() : msgFn || 'bad input';
+    throw new Error(msg);
+  }
+}
 
 function deleteIndices(arr, indices) {
   indices.sort((a, b) => a - b);
@@ -29,6 +36,8 @@ class JsonContext {
     Object.assign(this, options, {
       commands: new Map(options.commands),
       conditions: new Map(options.conditions),
+      optimisations: new Map(options.optimisations),
+      optSeq: new Set(options.optSeq),
       _nestDepth: 0,
       _nestBreadth: 1,
       UNSET_TOKEN,
@@ -50,6 +59,8 @@ class JsonContext {
     const base = {
       commands: [...this.commands.entries()],
       conditions: [...this.conditions.entries()],
+      optimisations: [...this.optimisations.entries()],
+      optSeq: [...this.optSeq],
       limits: { ...this.limits },
       rpnOperators: { ...this.rpnOperators },
       rpnConstants: { ...this.rpnConstants },
@@ -62,6 +73,8 @@ class JsonContext {
           Object.assign(v, cur, {
             commands: [...v.commands, ...Object.entries(cur.commands || {})],
             conditions: [...v.conditions, ...Object.entries(cur.conditions || {})],
+            optimisations: [...v.optimisations, ...Object.entries(cur.optimisations || {})],
+            optSeq: cur.optimiseSequence ? [...v.optSeq, cur.optimiseSequence] : v.optSeq,
             limits: Object.assign(v.limits, cur.limits),
             rpnOperators: Object.assign(v.rpnOperators, cur.rpnOperators),
             rpnConstants: Object.assign(v.rpnConstants, cur.rpnConstants),
@@ -145,7 +158,10 @@ class JsonContext {
 
   combine(specs, no) {
     invariant(!no, 'combine(): must provide a single (list) parameter.');
-    return specs.length > 0 ? specs.reduce(combineSpecs) : {};
+    const meaningfulSpecs = specs.filter((s) => !this.isNoOp(s));
+    return meaningfulSpecs.length > 0
+      ? (meaningfulSpecs.reduce(combineSpecs.bind(null, this, false)) ?? {})
+      : {};
   }
 
   isNoOp(spec) {
@@ -207,6 +223,8 @@ class JsonContext {
 const BASE_CONFIG = {
   commands: [],
   conditions: [],
+  optimisations: [],
+  optSeq: [],
   limits: {
     stringLength: 10240,
     recursionDepth: 10,
@@ -218,7 +236,6 @@ const BASE_CONFIG = {
   copy: (o) => (Array.isArray(o) ? [...o] : typeof o === 'object' && o ? { ...o } : o),
 };
 
-export { simplifySplice, invariant };
 export const context = new JsonContext(BASE_CONFIG).with(basicCommands, basicConditions);
 export const combine = context.combine;
 export const isNoOp = context.isNoOp;

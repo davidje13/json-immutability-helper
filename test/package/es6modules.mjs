@@ -4,9 +4,9 @@ import defaultExport, {
   context,
   invariant,
   update,
-  simplifySplice,
 } from 'json-immutability-helper';
 import stringCommands from 'json-immutability-helper/commands/string';
+import list from 'json-immutability-helper/commands/list';
 
 function fail() {
   throw new Error('ESM test failed');
@@ -38,8 +38,8 @@ checkSame(update, 'update');
 checkSame(combine, 'combine');
 checkSame(invariant, 'invariant');
 checkSame(UNSET_TOKEN, 'UNSET_TOKEN');
-if (typeof simplifySplice !== 'function') {
-  console.error('expected simplifySplice');
+if (typeof list.simplifySplice !== 'function') {
+  console.error('expected list.simplifySplice');
   fail();
 }
 

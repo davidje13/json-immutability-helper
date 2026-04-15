@@ -695,18 +695,18 @@ many times.
 Some common helpers are also included:
 
 ```javascript
-const { simplifySplice } = require('json-immutability-helper');
+const list = require('json-immutability-helper/commands/list');
 const { specFromDiff } = require('json-immutability-helper/helper/diff');
 const { getScopedState, makeScopedSpec, makeScopedReducer } = require('json-immutability-helper/helpers/scoped');
 const { makeHooks } = require('json-immutability-helper/helpers/hooks');
 ```
 
-### `simplifySplice(spliceList)`
+### `list.simplifySplice(spliceList)`
 
 ```javascript
 const mySpec = [
   'splice',
-  ...simplifySplice([
+  ...list.simplifySplice([
     [0, 1, 'A', 'b', 'C'],
     [1, 1, 'B'],
   ]),

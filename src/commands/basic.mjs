@@ -49,4 +49,21 @@ const commands = {
   '-': config('number', 'number')((object, [value]) => object - value),
 };
 
-export default { commands };
+const optAdd = (v) => (v === 0 ? null : v < 0 ? ['-', -v] : ['+', v]);
+
+const optimisations = {
+  '~': () => null,
+  merge: (spec1, spec2) => {
+    const output = ['merge', { ...spec1[1], ...spec2[1] }];
+    if (spec1[2] !== undefined) {
+      output.push(spec1[2]);
+    }
+    return output;
+  },
+  '+': (spec1, spec2) => optAdd(spec1[1] + spec2[1]),
+  '+,-': (spec1, spec2) => optAdd(spec1[1] - spec2[1]),
+  '-,+': (spec1, spec2) => optAdd(spec2[1] - spec1[1]),
+  '-': (spec1, spec2) => optAdd(-spec1[1] - spec2[1]),
+};
+
+export default { commands, optimisations };

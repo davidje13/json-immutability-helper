@@ -1,10 +1,3 @@
-export function invariant(condition, msgFn) {
-  if (!condition) {
-    const msg = typeof msgFn === 'function' ? msgFn() : msgFn || 'bad input';
-    throw new Error(msg);
-  }
-}
-
 export const safeGet = (o, key) =>
   Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined;
 

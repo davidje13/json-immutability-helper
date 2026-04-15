@@ -112,7 +112,7 @@ describe('global prototype pollution protection', () => {
     }),
   );
 
-  it('does not pollute the Object prototype from combineSpecs', () => {
+  it('does not pollute the Object prototype from combine', () => {
     context.combine([
       {},
       JSON.parse('{"__proto__": {"injected": "gotchya"}}'),
@@ -178,7 +178,7 @@ describe('local prototype pollution protection', () => {
     }),
   );
 
-  it('does not pollute the output prototype from combineSpecs', () => {
+  it('does not pollute the output prototype from combine', () => {
     const result = context.combine([{}, JSON.parse('{"__proto__": {"injected": "gotchya"}}')]);
 
     expect(result.injected).isUndefined();

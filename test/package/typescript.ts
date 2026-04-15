@@ -1,12 +1,8 @@
-import context, {
-  update,
-  UNSET_TOKEN,
-  type Context,
-  simplifySplice,
+import context, { update, UNSET_TOKEN, type Context } from 'json-immutability-helper';
+import listCommands, {
   type SpliceSpec,
   type SpliceStep,
-} from 'json-immutability-helper';
-import listCommands from 'json-immutability-helper/commands/list';
+} from 'json-immutability-helper/commands/list';
 import mathCommands from 'json-immutability-helper/commands/math';
 import stringCommands from 'json-immutability-helper/commands/string';
 import { makeHooks } from 'json-immutability-helper/helpers/hooks';
@@ -36,7 +32,7 @@ assertType(
     ['A'],
     [
       'splice',
-      ...simplifySplice([
+      ...listCommands.simplifySplice([
         [0, 1],
         [0, 0, 'B'],
       ]),
@@ -45,7 +41,7 @@ assertType(
 )<string[]>();
 
 assertType(
-  simplifySplice(
+  listCommands.simplifySplice(
     [
       [0, 1],
       [0, 0, 'B'],
@@ -54,7 +50,7 @@ assertType(
   ),
 )<SpliceStep<string>[]>();
 
-assertType(simplifySplice(['splice', [0, 1]], [[0, 0, 'B']]))<SpliceSpec<string>>();
+assertType(listCommands.simplifySplice(['splice', [0, 1]], [[0, 0, 'B']]))<SpliceSpec<string>>();
 
 // @ts-expect-error
 update(7, ['=', 'nope']); // incorrect type
