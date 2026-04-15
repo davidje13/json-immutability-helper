@@ -276,4 +276,145 @@ describe('combine', () => {
     expect(update.combine([{ x: { y: ['~'] } }, { x: { y: ['~'] } }])).equals({});
     expect(update.combine([{ x: { y: ['+', 1] } }, { x: { y: ['-', 1] } }])).equals({});
   });
+
+  it('merges multiple operations on a list which affect the same item', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals(['update', ['first', { id: ['=', 1] }], { x: ['+', 3] }]);
+  });
+
+  it('does not merge when using complex locators', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['>', 1] }], { x: ['+', 1] }],
+        ['update', ['first', { id: ['>', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['>', 1] }], { x: ['+', 1] }],
+      ['update', ['first', { id: ['>', 1] }], { x: ['+', 2] }],
+    ]);
+  });
+
+  it('merges interleaved updates', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['update', ['first', { id: ['=', 2] }], { x: ['+', 2] }],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 3] }],
+        ['update', ['first', { id: ['=', 2] }], { x: ['+', 4] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 4] }],
+      ['update', ['first', { id: ['=', 2] }], { x: ['+', 6] }],
+    ]);
+  });
+
+  it('does not merge updates which may not apply to the same items', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['update', ['last', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+      ['update', ['last', { id: ['=', 1] }], { x: ['+', 2] }],
+    ]);
+  });
+
+  it('does not merge updates which change the search key', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { id: ['=', 2] }],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['=', 1] }], { id: ['=', 2] }],
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+    ]);
+  });
+
+  it('merges updates which preserve the search key', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { id: ['=', 1] }],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals(['update', ['first', { id: ['=', 1] }], { id: ['=', 1], x: ['+', 2] }]);
+  });
+
+  it('merges distinct operations which mix lookup types', () => {
+    expect(
+      update.combine([
+        ['update', ['all', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+        ['update', ['all', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['all', { id: ['=', 1] }], { x: ['+', 3] }],
+      ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+    ]);
+
+    expect(
+      update.combine([
+        ['update', ['all', { id: ['=', 1] }], { a: ['+', 1] }],
+        ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+        ['update', ['all', { id: ['=', 1] }], { b: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['all', { id: ['=', 1] }], { a: ['+', 1], b: ['+', 2] }],
+      ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+    ]);
+  });
+
+  it('does not merge ordered locators across reorderings', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+      ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+    ]);
+  });
+
+  it('does not merge updates which change properties used elsewhere', () => {
+    expect(
+      update.combine([
+        ['update', ['all', { id: ['=', 1] }], { a: ['+', 1] }],
+        ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+        ['update', ['all', { id: ['=', 1] }], { a: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['all', { id: ['=', 1] }], { a: ['+', 1] }],
+      ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+      ['update', ['all', { id: ['=', 1] }], { a: ['+', 2] }],
+    ]);
+
+    expect(
+      update.combine([
+        ['update', ['all', { id: ['=', 1] }], { b: ['+', 1] }],
+        ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+        ['update', ['all', { id: ['=', 1] }], { a: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['all', { id: ['=', 1] }], { b: ['+', 1] }],
+      ['swap', ['first', { a: ['=', 1] }], ['first', { a: ['=', 2] }]],
+      ['update', ['all', { id: ['=', 1] }], { a: ['+', 2] }],
+    ]);
+  });
 });

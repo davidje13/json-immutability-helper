@@ -1,4 +1,5 @@
 import config from './util/commandTypeCheck.mjs';
+import { optimiseListSequence } from './util/optimiseListSequence.mjs';
 import { simplifySplice } from './util/simplifySplice.mjs';
 
 function interpretOrdinal(ordinal) {
@@ -271,4 +272,10 @@ const optimisations = {
   splice: simplifySplice,
 };
 
-export default { commands, conditions, optimisations, simplifySplice };
+export default {
+  commands,
+  conditions,
+  optimisations,
+  optimiseSequence: optimiseListSequence,
+  simplifySplice,
+};

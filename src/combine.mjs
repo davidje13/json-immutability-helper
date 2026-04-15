@@ -57,9 +57,9 @@ export function combineSpecs(context, inner, spec1, spec2) {
 
     let combined;
     if (!a.length) {
-      combined = b;
+      return ['seq', ...b];
     } else if (!b.length) {
-      combined = a;
+      return ['seq', ...a];
     } else if (a.length + b.length > 2) {
       const aa = a.pop();
       const bb = b.shift();
@@ -67,9 +67,9 @@ export function combineSpecs(context, inner, spec1, spec2) {
     } else {
       combined = [...a, ...b];
     }
-    if (!inner) {
+    if (!inner && combined.length > 1) {
       for (const fn of context.optSeq) {
-        combined = fn(combined, context);
+        combined = fn(combined, context, a.length);
       }
     }
     return combined.length > 1 ? ['seq', ...combined] : (combined[0] ?? null);

@@ -1,0 +1,1 @@
+"use strict";const e=Array.isArray;exports.addProperty=(e,r,t)=>Object.defineProperty(e,r,{value:t,configurable:!0,enumerable:!0,writable:!0}),exports.isArrayIndex=(e,r)=>{const t=Number(e);return t>=0&&t<r&&t.toFixed(0)===e},exports.isOp=e,exports.safeGet=(e,r)=>Object.prototype.hasOwnProperty.call(e,r)?e[r]:void 0;
