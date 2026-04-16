@@ -35,7 +35,7 @@ export function combineSpecs(context, inner, spec1, spec2) {
             if (['=', 'init'].includes(op[0])) {
               knownExists = op[1] !== context.UNSET_TOKEN && op[1] !== undefined;
               break;
-            } else if (op[0] === 'merge' && op[2]) {
+            } else if (op[0] === 'merge') {
               knownExists = true;
               break;
             } else if (op[0] === 'unset') {

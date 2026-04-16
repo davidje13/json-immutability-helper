@@ -1,12 +1,12 @@
 import { isOp, safeGet } from '../../util.mjs';
 
 export function optimiseListSequence(seq, context, optFromIndex) {
-  if (!seq.some((op) => isOp(op) && ['update'].includes(op[0]))) {
+  if (!seq.some((op) => isOp(op) && ['update', 'delete'].includes(op[0]))) {
     return seq;
   }
 
   const result = [];
-  const history = [];
+  let historyStop = 0;
   const handlers = new Map([
     [
       'update',
@@ -18,40 +18,80 @@ export function optimiseListSequence(seq, context, optFromIndex) {
         const keysOut = new Set(Object.keys(op[2]));
         keysOut.delete(locator._key);
         if (result.length >= optFromIndex) {
-          histLoop: for (let p = history.length; p-- > 0; ) {
-            const h = history[p];
-            if (h._invalidateOrder && typeof locator._ordinal === 'number') {
+          histLoop: for (let p = result.length; p-- > historyStop; ) {
+            const prev = result[p];
+            if (!prev) {
+              continue;
+            }
+            if (prev._invalidateOrder && typeof locator._ordinal === 'number') {
               break;
             }
-            if (h._locator) {
-              const prevOp = result[h._index];
-              if (
-                prevOp[0] === 'update' &&
-                isSameLocator(h._locator, locator) &&
-                (prevOp[3] || !op[3])
-              ) {
+            const prevOp = prev._op;
+            const prevLoc0 = prev._locators[0];
+            if (prevOp[0] === 'update') {
+              if (isSameLocator(locator, prevLoc0) && (prevOp[3] || !op[3])) {
                 const combined = [...prevOp];
                 combined[2] = context.combine([prevOp[2], op[2]]);
-                result[h._index] = combined;
+                prev._op = combined;
                 return true;
               }
-              if (locatorsMayOverlap(h._locator, locator)) {
+              if (locatorsMayOverlap(prevLoc0, locator)) {
                 break;
               }
+            } else if (prevOp[0] === 'delete' && deleteMayInterfere(prevLoc0, locator)) {
+              break;
             }
-            for (const key of h._keysIn ?? []) {
-              if (keysOut.has(key)) {
+            for (const l of prev._locators) {
+              if (keysOut.has(l._key)) {
                 break histLoop;
               }
             }
           }
         }
-        history.push({
-          _index: result.length,
-          _locator: locator,
-          _keysIn: locator._key,
-        });
-        result.push(op);
+        result.push({ _op: op, _locators: [locator] });
+        return true;
+      },
+    ],
+    [
+      'delete',
+      (op) => {
+        const locator = getSimpleLocator(op[1]);
+        if (!locator) {
+          return false;
+        }
+        let earliest = result.length;
+        if (result.length >= optFromIndex) {
+          histLoop: for (let p = result.length; p-- > historyStop; ) {
+            const prev = result[p];
+            if (!prev) {
+              continue;
+            }
+            if (prev._invalidateOrder && typeof locator._ordinal === 'number') {
+              break;
+            }
+            const prevOp = prev._op;
+            const prevLoc0 = prev._locators[0];
+            if (
+              isSameCondition(locator, prevLoc0) &&
+              ((prevOp[0] === 'update' &&
+                (locator._ordinal === prevLoc0._ordinal ||
+                  typeof locator._ordinal !== 'number' ||
+                  ([0, -1].includes(locator._ordinal) && prevLoc0._ordinal === 'one'))) ||
+                (prevOp[0] === 'delete' &&
+                  (locator._ordinal === 'all' || prevLoc0._ordinal === 'one')))
+            ) {
+              earliest = p;
+              result[p] = null;
+              continue;
+            }
+            for (const l of prev._locators) {
+              if (deleteMayInterfere(locator, l)) {
+                break histLoop;
+              }
+            }
+          }
+        }
+        result[earliest] = { _op: op, _locators: [locator] };
         return true;
       },
     ],
@@ -63,8 +103,7 @@ export function optimiseListSequence(seq, context, optFromIndex) {
         if (!locator1 || !locator2) {
           return false;
         }
-        history.push({ _invalidateOrder: true, _keysIn: [locator1._key, locator2._key] });
-        result.push(op);
+        result.push({ _op: op, _invalidateOrder: true, _locators: [locator1, locator2] });
         return true;
       },
     ],
@@ -76,8 +115,7 @@ export function optimiseListSequence(seq, context, optFromIndex) {
         if (!locator1 || !locator2) {
           return false;
         }
-        history.push({ _invalidateOrder: true, _keysIn: [locator1._key, locator2._key] });
-        result.push(op);
+        result.push({ _op: op, _invalidateOrder: true, _locators: [locator1, locator2] });
         return true;
       },
     ],
@@ -86,10 +124,17 @@ export function optimiseListSequence(seq, context, optFromIndex) {
     if (isOp(op) && handlers.get(op[0])?.(op)) {
       continue;
     }
-    result.push(op);
-    history.length = 0;
+    result.push({ _op: op });
+    historyStop = result.length;
   }
-  return result.filter((v) => v);
+
+  const specOut = [];
+  for (const r of result) {
+    if (r) {
+      specOut.push(r._op);
+    }
+  }
+  return specOut;
 }
 
 function getSimpleLocator(locator) {
@@ -134,8 +179,8 @@ function mayChangeLocatorValueAway(spec, locator) {
   return true;
 }
 
-const isSameLocator = (a, b) =>
-  a._key === b._key && a._value === b._value && a._ordinal === b._ordinal;
+const isSameCondition = (a, b) => a._key === b._key && a._value === b._value;
+const isSameLocator = (a, b) => isSameCondition(a, b) && a._ordinal === b._ordinal;
 
 const locatorsMayOverlap = (a, b) =>
   a._key !== b._key ||
@@ -144,3 +189,5 @@ const locatorsMayOverlap = (a, b) =>
       typeof a._ordinal !== 'number' ||
       typeof b._ordinal !== 'number' ||
       a._ordinal >= 0 !== b._ordinal >= 0));
+
+const deleteMayInterfere = (del, next) => del._key !== next._key || del._value === next._value;

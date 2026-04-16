@@ -37,7 +37,8 @@ const commands = {
     'merge:object',
     'initial:object?',
   )((object, [value, init], context) => {
-    const initedObject = object === undefined ? init : object;
+    const initedObject = object ?? init;
+    context.invariant(initedObject, 'expected target to be object');
     return context.applyMerge(
       initedObject,
       Object.entries(value).filter(([, v]) => v !== undefined),

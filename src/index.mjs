@@ -102,15 +102,13 @@ class JsonContext {
       }
     }
 
-    invariant(
-      typeof object === 'object' && object !== null,
-      `/${path}: target must be an object or array`,
-    );
+    invariant(typeof spec === 'object' && spec, `/${path}: spec must be an object or a command`);
 
-    invariant(
-      typeof spec === 'object' && spec !== null,
-      `/${path}: spec must be an object or a command`,
-    );
+    if (typeof object !== 'object' || !object) {
+      // special case: allow no-ops on any type
+      invariant(!Object.keys(spec).length, `/${path}: target must be an object or array`);
+      return object === UNSET_TOKEN ? (allowUnset ? UNSET_TOKEN : undefined) : object;
+    }
 
     const nextPath = path ? `${path}/` : '';
     const diffEntries = Object.entries(spec).map(([key, s]) => [

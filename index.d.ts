@@ -60,6 +60,7 @@ declare module 'json-immutability-helper' {
   export type MultiLocator<T> = Locator<T, 'one' | 'first' | 'last' | 'all' | number>;
 
   type If<T, True> = T extends true ? True : never;
+  type NoOp = { [k: string | number]: never };
 
   export type Spec<T, Unsettable extends boolean = false> =
     | (T extends string
@@ -71,6 +72,7 @@ declare module 'json-immutability-helper' {
             : T extends ReadonlyArray<infer U>
               ? ArraySpec<U>
               : ObjectSpec<T>)
+    | NoOp
     | ['=', T | If<Unsettable, typeof SHARED_UNSET_TOKEN>]
     | ['init', T]
     | ['if', Condition<T>, Spec<T, Unsettable>, Spec<T, Unsettable>?]
