@@ -7,7 +7,31 @@ export function optimiseListSequence(seq, context, optFromIndex) {
 
   const result = [];
   let historyStop = 0;
+
+  const pushUnshift = (op) =>
+    result.push({ _op: op, _locators: [], _addsItems: 1, _addsItemsIndex: 1 });
+  const swapMove = (arg1, arg2) => (op) => {
+    const locator1 = getSimpleLocator(op[arg1]);
+    const locator2 = getSimpleLocator(op[arg2]);
+    if (!locator1 || !locator2) {
+      return false;
+    }
+    return result.push({ _op: op, _invalidateOrder: true, _locators: [locator1, locator2] });
+  };
+
   const handlers = new Map([
+    ['push', pushUnshift],
+    ['unshift', pushUnshift],
+    [
+      'insert',
+      (op) => {
+        const locator = getSimpleLocator(op[2]);
+        if (!locator) {
+          return false;
+        }
+        return result.push({ _op: op, _locators: [locator], _addsItems: 2, _addsItemsIndex: 3 });
+      },
+    ],
     [
       'update',
       (op) => {
@@ -18,6 +42,7 @@ export function optimiseListSequence(seq, context, optFromIndex) {
         const keysOut = new Set(Object.keys(op[2]));
         keysOut.delete(locator._key);
         if (result.length >= optFromIndex) {
+          const condition = context.makeConditionPredicate(op[1][1]);
           histLoop: for (let p = result.length; p-- > historyStop; ) {
             const prev = result[p];
             if (!prev) {
@@ -26,20 +51,30 @@ export function optimiseListSequence(seq, context, optFromIndex) {
             if (prev._invalidateOrder && typeof locator._ordinal === 'number') {
               break;
             }
-            const prevOp = prev._op;
-            const prevLoc0 = prev._locators[0];
-            if (prevOp[0] === 'update') {
-              if (isSameLocator(locator, prevLoc0) && (prevOp[3] || !op[3])) {
-                const combined = [...prevOp];
-                combined[2] = context.combine([prevOp[2], op[2]]);
-                prev._op = combined;
-                return true;
+            if (prev._addsItems) {
+              for (let i = prev._addsItemsIndex; i < prev._op.length; ++i) {
+                if (condition(prev._op[i])) {
+                  break histLoop;
+                }
               }
-              if (locatorsMayOverlap(prevLoc0, locator)) {
+            }
+            switch (prev._op[0]) {
+              case 'update':
+                if (isSameLocator(locator, prev._locators[0]) && (prev._op[3] || !op[3])) {
+                  const combined = [...prev._op];
+                  combined[2] = context.combine([prev._op[2], op[2]]);
+                  prev._op = combined;
+                  return true;
+                }
+                if (locatorsMayOverlap(prev._locators[0], locator)) {
+                  break histLoop;
+                }
                 break;
-              }
-            } else if (prevOp[0] === 'delete' && deleteMayInterfere(prevLoc0, locator)) {
-              break;
+              case 'delete':
+                if (deleteMayInterfere(prev._locators[0], locator)) {
+                  break histLoop;
+                }
+                break;
             }
             for (const l of prev._locators) {
               if (keysOut.has(l._key)) {
@@ -48,8 +83,7 @@ export function optimiseListSequence(seq, context, optFromIndex) {
             }
           }
         }
-        result.push({ _op: op, _locators: [locator] });
-        return true;
+        return result.push({ _op: op, _locators: [locator] });
       },
     ],
     [
@@ -61,6 +95,7 @@ export function optimiseListSequence(seq, context, optFromIndex) {
         }
         let earliest = result.length;
         if (result.length >= optFromIndex) {
+          const condition = context.makeConditionPredicate(op[1][1]);
           histLoop: for (let p = result.length; p-- > historyStop; ) {
             const prev = result[p];
             if (!prev) {
@@ -69,20 +104,46 @@ export function optimiseListSequence(seq, context, optFromIndex) {
             if (prev._invalidateOrder && typeof locator._ordinal === 'number') {
               break;
             }
-            const prevOp = prev._op;
+            if (prev._addsItems) {
+              const matchIdx = new Set();
+              for (let i = prev._addsItemsIndex; i < prev._op.length; ++i) {
+                if (condition(prev._op[i])) {
+                  matchIdx.add(i);
+                }
+              }
+              if (matchIdx.size) {
+                if (
+                  typeof locator._ordinal === 'number' ||
+                  (locator._ordinal === 'one' && (matchIdx.size > 1 || prev._addsItems === 2))
+                ) {
+                  break;
+                }
+                prev._op = prev._op.filter((_, i) => !matchIdx.has(i));
+                const removedAll = prev._op.length === prev._addsItemsIndex;
+                if (removedAll) {
+                  result[p] = null;
+                }
+                if (locator._ordinal === 'one') {
+                  return true;
+                }
+                if (removedAll) {
+                  continue;
+                }
+              }
+            }
             const prevLoc0 = prev._locators[0];
-            if (
-              isSameCondition(locator, prevLoc0) &&
-              ((prevOp[0] === 'update' &&
-                (locator._ordinal === prevLoc0._ordinal ||
-                  typeof locator._ordinal !== 'number' ||
-                  ([0, -1].includes(locator._ordinal) && prevLoc0._ordinal === 'one'))) ||
-                (prevOp[0] === 'delete' &&
-                  (locator._ordinal === 'all' || prevLoc0._ordinal === 'one')))
-            ) {
-              earliest = p;
-              result[p] = null;
-              continue;
+            if (['update', 'delete'].includes(prev._op[0]) && isSameCondition(locator, prevLoc0)) {
+              if (
+                prev._op[0] === 'update'
+                  ? locator._ordinal === prevLoc0._ordinal ||
+                    typeof locator._ordinal !== 'number' ||
+                    ([0, -1].includes(locator._ordinal) && prevLoc0._ordinal === 'one')
+                  : locator._ordinal === 'all' || prevLoc0._ordinal === 'one'
+              ) {
+                earliest = p;
+                result[p] = null;
+                continue;
+              }
             }
             for (const l of prev._locators) {
               if (deleteMayInterfere(locator, l)) {
@@ -95,30 +156,8 @@ export function optimiseListSequence(seq, context, optFromIndex) {
         return true;
       },
     ],
-    [
-      'swap',
-      (op) => {
-        const locator1 = getSimpleLocator(op[1]);
-        const locator2 = getSimpleLocator(op[2]);
-        if (!locator1 || !locator2) {
-          return false;
-        }
-        result.push({ _op: op, _invalidateOrder: true, _locators: [locator1, locator2] });
-        return true;
-      },
-    ],
-    [
-      'move',
-      (op) => {
-        const locator1 = getSimpleLocator(op[1]);
-        const locator2 = getSimpleLocator(op[3]);
-        if (!locator1 || !locator2) {
-          return false;
-        }
-        result.push({ _op: op, _invalidateOrder: true, _locators: [locator1, locator2] });
-        return true;
-      },
-    ],
+    ['swap', swapMove(1, 2)],
+    ['move', swapMove(1, 3)],
   ]);
   for (const op of seq) {
     if (isOp(op) && handlers.get(op[0])?.(op)) {

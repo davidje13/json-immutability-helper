@@ -281,6 +281,44 @@ describe('combine', () => {
     ).equals(['update', ['first', { id: ['=', 1] }], { x: ['+', 3] }]);
   });
 
+  it('merges updates around an insert if the insert is unrelated', () => {
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['push', { id: 2 }],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 3] }],
+      ['push', { id: 2 }],
+    ]);
+
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['unshift', { id: 2 }],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 3] }],
+      ['unshift', { id: 2 }],
+    ]);
+
+    expect(
+      update.combine([
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 1] }],
+        ['insert', 'after', ['first', { id: ['=', 2] }], { id: 3 }],
+        ['update', ['first', { id: ['=', 1] }], { x: ['+', 2] }],
+      ]),
+    ).equals([
+      'seq',
+      ['update', ['first', { id: ['=', 1] }], { x: ['+', 3] }],
+      ['insert', 'after', ['first', { id: ['=', 2] }], { id: 3 }],
+    ]);
+  });
+
   it('merges delete operations on a list which affect the same item', () => {
     expect(
       update.combine([
@@ -325,6 +363,47 @@ describe('combine', () => {
         ['delete', ['all', { id: ['=', 1] }]],
       ]),
     ).equals(['delete', ['all', { id: ['=', 1] }]]);
+  });
+
+  it('removes insert operations which are clobbered by a delete', () => {
+    expect(
+      update.combine([
+        ['push', { id: 1 }],
+        ['delete', ['one', { id: ['=', 1] }]],
+      ]),
+    ).equals({});
+
+    expect(
+      update.combine([
+        ['push', { id: 1 }, { id: 2 }, { id: 3 }],
+        ['delete', ['one', { id: ['=', 2] }]],
+      ]),
+    ).equals(['push', { id: 1 }, { id: 3 }]);
+
+    expect(
+      update.combine([
+        ['push', { id: 1 }, { id: 1 }],
+        ['delete', ['all', { id: ['=', 1] }]],
+      ]),
+    ).equals(['delete', ['all', { id: ['=', 1] }]]);
+
+    expect(
+      update.combine([
+        ['push', { id: 1 }, { id: 2 }],
+        ['delete', ['one', { id: ['=', 1] }]],
+        ['delete', ['one', { id: ['=', 2] }]],
+      ]),
+    ).equals({});
+  });
+
+  it('stops merging if a delete is fully satisfied', () => {
+    expect(
+      update.combine([
+        ['delete', ['one', { id: ['=', 1] }]],
+        ['push', { id: 1 }],
+        ['delete', ['one', { id: ['=', 1] }]],
+      ]),
+    ).equals(['delete', ['one', { id: ['=', 1] }]]);
   });
 
   it('does not merge when using complex locators', () => {
@@ -644,6 +723,102 @@ describe('combine', () => {
           specs: [
             ['update', ['first', { id: ['=', 1] }], { x: ['=', 2] }],
             ['update', ['first', { x: ['=', 2] }], { x: ['=', 3] }],
+            ['delete', ['first', { id: ['=', 1] }]],
+          ],
+        },
+        ...['first', 'last', 'all'].flatMap((ord) =>
+          [
+            ['push', { id: 1, x: 0 }],
+            ['unshift', { id: 1, x: 0 }],
+            ['splice', [0, 0, { id: 1, x: 0 }]],
+            ['splice', [10, 0, { id: 1, x: 0 }]],
+            ['splice', [0, 1, { id: 1, x: 0 }]],
+            ['insert', 'before', ['first', { x: ['=', 1] }], { id: 1, x: 0 }],
+            ['insert', 'before', ['last', { x: ['=', 1] }], { id: 1, x: 0 }],
+            ['insert', 'after', ['first', { x: ['=', 1] }], { id: 1, x: 0 }],
+            ['insert', 'after', ['last', { x: ['=', 1] }], { id: 1, x: 0 }],
+            ['insert', 'before', ['first', { x: ['=', 0] }], { id: 1, x: 0 }],
+            ['insert', 'before', ['first', { id: ['=', 1] }], { id: 1, x: 0 }],
+            ['insert', 'before', ['first', { id: ['=', 2] }], { id: 1, x: 0 }],
+            ['insert', 'before', ['first', { id: ['=', 2] }], { id: 3, x: 0 }],
+          ].map((op) => ({
+            inputs: [[], [{ id: 1, x: 0 }], [{ id: 1, x: 1 }]],
+            specs: [
+              ['update', [ord, { id: ['=', 1] }], { x: ['+', 1] }],
+              op,
+              ['update', [ord, { id: ['=', 1] }], { x: ['+', 2] }],
+            ],
+          })),
+        ),
+        ...['first', 'last', 'all'].flatMap((ord) =>
+          [
+            ['push', { id: 1, x: 0 }],
+            ['unshift', { id: 1, x: 0 }],
+            ['insert', 'before', ['first', { id: ['=', 1] }], { id: 1, x: 0 }],
+            ['insert', 'after', ['last', { id: ['=', 1] }], { id: 1, x: 0 }],
+          ].map((op) => ({
+            inputs: [[], [{ id: 1, x: 1 }]],
+            specs: [op, ['delete', [ord, { id: ['=', 1] }]]],
+          })),
+        ),
+        {
+          inputs: [[], [{ id: 1 }]],
+          specs: [
+            ['delete', ['one', { id: ['=', 1] }]],
+            ['push', { id: 1 }],
+            ['delete', ['one', { id: ['=', 1] }]],
+          ],
+        },
+        {
+          inputs: [[], [{ id: 1 }], [{ id: 2 }]],
+          specs: [
+            ['insert', 'after', ['all', { id: ['=', 1] }], { id: 2 }],
+            ['delete', ['one', { id: ['=', 2] }]],
+          ],
+        },
+        {
+          inputs: [[], [{ id: 1 }]],
+          specs: [
+            ['insert', 'after', ['first', { id: ['=', 1] }], { id: 1 }],
+            ['delete', ['all', { id: ['=', 1] }]],
+          ],
+        },
+        {
+          inputs: [[], [{ id: 1 }]],
+          specs: [
+            ['insert', 'after', ['first', { id: ['=', 1] }], { id: 1, x: 2 }],
+            ['delete', ['first', { id: ['=', 1] }]],
+          ],
+        },
+        {
+          inputs: [[]],
+          specs: [
+            ['push', { id: 1 }],
+            ['insert', 'before', ['first', { id: ['=', 1] }], { id: 2 }],
+            ['delete', ['first', { id: ['=', 1] }]],
+          ],
+        },
+        {
+          inputs: [[]],
+          specs: [
+            ['push', { id: 1 }],
+            ['insert', 'before', ['first', { id: ['=', 1] }], { id: 2 }],
+            ['delete', ['all', { id: ['=', 1] }]],
+          ],
+        },
+        {
+          inputs: [[]],
+          specs: [
+            ['push', { id: 1, x: 1 }, { id: 1, x: 2 }],
+            ['delete', ['first', { id: ['=', 1] }]],
+          ],
+        },
+        {
+          inputs: [[]],
+          specs: [
+            ['push', { id: 1, x: 1 }, { id: 1, x: 2 }],
+            ['update', ['first', { id: ['=', 1] }], { x: ['=', 3] }],
+            ['swap', ['first', { id: ['=', 1] }], ['last', { id: ['=', 1] }]],
             ['delete', ['first', { id: ['=', 1] }]],
           ],
         },
