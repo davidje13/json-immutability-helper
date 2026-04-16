@@ -1,7 +1,6 @@
 import basicCommands from './commands/basic.mjs';
 import basicConditions from './conditions/basic.mjs';
-import { combineSpecs } from './combine.mjs';
-import { addProperty, isArrayIndex, isOp, safeGet } from './util.mjs';
+import { combineSpecs, addProperty, isOp } from './combine.mjs';
 
 export function invariant(condition, msgFn) {
   if (!condition) {
@@ -9,6 +8,13 @@ export function invariant(condition, msgFn) {
     throw new Error(msg);
   }
 }
+
+const isArrayIndex = (key, limit) => {
+  const v = Number(key);
+  return v >= 0 && v < limit && v.toFixed(0) === key;
+};
+
+const safeGet = (o, key) => (Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined);
 
 function deleteIndices(arr, indices) {
   indices.sort((a, b) => a - b);

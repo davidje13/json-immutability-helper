@@ -1,1 +1,0 @@
-const e=(e,a)=>Object.prototype.hasOwnProperty.call(e,a)?e[a]:void 0,a=(e,a,r)=>Object.defineProperty(e,a,{value:r,configurable:!0,enumerable:!0,writable:!0}),r=Array.isArray,b=(e,a)=>{const r=Number(e);return r>=0&&r<a&&r.toFixed(0)===e};export{a,b,r as i,e as s};

@@ -1,4 +1,4 @@
-import { isOp, safeGet } from '../../util.mjs';
+const isOp = Array.isArray;
 
 export function optimiseListSequence(seq, context, optFromIndex) {
   if (!seq.some((op) => isOp(op) && ['update', 'delete'].includes(op[0]))) {
@@ -208,11 +208,11 @@ function mayChangeLocatorValueAway(spec, locator) {
   if (!spec || typeof spec !== 'object' || Array.isArray(spec)) {
     return true;
   }
-  const op = safeGet(spec, locator._key);
-  if (!op) {
+  if (!Object.prototype.hasOwnProperty.call(spec, locator._key)) {
     return false;
   }
-  if (isOp(op) && op[0] === '=' && op[1] === locator._value) {
+  const op = spec[locator._key];
+  if (!op || (isOp(op) && op[0] === '=' && op[1] === locator._value)) {
     return false;
   }
   return true;

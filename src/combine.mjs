@@ -1,5 +1,3 @@
-import { addProperty, isOp } from './util.mjs';
-
 export function combineSpecs(context, inner, spec1, spec2) {
   if (isOp(spec1) && isOp(spec2)) {
     const op1 = spec1[0];
@@ -94,6 +92,16 @@ export function combineSpecs(context, inner, spec1, spec2) {
   });
   return removed && Object.keys(result).length === 0 ? null : result;
 }
+
+export const addProperty = (o, key, value) =>
+  Object.defineProperty(o, key, {
+    value,
+    configurable: true,
+    enumerable: true,
+    writable: true,
+  });
+
+export const isOp = Array.isArray;
 
 function getSeqSteps(spec) {
   if (!spec) {

@@ -29,7 +29,11 @@ declare module 'json-immutability-helper' {
     commands?: Record<string, DirectiveFn>;
     conditions?: Record<string, ConditionFn>;
     optimisations?: Record<string, OptimisationFn<any>>;
-    optimiseSequence?: <T>(sequence: Spec<T>[], context: Readonly<Context>) => Spec<T>[];
+    optimiseSequence?: <T>(
+      sequence: Spec<T>[],
+      context: Readonly<Context>,
+      preOptimised: number,
+    ) => Spec<T>[];
     rpnOperators?: Record<string, RpnOperator>;
     rpnConstants?: Record<string, RpnValue>;
     limits?: Partial<Limits>;
