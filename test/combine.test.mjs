@@ -474,17 +474,15 @@ describe('combine', () => {
     ({ inputs = ANY_INPUT, specs }) => {
       for (const input of inputs) {
         let expected = input;
-        for (const spec of specs) {
-          expected = update(expected, spec);
+        for (let i = 0; i < specs.length; ++i) {
+          expected = update(expected, specs[i]);
+          const combinedSpec = update.combine(specs.slice(0, i + 1));
+          expect(update(input, combinedSpec)).equals(expected);
         }
-
-        const combinedSpec = update.combine(specs);
-        expect(update(input, combinedSpec)).equals(expected);
       }
     },
     {
       parameters: [
-        { specs: [] },
         {
           specs: [
             ['=', 2],
@@ -820,6 +818,24 @@ describe('combine', () => {
             ['update', ['first', { id: ['=', 1] }], { x: ['=', 3] }],
             ['swap', ['first', { id: ['=', 1] }], ['last', { id: ['=', 1] }]],
             ['delete', ['first', { id: ['=', 1] }]],
+          ],
+        },
+
+        {
+          inputs: [[]],
+          specs: [
+            ['push', { id: 1, x: 1 }, { id: 2, x: 2 }],
+            ['update', ['one', { id: ['=', 1] }], { x: ['=', 1.1] }],
+            ['update', ['one', { id: ['=', 1] }], { x: ['=', 1.2] }],
+            ['update', ['one', { id: ['=', 2] }], { x: ['=', 2.1] }],
+            ['update', ['one', { id: ['=', 1] }], { x: ['=', 1.3] }],
+            ['delete', ['one', { id: ['=', 1] }]],
+            ['push', { id: 3, x: 3 }],
+            ['update', ['one', { id: ['=', 1] }], { x: ['=', 1.4] }],
+            ['update', ['one', { id: ['=', 2] }], { x: ['=', 2.2] }],
+            ['delete', ['one', { id: ['=', 2] }]],
+            ['update', ['one', { id: ['=', 3] }], { x: ['=', 3.1] }],
+            ['delete', ['one', { id: ['=', 3] }]],
           ],
         },
       ],
